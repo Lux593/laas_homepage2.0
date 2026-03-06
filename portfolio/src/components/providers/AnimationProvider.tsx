@@ -38,10 +38,6 @@ export default function AnimationProvider({ children }: { children: React.ReactN
     const lenisInstance = (window as unknown as Record<string, Lenis | undefined>).__lenis;
     if (lenisInstance) {
       lenisInstance.on("scroll", ScrollTrigger.update);
-      gsap.ticker.add((time) => {
-        lenisInstance.raf(time * 1000);
-      });
-      gsap.ticker.lagSmoothing(0);
     }
 
     ScrollTrigger.refresh();

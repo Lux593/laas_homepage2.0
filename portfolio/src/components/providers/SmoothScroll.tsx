@@ -25,11 +25,18 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     window.scrollTo(0, 0);
     lenis.scrollTo(0, { immediate: true });
 
+    // Drive Lenis raf loop
+    function raf(time: number) {
+      lenis.raf(time);
+      requestAnimationFrame(raf);
+    }
+    const rafId = requestAnimationFrame(raf);
+
     // Expose for AnimationProvider to sync with ScrollTrigger
-    // Lenis.raf() is called exclusively via GSAP ticker in AnimationProvider
     (window as unknown as Record<string, unknown>).__lenis = lenis;
 
     return () => {
+      cancelAnimationFrame(rafId);
       lenis.destroy();
       lenisRef.current = null;
       delete (window as unknown as Record<string, unknown>).__lenis;
