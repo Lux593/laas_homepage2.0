@@ -128,7 +128,7 @@ export default function Hero() {
           {/* Line 1 */}
           <span
             ref={line1Ref}
-            className="block h-[1.15em] text-display-md md:text-display-lg font-display font-bold tracking-tighter leading-[1.1] opacity-0"
+            className="block text-[11vw] md:text-display-lg font-display font-bold tracking-tighter leading-[1.15] opacity-0"
           >
             Hey, ich bin Luca.
           </span>
@@ -136,15 +136,15 @@ export default function Hero() {
           {/* Line 2 */}
           <div
             ref={line2Ref}
-            className="mt-4 opacity-0"
+            className="mt-3 opacity-0"
           >
-            <span className="block h-[1.15em] text-display-sm md:text-display-md font-display font-light text-text-secondary">
+            <span className="block text-[6.5vw] md:text-display-md font-display font-light leading-[1.3] text-text-secondary">
               Ich biete
             </span>
             {/* Line 3 - rotating word */}
             <span
               ref={rotatingRef}
-              className="block h-[1.4em] text-display-sm md:text-display-md font-display font-bold tracking-tight text-gradient-accent whitespace-nowrap"
+              className="block text-[8vw] md:text-display-md font-display font-bold tracking-tight leading-[1.4] text-gradient-accent whitespace-nowrap"
             >
               {ROTATING_WORDS[wordIndex]}
             </span>

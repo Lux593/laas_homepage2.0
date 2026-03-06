@@ -8,7 +8,8 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (prefersReducedMotion) return;
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    if (prefersReducedMotion || isMobile) return;
 
     const lenis = new Lenis({
       duration: 1.2,
@@ -16,7 +17,6 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
-      touchMultiplier: 2,
     });
 
     lenisRef.current = lenis;
@@ -25,18 +25,20 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
     window.scrollTo(0, 0);
     lenis.scrollTo(0, { immediate: true });
 
-    // Drive Lenis raf loop
+    // Drive Lenis raf loop with proper cleanup
+    let running = true;
     function raf(time: number) {
+      if (!running) return;
       lenis.raf(time);
       requestAnimationFrame(raf);
     }
-    const rafId = requestAnimationFrame(raf);
+    requestAnimationFrame(raf);
 
     // Expose for AnimationProvider to sync with ScrollTrigger
     (window as unknown as Record<string, unknown>).__lenis = lenis;
 
     return () => {
-      cancelAnimationFrame(rafId);
+      running = false;
       lenis.destroy();
       lenisRef.current = null;
       delete (window as unknown as Record<string, unknown>).__lenis;
