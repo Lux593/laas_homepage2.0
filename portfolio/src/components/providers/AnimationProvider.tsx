@@ -34,17 +34,26 @@ export default function AnimationProvider({ children }: { children: React.ReactN
       invalidateOnRefresh: true,
     });
 
-    // Sync ScrollTrigger with Lenis
-    const lenisInstance = (window as unknown as Record<string, Lenis | undefined>).__lenis;
-    if (lenisInstance) {
-      lenisInstance.on("scroll", ScrollTrigger.update);
+    // Sync ScrollTrigger with Lenis (retry because SmoothScroll effect may run after this one)
+    function syncLenis() {
+      const lenisInstance = (window as unknown as Record<string, Lenis | undefined>).__lenis;
+      if (lenisInstance) {
+        lenisInstance.on("scroll", ScrollTrigger.update);
+        ScrollTrigger.refresh();
+      }
     }
+    syncLenis();
+    // Retry after a frame in case SmoothScroll hasn't initialized yet
+    const retryId = requestAnimationFrame(() => {
+      syncLenis();
+    });
 
     ScrollTrigger.refresh();
     animationReady = true;
     listeners.forEach((cb) => cb());
 
     return () => {
+      cancelAnimationFrame(retryId);
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
       animationReady = false;
       listeners.forEach((cb) => cb());

@@ -10,7 +10,10 @@ export default function Preloader() {
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 5000);
     const playTimer = setTimeout(() => {
-      videoRef.current?.play();
+      videoRef.current?.play().catch(() => {
+        // Autoplay blocked by browser — skip preloader
+        setIsLoading(false);
+      });
     }, 500);
     return () => {
       clearTimeout(timer);
