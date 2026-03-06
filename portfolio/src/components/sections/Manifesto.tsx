@@ -58,28 +58,36 @@ export default function Manifesto() {
         </span>
       </div>
 
-      <div className="relative">
-        {/* Floating image overlapping the text */}
-        <div
-          ref={imageRef}
-          className="absolute right-[8%] md:right-[12%] top-8 md:top-12 z-20 opacity-0 pointer-events-none"
-        >
-          <div className="relative w-36 md:w-52 rounded-2xl overflow-hidden border border-glass-border/50 shadow-2xl shadow-black/50"
-            style={{ transform: "rotate(3deg)" }}
-          >
-            <Image
-              src="/personal_pic.jpg"
-              alt="Luca Arnoldi"
-              width={208}
-              height={280}
-              className="w-full h-auto object-cover grayscale-[30%]"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/60 via-transparent to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-r from-bg-primary/20 to-transparent" />
+      <div className="container-custom">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-8 md:gap-16 items-start">
+          {/* Text left - with scroll highlight */}
+          <div>
+            <ScrollHighlight text={MANIFESTO_TEXT} className="font-body" />
+          </div>
+
+          {/* Image right - sticky while scrolling */}
+          <div className="hidden md:block sticky top-[20vh]" style={{ height: "fit-content" }}>
+            <div
+              ref={imageRef}
+              className="opacity-0"
+            >
+              <div
+                className="relative w-72 lg:w-96 rounded-2xl overflow-hidden border border-glass-border/50 shadow-2xl shadow-black/50"
+                style={{ transform: "rotate(3deg)" }}
+              >
+                <Image
+                  src="/personal_pic.jpg"
+                  alt="Luca Arnoldi"
+                  width={384}
+                  height={512}
+                  className="w-full h-auto object-cover grayscale-[30%]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/60 via-transparent to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-r from-bg-primary/20 to-transparent" />
+              </div>
+            </div>
           </div>
         </div>
-
-        <ScrollHighlight text={MANIFESTO_TEXT} className="font-body" />
       </div>
     </section>
   );

@@ -11,7 +11,7 @@ export const SITE_CONFIG = {
 } as const;
 
 export const MANIFESTO_TEXT =
-  "Ich verstehe dein Problem und löse es mit Code. Kurze Wege, ehrliche Kommunikation. Ich baue dir, was du brauchst – ohne bla bla.";
+  "Ich verstehe dein Problem und löse es mit Code. Kurze Wege und ehrliche Kommunikation. Ich baue dir, was du brauchst – ohne bla bla.";
 
 export interface Project {
   id: string;

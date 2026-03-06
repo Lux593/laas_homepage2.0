@@ -49,7 +49,7 @@ export default function Navigation() {
         className={cn(
           "mx-auto max-w-[var(--container-max)] transition-all duration-700 ease-out-expo flex items-center justify-between",
           isScrolled
-            ? "mx-6 md:mx-8 px-6 py-3 glass border border-glass-border rounded-full"
+            ? "mx-auto max-w-[min(calc(100%-3rem),var(--container-max))] px-6 py-3 glass border border-glass-border rounded-full"
             : "px-[var(--container-padding)] py-4"
         )}
       >

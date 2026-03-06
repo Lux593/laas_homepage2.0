@@ -60,11 +60,11 @@ export default function ScrollHighlight({ text, className }: ScrollHighlightProp
     <div ref={containerRef} className="relative" style={{ height: "250vh" }}>
       <div
         ref={stickyRef}
-        className="sticky top-10 h-screen flex items-center justify-center px-[var(--container-padding)]"
+        className="sticky top-10 h-screen flex items-center justify-start"
       >
         <p
           className={cn(
-            "text-display-sm md:text-display-md font-body leading-[1.3] max-w-5xl text-center",
+            "text-display-sm md:text-display-md font-body leading-[1.3] max-w-5xl text-left",
             className
           )}
         >
