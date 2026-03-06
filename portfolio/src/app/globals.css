@@ -1,0 +1,283 @@
+@import "tailwindcss";
+
+/* ============================================
+   Tailwind CSS v4 Theme Configuration
+   ============================================ */
+@theme inline {
+  /* Colors - Dark Cinematic */
+  --color-bg-primary: #050505;
+  --color-bg-secondary: #0a0a0a;
+  --color-bg-elevated: #111111;
+  --color-text-primary: #f5f5f0;
+  --color-text-secondary: #8a8a80;
+  --color-text-muted: #6a6a63;
+  --color-accent-primary: #c8ff00;
+  --color-accent-secondary: #00d4ff;
+  --color-accent-warm: #ff6b35;
+
+  /* Font Families */
+  --font-display: var(--font-clash), system-ui, sans-serif;
+  --font-body: var(--font-satoshi), system-ui, sans-serif;
+  --font-serif: var(--font-instrument), Georgia, serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  /* Fluid Typography */
+  --text-display-xl: clamp(4rem, 12vw, 12rem);
+  --text-display-lg: clamp(3rem, 8vw, 8rem);
+  --text-display-md: clamp(2rem, 5vw, 5rem);
+  --text-display-sm: clamp(1.5rem, 3vw, 3rem);
+  --text-body-lg: clamp(1.125rem, 1.5vw, 1.5rem);
+  --text-body-md: clamp(1rem, 1.2vw, 1.25rem);
+  --text-body-sm: clamp(0.875rem, 1vw, 1rem);
+  --text-caption: clamp(0.75rem, 0.8vw, 0.875rem);
+
+  /* Spacing */
+  --spacing-section: clamp(8rem, 15vh, 16rem);
+  --spacing-section-sm: clamp(4rem, 8vh, 8rem);
+
+  /* Border Radius */
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2rem;
+
+  /* Easing */
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+
+  /* Animations */
+  --animate-grain: grain 8s steps(10) infinite;
+  --animate-glow-pulse: glow-pulse 4s ease-in-out infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-scroll-down: scrollDown 2s ease-in-out infinite;
+
+  /* Glass tokens */
+  --color-glass-border: rgba(255, 255, 255, 0.06);
+  --color-glass-bg: rgba(255, 255, 255, 0.02);
+}
+
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -10%); }
+  20% { transform: translate(-15%, 5%); }
+  30% { transform: translate(7%, -25%); }
+  40% { transform: translate(-5%, 25%); }
+  50% { transform: translate(-15%, 10%); }
+  60% { transform: translate(15%, 0%); }
+  70% { transform: translate(0%, 15%); }
+  80% { transform: translate(3%, 35%); }
+  90% { transform: translate(-10%, 10%); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes scrollDown {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(300%); }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* Pipeline: Node leuchtet auf wenn der Prozess dort ankommt */
+@keyframes nodeActivate {
+  0%, 5% { border-color: rgba(0,212,255,0.12); background: transparent; }
+  10%, 28% { border-color: rgba(0,212,255,0.45); background: rgba(0,212,255,0.06); }
+  38%, 100% { border-color: rgba(0,212,255,0.12); background: transparent; }
+}
+@keyframes nodeTextActivate {
+  0%, 5% { color: rgba(0,212,255,0.3); }
+  10%, 28% { color: rgba(0,212,255,0.85); }
+  38%, 100% { color: rgba(0,212,255,0.3); }
+}
+/* Pipeline: Linie füllt sich von links nach rechts zwischen zwei Nodes */
+@keyframes lineFillLR {
+  0%, 5% { transform: scaleX(0); }
+  50% { transform: scaleX(1); }
+  55%, 100% { transform: scaleX(1); opacity: 0; }
+}
+
+/* ============================================
+   CSS Custom Properties (Design Tokens)
+   ============================================ */
+:root {
+  --section-padding: clamp(8rem, 15vh, 16rem);
+  --container-max: 1440px;
+  --container-padding: clamp(1.5rem, 4vw, 4rem);
+
+  --duration-fast: 300ms;
+  --duration-medium: 600ms;
+  --duration-slow: 1000ms;
+  --duration-ultra: 1500ms;
+
+  --z-behind: -1;
+  --z-base: 0;
+  --z-above: 10;
+  --z-nav: 100;
+  --z-overlay: 200;
+  --z-cursor: 9999;
+}
+
+/* ============================================
+   Base Reset & Overrides
+   ============================================ */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-text-muted) transparent;
+  }
+
+  html {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: auto;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    background-color: var(--color-bg-primary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent-primary);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  ::selection {
+    background-color: var(--color-accent-primary);
+    color: var(--color-bg-primary);
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-text-muted);
+    border-radius: 2px;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img, video, canvas {
+    display: block;
+    max-width: 100%;
+  }
+
+  button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+  }
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+@layer utilities {
+  .container-custom {
+    max-width: var(--container-max);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--container-padding);
+    padding-right: var(--container-padding);
+  }
+
+
+  .gpu {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+
+  .perspective-2000 {
+    perspective: 2000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .text-gradient-accent {
+    background: linear-gradient(135deg, #ffffff, #a0a0a0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .glass-hover {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .py-section {
+    padding-top: var(--spacing-section);
+    padding-bottom: var(--spacing-section);
+  }
+
+  .pt-section {
+    padding-top: var(--spacing-section);
+  }
+}
+
+/* ============================================
+   Noise / Grain Overlay
+   ============================================ */
+.grain-overlay {
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  z-index: var(--z-overlay);
+  pointer-events: none;
+  opacity: 0.035;
+  animation: grain 8s steps(10) infinite;
+}
