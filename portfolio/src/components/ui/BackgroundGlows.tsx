@@ -31,11 +31,11 @@ export default function BackgroundGlows() {
       const sections = document.querySelectorAll("section[id]");
 
       const colorSchemes = [
-        { primary: "#999999", secondary: "#aaaaaa" },
-        { primary: "#aaaaaa", secondary: "#888888" },
-        { primary: "#999999", secondary: "#bbbbbb" },
-        { primary: "#888888", secondary: "#aaaaaa" },
-        { primary: "#999999", secondary: "#aaaaaa" },
+        { primary: "#C49F7B", secondary: "#A07850" },
+        { primary: "#DFBE9F", secondary: "#C49F7B" },
+        { primary: "#A07850", secondary: "#DFBE9F" },
+        { primary: "#C49F7B", secondary: "#A07850" },
+        { primary: "#DFBE9F", secondary: "#C49F7B" },
       ];
 
       sections.forEach((section, i) => {
@@ -83,7 +83,7 @@ export default function BackgroundGlows() {
         ref={glow1Ref}
         className="absolute w-[500px] h-[500px] md:w-[700px] md:h-[700px] rounded-full opacity-[0.03]"
         style={{
-          backgroundColor: "#999999",
+          backgroundColor: "#C49F7B",
           filter: "blur(180px)",
           top: "10%",
           left: "15%",
@@ -94,7 +94,7 @@ export default function BackgroundGlows() {
         ref={glow2Ref}
         className="absolute w-[400px] h-[400px] md:w-[600px] md:h-[600px] rounded-full opacity-[0.02]"
         style={{
-          backgroundColor: "#aaaaaa",
+          backgroundColor: "#DFBE9F",
           filter: "blur(160px)",
           top: "50%",
           right: "10%",
@@ -105,7 +105,7 @@ export default function BackgroundGlows() {
         ref={glow3Ref}
         className="absolute w-[350px] h-[350px] md:w-[500px] md:h-[500px] rounded-full opacity-[0.02]"
         style={{
-          backgroundColor: "#888888",
+          backgroundColor: "#A07850",
           filter: "blur(160px)",
           bottom: "20%",
           left: "40%",

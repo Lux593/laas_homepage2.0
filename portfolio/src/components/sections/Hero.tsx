@@ -1,10 +1,16 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, Suspense } from "react";
+import dynamic from "next/dynamic";
 import gsap from "gsap";
 import { useMousePosition } from "@/hooks/useMousePosition";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 
+// Lazy-load the 3D canvas to avoid SSR issues
+const HeroCanvas = dynamic(() => import("@/components/canvas/HeroCanvas"), {
+  ssr: false,
+  loading: () => null,
+});
 
 const ROTATING_WORDS = [
   "Web-Apps",
@@ -87,35 +93,19 @@ export default function Hero() {
   return (
     <section
       ref={sectionRef}
-      className="relative h-screen flex flex-col items-center justify-center overflow-hidden"
+      className="relative h-screen flex flex-col items-center justify-center overflow-hidden bg-[#050505]"
       id="hero"
     >
-      {/* Background Glows */}
-      {!isMobile && (
-        <>
-          <div
-            className="absolute w-[600px] h-[600px] rounded-full bg-accent-primary/10 blur-[150px] pointer-events-none"
-            style={{
-              transform: `translate3d(${mouse.normalizedX * -15}px, ${mouse.normalizedY * -10}px, 0)`,
-              transition: "transform 0.3s ease-out",
-              left: "20%",
-              top: "20%",
-            }}
-          />
-          <div
-            className="absolute w-[500px] h-[500px] rounded-full bg-accent-secondary/8 blur-[120px] pointer-events-none"
-            style={{
-              transform: `translate3d(${mouse.normalizedX * 10}px, ${mouse.normalizedY * 8}px, 0)`,
-              transition: "transform 0.4s ease-out",
-              right: "15%",
-              bottom: "25%",
-            }}
-          />
-        </>
-      )}
+      {/* 3D Canvas Background */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none"
+        style={{ opacity: 0.8, mixBlendMode: "screen" }}
+      >
+        <HeroCanvas />
+      </div>
 
       {/* Main Content */}
-      <div className="relative z-10 flex justify-center px-[var(--container-padding)]">
+      <div className="relative z-10 flex justify-center px-[var(--container-padding)] pointer-events-none">
         <div
           className="text-left"
           style={{
@@ -157,11 +147,11 @@ export default function Hero() {
         ref={scrollIndicatorRef}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 opacity-0"
       >
-        <span className="text-caption font-mono uppercase tracking-widest text-text-muted">
+        <span className="text-caption font-mono uppercase tracking-widest" style={{ color: "#DFBE9F" }}>
           Scrollen
         </span>
-        <div className="w-[1px] h-12 bg-gradient-to-b from-text-muted/50 to-transparent relative overflow-hidden">
-          <div className="absolute w-full h-4 bg-accent-primary animate-[scrollDown_2s_ease-in-out_infinite]" />
+        <div className="w-[1px] h-12 bg-gradient-to-b from-[#DFBE9F]/50 to-transparent relative overflow-hidden">
+          <div className="absolute w-full h-4 bg-[#C49F7B] animate-[scrollDown_2s_ease-in-out_infinite]" />
         </div>
       </div>
     </section>

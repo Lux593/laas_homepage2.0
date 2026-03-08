@@ -52,10 +52,13 @@ export default function Manifesto() {
 
   return (
     <section id="about" className="relative">
-      <div className="container-custom pt-section">
-        <span className="text-caption font-mono uppercase tracking-widest text-text-muted">
+      <div className="container-custom pt-section mb-16 md:mb-24">
+        <span className="text-caption font-mono uppercase tracking-widest text-text-muted block mb-4">
           03 — Manifest
         </span>
+        <h2 className="text-display-sm md:text-display-md font-display font-bold tracking-tighter">
+          Über mich
+        </h2>
       </div>
 
       <div className="container-custom">

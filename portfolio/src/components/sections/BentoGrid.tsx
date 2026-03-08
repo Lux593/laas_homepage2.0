@@ -159,16 +159,19 @@ export default function BentoGrid() {
             </div>
           </BentoCard>
 
-          {/* Tech Stack */}
+          {/* Tools die ich mag */}
           <BentoCard className="md:col-span-2 lg:col-span-3" index={2}>
             <span className="text-caption font-mono uppercase tracking-widest text-text-muted mb-6 block">
-              Tech Stack
+              Tools die ich mag
             </span>
             <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
               {TECH_STACK.map((tech, i) => (
-                <span
+                <a
                   key={tech.name}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-body-sm font-mono rounded-full border border-glass-border bg-bg-primary/50 text-text-secondary hover:text-text-primary hover:border-accent-primary/30 hover:bg-accent-primary/5 transition-all duration-500 ease-out-expo cursor-default"
+                  href={tech.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 text-body-sm font-mono rounded-full border border-glass-border bg-bg-primary/50 text-text-secondary hover:text-text-primary hover:border-accent-primary/30 hover:bg-accent-primary/5 transition-all duration-500 ease-out-expo cursor-pointer"
                   style={{ transitionDelay: `${i * 20}ms` }}
                 >
                   <Image
@@ -179,7 +182,7 @@ export default function BentoGrid() {
                     className="w-4 h-4 brightness-0 invert opacity-70"
                   />
                   {tech.name}
-                </span>
+                </a>
               ))}
             </div>
           </BentoCard>

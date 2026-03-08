@@ -38,7 +38,7 @@ export const PROJECTS: Project[] = [
       "Eine intelligente Oberfläche, die sich durch neuronale Mustererkennung und Echtzeit-KI-Inferenz an das Nutzerverhalten anpasst.",
     image: "/images/projects/nexus-hero.webp",
     logo: "/harley-davidson-logo.png",
-    color: "#c8ff00",
+    color: "#C49F7B",
   },
   {
     id: "intersport",
@@ -51,7 +51,7 @@ export const PROJECTS: Project[] = [
       "Ein Premium-Banking-Erlebnis mit biometrischer Sicherheit, Echtzeit-Analysen und gestengesteuerter Navigation.",
     image: "/images/projects/aura-hero.webp",
     logo: "/intersport-gemo-logo.png",
-    color: "#00d4ff",
+    color: "#DFBE9F",
   },
   {
     id: "mobileobjects",
@@ -64,7 +64,7 @@ export const PROJECTS: Project[] = [
       "Enterprise-Workflow-Automatisierung, die manuelle Prozesse durch intelligente Pipeline-Orchestrierung um 80% reduziert.",
     image: "/images/projects/flow-hero.webp",
     logo: "/mobileobjects-logo.png",
-    color: "#ff6b35",
+    color: "#A07850",
   },
 ];
 
@@ -89,18 +89,22 @@ export const EXPERTISE = [
 export interface TechItem {
   name: string;
   icon: string;
+  url: string;
 }
 
 export const TECH_STACK: TechItem[] = [
-  { name: "n8n", icon: "/n8n-icon.svg" },
-  { name: "Supabase", icon: "/supabase-icon.svg" },
-  { name: "Firebase", icon: "/firebase-icon.svg" },
-  { name: "Firefly", icon: "/firefly-icon.svg" },
-  { name: "Hostinger", icon: "/hostinger-icon.svg" },
-  { name: "Make", icon: "/make-icon.svg" },
-  { name: "Cursor AI", icon: "/cursor-icon-white.svg" },
-  { name: "Anthropic", icon: "/anthropic-icon.svg" },
-  { name: "Gemini", icon: "/gemini-icon.svg" },
+  { name: "n8n", icon: "/n8n-icon.svg", url: "https://n8n.io" },
+  { name: "Supabase", icon: "/supabase-icon.svg", url: "https://supabase.com" },
+  { name: "Firebase", icon: "/firebase-icon.svg", url: "https://firebase.google.com" },
+  { name: "Firefly", icon: "/firefly-icon.svg", url: "https://www.adobe.com/products/firefly.html" },
+  { name: "Hostinger", icon: "/hostinger-icon.svg", url: "https://www.hostinger.com" },
+  { name: "Make", icon: "/make-icon.svg", url: "https://www.make.com" },
+  { name: "Cursor AI", icon: "/cursor-icon-white.svg", url: "https://www.cursor.com" },
+  { name: "Anthropic", icon: "/anthropic-icon.svg", url: "https://www.anthropic.com" },
+  { name: "Gemini", icon: "/gemini-icon.svg", url: "https://gemini.google.com" },
+  { name: "GitHub", icon: "/github-icon.svg", url: "https://github.com" },
+  { name: "Spotify", icon: "/spotify-icon.svg", url: "https://www.spotify.com" },
+  { name: "YouTube", icon: "/youtube-icon.svg", url: "https://www.youtube.com" },
 ];
 
 export const NAV_ITEMS = [
