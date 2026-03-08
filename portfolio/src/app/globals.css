@@ -89,22 +89,27 @@
   100% { transform: translateX(-50%); }
 }
 
-/* Pipeline: Node leuchtet auf wenn der Prozess dort ankommt */
-@keyframes nodeActivate {
-  0%, 5% { border-color: rgba(196,159,123,0.12); background: transparent; }
-  10%, 28% { border-color: rgba(196,159,123,0.45); background: rgba(196,159,123,0.06); }
-  38%, 100% { border-color: rgba(196,159,123,0.12); background: transparent; }
+/* 3D Workflow pipeline animations */
+@keyframes flowPulse {
+  0%, 15% { border-color: rgba(223,190,159,0.08); }
+  25%, 40% { border-color: rgba(223,190,159,0.35); transform: translateZ(var(--tw-translate-z, 0px)) scale(1.05); }
+  55%, 100% { border-color: rgba(223,190,159,0.08); transform: translateZ(var(--tw-translate-z, 0px)) scale(1); }
 }
-@keyframes nodeTextActivate {
-  0%, 5% { color: rgba(196,159,123,0.3); }
-  10%, 28% { color: rgba(196,159,123,0.85); }
-  38%, 100% { color: rgba(196,159,123,0.3); }
+@keyframes flowGlow {
+  0%, 15% { opacity: 0; }
+  25%, 40% { opacity: 1; }
+  55%, 100% { opacity: 0; }
 }
-/* Pipeline: Linie füllt sich von links nach rechts zwischen zwei Nodes */
-@keyframes lineFillLR {
-  0%, 5% { transform: scaleX(0); }
-  50% { transform: scaleX(1); }
-  55%, 100% { transform: scaleX(1); opacity: 0; }
+@keyframes flowText {
+  0%, 15% { color: rgba(223,190,159,0.25); }
+  25%, 40% { color: rgba(223,190,159,0.9); }
+  55%, 100% { color: rgba(223,190,159,0.25); }
+}
+@keyframes flowParticle {
+  0%, 10% { left: 0%; opacity: 0; }
+  15% { opacity: 1; }
+  50% { left: 100%; opacity: 1; }
+  55%, 100% { left: 100%; opacity: 0; }
 }
 
 /* ============================================

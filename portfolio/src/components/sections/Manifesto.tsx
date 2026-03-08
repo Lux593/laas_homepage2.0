@@ -18,12 +18,12 @@ export default function Manifesto() {
     const ctx = gsap.context(() => {
       gsap.fromTo(
         imageRef.current,
-        { y: 80, opacity: 0, rotate: -4, scale: 0.9 },
+        { y: 80, opacity: 0, scale: 0.9, rotate: 0 },
         {
           y: 0,
           opacity: 1,
-          rotate: 3,
           scale: 1,
+          rotate: 0,
           duration: 1.4,
           ease: "expo.out",
           scrollTrigger: {
@@ -36,7 +36,7 @@ export default function Manifesto() {
 
       gsap.to(imageRef.current, {
         y: -60,
-        rotate: -2,
+        rotate: 0,
         ease: "none",
         scrollTrigger: {
           trigger: imageRef.current,
@@ -52,7 +52,7 @@ export default function Manifesto() {
 
   return (
     <section id="about" className="relative">
-      <div className="container-custom pt-section mb-16 md:mb-24">
+      <div className="container-custom pt-12 md:pt-section mb-8 md:mb-24">
         <span className="text-caption font-mono uppercase tracking-widest text-text-muted block mb-4">
           03 — Manifest
         </span>
@@ -68,16 +68,13 @@ export default function Manifesto() {
             <ScrollHighlight text={MANIFESTO_TEXT} className="font-body" />
           </div>
 
-          {/* Image right - sticky while scrolling */}
-          <div className="hidden md:block sticky top-[20vh]" style={{ height: "fit-content" }}>
+          {/* Image - above text on mobile, sticky on desktop */}
+          <div className="order-first md:order-none md:sticky md:top-[20vh]" style={{ height: "fit-content" }}>
             <div
               ref={imageRef}
               className="opacity-0"
             >
-              <div
-                className="relative w-72 lg:w-96 rounded-2xl overflow-hidden border border-glass-border/50 shadow-2xl shadow-black/50"
-                style={{ transform: "rotate(3deg)" }}
-              >
+              <div className="relative w-48 mx-auto md:mx-0 md:w-72 lg:w-96 rounded-2xl overflow-hidden">
                 <Image
                   src="/personal_pic.jpg"
                   alt="Luca Arnoldi"
@@ -85,8 +82,6 @@ export default function Manifesto() {
                   height={512}
                   className="w-full h-auto object-cover grayscale-[30%]"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-bg-primary/60 via-transparent to-transparent" />
-                <div className="absolute inset-0 bg-gradient-to-r from-bg-primary/20 to-transparent" />
               </div>
             </div>
           </div>

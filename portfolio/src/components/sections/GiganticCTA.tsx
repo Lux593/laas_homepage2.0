@@ -76,7 +76,7 @@ export default function GiganticCTA() {
           <TextReveal
             as="h2"
             variant="words"
-            className="text-display-sm md:text-display-md font-display font-bold tracking-tighter mb-8 max-w-5xl text-[#0a0a0a]"
+            className="text-[clamp(2rem,5vw,3rem)] md:text-display-md font-display font-bold tracking-tighter mb-8 max-w-5xl text-[#0a0a0a]"
             stagger={0.05}
           >
             Lust auf ein Projekt?
@@ -141,11 +141,11 @@ export default function GiganticCTA() {
           </div>
         </div>
 
-        <div className="absolute bottom-8 left-0 right-0 px-[var(--container-padding)] max-w-[var(--container-max)] mx-auto flex items-center justify-between">
+        <div className="absolute bottom-8 left-0 right-0 px-[var(--container-padding)] max-w-[var(--container-max)] mx-auto flex flex-col items-center gap-3 text-center md:flex-row md:justify-between md:text-left">
           <p className="text-caption font-mono" style={{ color: "#9a9a9a" }}>
             © {new Date().getFullYear()} {SITE_CONFIG.name}
           </p>
-          <div className="flex items-center gap-8">
+          <div className="flex items-center gap-4 md:gap-8">
             <a href="/agb" className="text-caption font-mono transition-colors duration-300" style={{ color: "#9a9a9a" }}>AGB</a>
             <a href="/datenschutz" className="text-caption font-mono transition-colors duration-300" style={{ color: "#9a9a9a" }}>Datenschutz</a>
             <a href="/impressum" className="text-caption font-mono transition-colors duration-300" style={{ color: "#9a9a9a" }}>Impressum</a>
