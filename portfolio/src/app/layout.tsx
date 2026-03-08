@@ -124,7 +124,7 @@ export default function RootLayout({
         >
           Zum Inhalt springen
         </a>
-        <Preloader />
+        {/* <Preloader /> */}
         <SmoothScroll>
           <AnimationProvider>
             <GrainOverlay />
