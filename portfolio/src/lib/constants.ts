@@ -109,7 +109,7 @@ export const TECH_STACK: TechItem[] = [
 
 export const NAV_ITEMS = [
   { label: "Projekte", href: "#work" },
-  { label: "Über mich", href: "#about" },
   { label: "Expertise", href: "#expertise" },
+  { label: "Über mich", href: "#about" },
   { label: "Kontakt", href: "#contact" },
 ] as const;

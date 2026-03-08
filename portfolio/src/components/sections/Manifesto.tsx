@@ -15,15 +15,16 @@ export default function Manifesto() {
   useEffect(() => {
     if (!imageRef.current) return;
 
-    const ctx = gsap.context(() => {
+    const mm = gsap.matchMedia();
+
+    mm.add("(min-width: 768px)", () => {
       gsap.fromTo(
         imageRef.current,
-        { y: 80, opacity: 0, scale: 0.9, rotate: 0 },
+        { y: 80, opacity: 0, scale: 0.9 },
         {
           y: 0,
           opacity: 1,
           scale: 1,
-          rotate: 0,
           duration: 1.4,
           ease: "expo.out",
           scrollTrigger: {
@@ -36,7 +37,6 @@ export default function Manifesto() {
 
       gsap.to(imageRef.current, {
         y: -60,
-        rotate: 0,
         ease: "none",
         scrollTrigger: {
           trigger: imageRef.current,
@@ -45,9 +45,14 @@ export default function Manifesto() {
           scrub: 1,
         },
       });
-    }, imageRef);
+    });
 
-    return () => ctx.revert();
+    // On mobile: just make the image visible immediately
+    mm.add("(max-width: 767px)", () => {
+      gsap.set(imageRef.current, { opacity: 1 });
+    });
+
+    return () => mm.revert();
   }, []);
 
   return (

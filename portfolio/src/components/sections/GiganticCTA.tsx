@@ -85,7 +85,7 @@ export default function GiganticCTA() {
           <TextReveal
             as="p"
             variant="words"
-            className="text-[clamp(1.5rem,3vw,3rem)] font-body mb-12 text-[#3a3a3a] whitespace-nowrap"
+            className="text-[clamp(1.2rem,2.2vw,2rem)] font-body mb-12 text-[#3a3a3a] whitespace-nowrap"
             start="top 90%"
           >
             schreib mir - dann starten wir.
