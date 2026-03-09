@@ -27,13 +27,13 @@ export default function FlipCard({ project }: FlipCardProps) {
         scrollTrigger: {
           trigger: pinRef.current,
           start: "top 15%",
-          end: "+=100%",
+          end: "+=250%",
           pin: true,
-          scrub: 0.6,
+          scrub: 1.5,
         },
       })
         // Hold front visible for a moment
-        .to(innerRef.current!, { rotateX: 0, duration: 0.3 })
+        .to(innerRef.current!, { rotateX: 0, duration: 0.5 })
         // Flip to back
         .to(innerRef.current!, {
           rotateX: -180,
@@ -41,7 +41,7 @@ export default function FlipCard({ project }: FlipCardProps) {
           ease: "power2.inOut",
         })
         // Hold back visible
-        .to(innerRef.current!, { rotateX: -180, duration: 0.4 });
+        .to(innerRef.current!, { rotateX: -180, duration: 0.6 });
     }, pinRef);
 
     return () => ctx.revert();

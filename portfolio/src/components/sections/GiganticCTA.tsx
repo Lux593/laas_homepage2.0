@@ -16,41 +16,62 @@ export default function GiganticCTA() {
   useEffect(() => {
     if (!cardRef.current || !sectionRef.current) return;
 
-    const ctx = gsap.context(() => {
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 80%",
-          end: "top 0%",
-          scrub: 1,
-        },
-      });
+    const isMobile = window.innerWidth < 768;
 
-      // Phase 1: Small centered card slides up from bottom
-      tl.fromTo(
-        cardRef.current,
-        {
-          scale: 0.7,
+    const ctx = gsap.context(() => {
+      if (isMobile) {
+        // Mobile: fullscreen clip-path wipe from bottom, no scale/border-radius
+        gsap.set(cardRef.current, { scale: 1, borderRadius: "0px" });
+
+        gsap.fromTo(
+          cardRef.current,
+          { clipPath: "inset(100% 0 0 0)" },
+          {
+            clipPath: "inset(0% 0 0 0)",
+            ease: "none",
+            scrollTrigger: {
+              trigger: sectionRef.current,
+              start: "top bottom",
+              end: "top 50%",
+              scrub: 1,
+            },
+          }
+        );
+      } else {
+        // Desktop: card animation with scale + rounded corners
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top 80%",
+            end: "top 0%",
+            scrub: 1,
+          },
+        });
+
+        tl.fromTo(
+          cardRef.current,
+          {
+            scale: 0.7,
+            borderRadius: "2rem",
+            clipPath: "inset(100% 0 0 0 round 2rem)",
+          },
+          {
+            clipPath: "inset(0% 0 0 0 round 2rem)",
+            scale: 0.7,
+            borderRadius: "2rem",
+            duration: 0.5,
+            ease: "none",
+          }
+        );
+
+        tl.to(cardRef.current, {
+          scale: 1,
           borderRadius: "2rem",
-          clipPath: "inset(100% 0 0 0 round 2rem)",
-        },
-        {
           clipPath: "inset(0% 0 0 0 round 2rem)",
-          scale: 0.7,
-          borderRadius: "2rem",
           duration: 0.5,
           ease: "none",
-        }
-      );
-
-      // Phase 2: Card expands to full width, keeps rounded corners
-      tl.to(cardRef.current, {
-        scale: 1,
-        borderRadius: "2rem",
-        clipPath: "inset(0% 0 0 0 round 2rem)",
-        duration: 0.5,
-        ease: "none",
-      });
+        });
+      }
     }, sectionRef);
 
     return () => ctx.revert();
@@ -68,7 +89,7 @@ export default function GiganticCTA() {
         className="relative min-h-screen flex flex-col justify-center overflow-hidden"
         style={{
           backgroundColor: "#f0ede8",
-          clipPath: "inset(100% 0 0 0 round 2rem)",
+          clipPath: "inset(100% 0 0 0)",
           transformOrigin: "center center",
         }}
       >
