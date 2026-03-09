@@ -58,27 +58,11 @@ export default function FlipCard({ project }: FlipCardProps) {
       >
         {/* ===== FRONT ===== */}
         <div
-          className="relative rounded-3xl overflow-hidden border border-glass-border bg-glass-bg"
+          className="relative rounded-3xl overflow-hidden border border-glass-border glass"
           style={{ backfaceVisibility: "hidden" }}
         >
-          <div className="relative aspect-[4/3] md:aspect-[16/8] overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-bg-primary/90 z-10" />
-
-            <div
-              className="absolute -inset-20 opacity-20 blur-[100px] z-0"
-              style={{ backgroundColor: project.color }}
-            />
-
-            <div
-              className="w-full h-full relative"
-              style={{
-                background: `
-                  radial-gradient(ellipse at 30% 50%, ${project.color}22 0%, transparent 50%),
-                  radial-gradient(ellipse at 70% 50%, ${project.color}11 0%, transparent 50%),
-                  linear-gradient(135deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%)
-                `,
-              }}
-            >
+          <div className="relative aspect-[4/3] md:aspect-[16/8]">
+            <div className="w-full h-full relative">
               <div className="absolute inset-0 flex items-center justify-center">
                 <span
                   className="text-[15rem] md:text-[20rem] font-display font-black leading-none tracking-tighter select-none"
@@ -119,7 +103,7 @@ export default function FlipCard({ project }: FlipCardProps) {
               {project.title}
             </h3>
 
-            <p className="text-body-md font-serif italic text-text-secondary mb-6">
+            <p className="text-body-md font-body text-text-secondary mb-6">
               {project.subtitle}
             </p>
 

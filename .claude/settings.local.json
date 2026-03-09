@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git commit:*)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(git add portfolio/src/components/sections/GiganticCTA.tsx portfolio/src/components/ui/FlipCard.tsx portfolio/src/lib/constants.ts)",
+      "Bash(git push origin main)"
+    ]
+  }
+}
