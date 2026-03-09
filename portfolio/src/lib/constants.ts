@@ -13,6 +13,11 @@ export const SITE_CONFIG = {
 export const MANIFESTO_TEXT =
   "Ich verstehe dein Problem und löse es mit Code. Kurze Wege und ehrliche Kommunikation. Ich baue dir, was du brauchst – ohne bla bla.";
 
+export interface ProjectFeature {
+  title: string;
+  description: string;
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -21,6 +26,8 @@ export interface Project {
   year: string;
   tech: string[];
   description: string;
+  details: string;
+  features: ProjectFeature[];
   image: string;
   logo: string;
   color: string;
@@ -30,12 +37,36 @@ export const PROJECTS: Project[] = [
   {
     id: "harley",
     title: "Harley-Davidson Powershop",
-    subtitle: "E-Commerce & Markenportal",
-    category: "Fullstack / E-Commerce",
-    year: "2025",
+    subtitle: "Operations & Management Web-App",
+    category: "Fullstack / Web-App",
+    year: "2024 – heute",
     tech: ["React", "Next.js", "Python", "OpenAI", "PostgreSQL"],
     description:
-      "Eine intelligente Oberfläche, die sich durch neuronale Mustererkennung und Echtzeit-KI-Inferenz an das Nutzerverhalten anpasst.",
+      "Eine maßgeschneiderte Web-App für das Management des Tagesgeschäfts, der Mitarbeiter- und Eventplanung – ergänzt durch Workflow-Automatisierungen und KI-gestützte Prozesse.",
+    details:
+      "Für den Harley-Davidson Powershop habe ich eine umfassende Management-Plattform entwickelt, die sämtliche operative Abläufe digitalisiert und optimiert.",
+    features: [
+      {
+        title: "Tagesgeschäft-Management",
+        description:
+          "Zentrale Oberfläche zur Steuerung des täglichen Geschäftsbetriebs mit Echtzeit-Übersichten und Aufgabenverwaltung.",
+      },
+      {
+        title: "Mitarbeiter- & Eventplanung",
+        description:
+          "Integrierte Planung für Schichten, Verfügbarkeiten und Events mit automatischer Konflikterkennung.",
+      },
+      {
+        title: "Workflow-Automatisierungen",
+        description:
+          "Automatisierte Geschäftsprozesse, die repetitive Aufgaben eliminieren und den operativen Alltag beschleunigen.",
+      },
+      {
+        title: "KI-Prozesse & Funktionen",
+        description:
+          "Implementierung intelligenter Funktionen auf Basis von KI – von automatisierten Auswertungen bis zur smarten Entscheidungsunterstützung.",
+      },
+    ],
     image: "/images/projects/nexus-hero.webp",
     logo: "/harley-davidson-logo.png",
     color: "#C49F7B",
@@ -43,12 +74,31 @@ export const PROJECTS: Project[] = [
   {
     id: "intersport",
     title: "Intersport GEMO",
-    subtitle: "Digitale Sporthandel-Plattform",
-    category: "Mobile / Handel",
+    subtitle: "Verleih-App & Management Dashboard",
+    category: "Fullstack / Web-App",
     year: "2025",
-    tech: ["Swift", "SwiftUI", "Core Data", "Plaid API"],
+    tech: ["React", "Next.js", "Supabase", "Tailwind CSS"],
     description:
-      "Ein Premium-Banking-Erlebnis mit biometrischer Sicherheit, Echtzeit-Analysen und gestengesteuerter Navigation.",
+      "Eine Verleih-App zur digitalen Abwicklung des gesamten Verleihprozesses zwischen Kunde und Intersport GEMO – inklusive Management-View für KPIs.",
+    details:
+      "Für Intersport GEMO habe ich eine vollständige Verleih-Plattform entwickelt, die den Prozess von der Kundenanfrage bis zur Rückgabe digital abbildet.",
+    features: [
+      {
+        title: "Digitaler Verleihprozess",
+        description:
+          "End-to-End Abwicklung des Verleihs – von der Reservierung über die Ausgabe bis zur Rückgabe, vollständig digital und papierlos.",
+      },
+      {
+        title: "Kunden-Interface",
+        description:
+          "Intuitive Oberfläche für Kunden zur Auswahl, Buchung und Verwaltung ihrer Verleih-Artikel.",
+      },
+      {
+        title: "Management-View & KPIs",
+        description:
+          "Dashboard für das Management mit Echtzeit-KPIs zu Auslastung, Umsatz und Bestandsübersicht.",
+      },
+    ],
     image: "/images/projects/aura-hero.webp",
     logo: "/intersport-gemo-logo.png",
     color: "#DFBE9F",
@@ -56,12 +106,31 @@ export const PROJECTS: Project[] = [
   {
     id: "mobileobjects",
     title: "mobileObjects",
-    subtitle: "Workflow-Automatisierungsplattform",
-    category: "SaaS / Automatisierung",
-    year: "2024",
+    subtitle: "Feature-Entwicklung für bestehende Apps",
+    category: "Fullstack / Zusatzentwicklung",
+    year: "seit 2025",
     tech: ["Next.js", "n8n", "PostgreSQL", "Docker", "AWS"],
     description:
-      "Enterprise-Workflow-Automatisierung, die manuelle Prozesse durch intelligente Pipeline-Orchestrierung um 80% reduziert.",
+      "Entwicklung von Zusatzfunktionen für bestehende Applikationen – von Messaging-Systemen über Benutzerverwaltung bis hin zu operativen Tools.",
+    details:
+      "Für mobileObjects entwickle ich fortlaufend neue Features und Module, die nahtlos in die bestehende App-Landschaft integriert werden.",
+    features: [
+      {
+        title: "Messaging-System",
+        description:
+          "Integriertes Nachrichtensystem für die direkte Kommunikation zwischen Nutzern innerhalb der Plattform.",
+      },
+      {
+        title: "Benutzerverwaltung & Rollenkonzept",
+        description:
+          "Feingranulares Rollen- und Berechtigungssystem zur Steuerung von Zugriffen und Funktionen je nach Nutzerrolle.",
+      },
+      {
+        title: "Operative Tools",
+        description:
+          "Praxisnahe Werkzeuge für den operativen Alltag, die Arbeitsabläufe vereinfachen und die Effizienz steigern.",
+      },
+    ],
     image: "/images/projects/flow-hero.webp",
     logo: "/mobileobjects-logo.png",
     color: "#A07850",

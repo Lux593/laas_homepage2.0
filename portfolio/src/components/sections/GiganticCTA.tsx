@@ -20,14 +20,14 @@ export default function GiganticCTA() {
 
     const ctx = gsap.context(() => {
       if (isMobile) {
-        // Mobile: fullscreen clip-path wipe from bottom, no scale/border-radius
-        gsap.set(cardRef.current, { scale: 1, borderRadius: "0px" });
+        // Mobile: fullscreen clip-path wipe from bottom with rounded top corners
+        gsap.set(cardRef.current, { scale: 1, borderRadius: "1.5rem 1.5rem 0 0" });
 
         gsap.fromTo(
           cardRef.current,
-          { clipPath: "inset(100% 0 0 0)" },
+          { clipPath: "inset(100% 0 0 0 round 1.5rem 1.5rem 0 0)" },
           {
-            clipPath: "inset(0% 0 0 0)",
+            clipPath: "inset(0% 0 0 0 round 1.5rem 1.5rem 0 0)",
             ease: "none",
             scrollTrigger: {
               trigger: sectionRef.current,

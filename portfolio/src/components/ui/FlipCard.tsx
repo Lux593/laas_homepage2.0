@@ -36,12 +36,12 @@ export default function FlipCard({ project }: FlipCardProps) {
         .to(innerRef.current!, { rotateX: 0, duration: 0.5 })
         // Flip to back
         .to(innerRef.current!, {
-          rotateX: -180,
+          rotateX: 180,
           duration: 1,
           ease: "power2.inOut",
         })
         // Hold back visible
-        .to(innerRef.current!, { rotateX: -180, duration: 0.6 });
+        .to(innerRef.current!, { rotateX: 180, duration: 0.6 });
     }, pinRef);
 
     return () => ctx.revert();
@@ -61,7 +61,7 @@ export default function FlipCard({ project }: FlipCardProps) {
           className="relative rounded-3xl overflow-hidden border border-glass-border bg-glass-bg"
           style={{ backfaceVisibility: "hidden" }}
         >
-          <div className="relative aspect-[16/10] md:aspect-[16/8] overflow-hidden">
+          <div className="relative aspect-[4/3] md:aspect-[16/8] overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-bg-primary/90 z-10" />
 
             <div
@@ -134,52 +134,51 @@ export default function FlipCard({ project }: FlipCardProps) {
           className="absolute inset-0 rounded-3xl overflow-hidden border border-glass-border bg-glass-bg"
           style={{
             backfaceVisibility: "hidden",
-            transform: "rotateX(180deg)",
+            transform: "rotateX(-180deg)",
           }}
         >
-          <div className="h-full flex flex-col p-8 md:p-12">
+          <div className="h-full flex flex-col p-6 md:p-10 overflow-y-auto">
             {/* Header */}
-            <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center justify-between mb-6">
               <h3 className="text-body-lg md:text-display-sm font-display font-bold tracking-tighter">
                 {project.title}
               </h3>
               <span
-                className="text-caption font-mono uppercase tracking-widest px-3 py-1 rounded-full border"
+                className="text-caption font-mono uppercase tracking-widest px-3 py-1 rounded-full border shrink-0"
                 style={{ borderColor: project.color, color: project.color }}
               >
                 {project.year}
               </span>
             </div>
 
-            {/* Image */}
-            <div className="relative flex-1 min-h-0 rounded-2xl overflow-hidden mb-8">
-              <div
-                className="absolute inset-0"
-                style={{
-                  background: `
-                    radial-gradient(ellipse at 50% 50%, ${project.color}18 0%, transparent 70%),
-                    linear-gradient(135deg, #0a0a0a 0%, #151515 100%)
-                  `,
-                }}
-              />
-              <div className="absolute inset-0 flex items-center justify-center p-8">
-                <Image
-                  src={project.logo}
-                  alt={`${project.title} Logo`}
-                  width={300}
-                  height={150}
-                  className="max-h-32 w-auto object-contain opacity-60"
-                />
-              </div>
-            </div>
-
-            {/* Description */}
+            {/* Details description */}
             <p className="text-body-sm text-text-secondary leading-relaxed mb-6">
-              {project.description}
+              {project.details}
             </p>
 
+            {/* Features grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              {project.features.map((feature) => (
+                <div
+                  key={feature.title}
+                  className="rounded-xl p-4 border border-white/5 bg-white/[0.02]"
+                >
+                  <div
+                    className="w-8 h-[2px] mb-3 rounded-full"
+                    style={{ backgroundColor: project.color }}
+                  />
+                  <h4 className="text-body-sm font-display font-semibold mb-1.5 text-text-primary">
+                    {feature.title}
+                  </h4>
+                  <p className="text-caption text-text-muted leading-relaxed">
+                    {feature.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+
             {/* Tech stack */}
-            <div className="flex flex-wrap gap-2 mt-auto">
+            <div className="flex flex-wrap gap-2 mt-auto pt-4 border-t border-white/5">
               {project.tech.map((t) => (
                 <span
                   key={t}
