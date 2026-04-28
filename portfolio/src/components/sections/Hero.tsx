@@ -120,7 +120,7 @@ export default function Hero() {
             ref={line1Ref}
             className="block text-[11vw] md:text-display-lg font-display font-bold tracking-tighter leading-[1.15] opacity-0"
           >
-            Hey, ich bin Luca.
+            Hey, ich bin Luca
           </span>
 
           {/* Line 2 */}
