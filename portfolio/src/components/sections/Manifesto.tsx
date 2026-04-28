@@ -62,7 +62,7 @@ export default function Manifesto() {
           03 — Manifest
         </span>
         <h2 className="text-display-sm md:text-display-md font-display font-bold tracking-tighter">
-          Über mich
+          Über mich.
         </h2>
       </div>
 

@@ -75,7 +75,7 @@ export default function BentoGrid() {
             variant="words"
             className="text-display-sm md:text-display-md font-display font-bold tracking-tighter"
           >
-            Was ich mitbringe
+            Was ich mitbringe.
           </TextReveal>
         </div>
 

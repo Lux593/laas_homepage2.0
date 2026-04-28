@@ -100,7 +100,7 @@ export default function GiganticCTA() {
             className="text-[clamp(2rem,5vw,3rem)] md:text-display-md font-display font-bold tracking-tighter mb-8 max-w-5xl text-[#0a0a0a]"
             stagger={0.05}
           >
-            Lust auf ein Projekt?
+            Lust auf ein Projekt ?
           </TextReveal>
 
           <TextReveal
