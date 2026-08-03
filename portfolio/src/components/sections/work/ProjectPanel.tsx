@@ -15,11 +15,11 @@ export default function ProjectPanel({ project }: { project: Project }) {
       {/* w-full is load-bearing: container-custom's auto margins would otherwise
           stop this flex item from stretching and shrink-wrap it to its content */}
       <div className="work-container w-full">
-        {/* Shrink-to-fit pair (text + device), then center the pair — keeps them
-            close without pinning the whole spread to the left edge. */}
-        <div className="mt-[clamp(1.75rem,4vh,3rem)] flex justify-center">
-          <div className="grid w-full max-w-full grid-cols-1 items-center gap-y-10 lg:w-auto lg:grid-cols-[minmax(0,48ch)_auto] lg:gap-x-[clamp(3rem,5vw,5rem)] lg:gap-y-0">
-            <div className="min-w-0 max-w-[48ch] justify-self-center lg:justify-self-stretch">
+        {/* Text flush left (same edge as „PROJEKTE"); device stays in the right
+            1fr column and is centered there — same X as the old centered pair. */}
+        <div className="mt-[clamp(1.75rem,4vh,3rem)]">
+          <div className="grid w-full max-w-full grid-cols-1 items-center gap-y-10 lg:grid-cols-[minmax(0,48ch)_1fr] lg:gap-x-[clamp(3rem,5vw,5rem)] lg:gap-y-0">
+            <div className="min-w-0 max-w-[48ch]">
               <header>
                 <h3 className="font-display text-[clamp(1.9rem,3.1vw,3.1rem)] font-bold leading-[0.98] tracking-tighter text-[#0a0a0a] uppercase">
                   {project.title}
