@@ -1,4 +1,4 @@
-/* Process — same pin/track language as Selected Work, dark surface */
+/* Process — shuttle wipe on desktop, stacked reading on mobile */
 
 .process-container {
   max-width: max(1600px, min(1920px, 92vw));
@@ -15,6 +15,14 @@
   padding-bottom: clamp(4rem, 10vh, 8rem);
 }
 
+.process-pin--desktop {
+  display: none;
+}
+
+.process-stack {
+  display: block;
+}
+
 .process-track {
   display: flex;
   flex-direction: column;
@@ -27,30 +35,126 @@
 }
 
 .process-track > .process-panel + .process-panel {
-  border-top: 1px solid rgba(252, 252, 252, 0.1);
+  border-top: 1px solid rgba(242, 237, 228, 0.15);
 }
 
-/* MUST stay byte-identical to the gsap.matchMedia() query in useHorizontalPin */
+/* Short hairlines under process points — not full text-column width */
+.process-points {
+  background-image: linear-gradient(
+    to right,
+    rgba(242, 237, 228, 0.15),
+    rgba(242, 237, 228, 0.15)
+  );
+  background-size: min(36ch, 88%) 1px;
+  background-repeat: no-repeat;
+  background-position: left top;
+}
+
+.process-point {
+  background-image: linear-gradient(
+    to right,
+    rgba(242, 237, 228, 0.15),
+    rgba(242, 237, 228, 0.15)
+  );
+  background-size: min(36ch, 88%) 1px;
+  background-repeat: no-repeat;
+  background-position: left bottom;
+}
+
+/* Fixed media well — identical size on every process step */
+.process-media {
+  --process-media-size: min(100%, clamp(340px, 46vw, 580px));
+  width: var(--process-media-size);
+}
+
+.process-media-frame {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+}
+
+/* Desktop shuttle stage */
+.process-stage {
+  position: relative;
+  flex: 1 1 0%;
+  min-height: 0;
+  width: 100%;
+}
+
+.process-stage-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 3vw, 3rem);
+  align-items: start;
+  height: 100%;
+  padding-top: clamp(1rem, 3vh, 2.25rem);
+}
+
+.process-slot {
+  position: relative;
+  min-width: 0;
+  min-height: clamp(340px, 46vw, 520px);
+}
+
+.process-copy-layer {
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  max-width: 48ch;
+}
+
+.process-slot[data-process-slot="right"] .process-copy-layer {
+  inset: 0 0 auto auto;
+  margin-left: auto;
+}
+
+/* Overlay grid mirrors text columns — shuttle starts in column 2 */
+.process-shuttle-track {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(1.5rem, 3vw, 3rem);
+  align-items: start;
+  padding-top: clamp(1rem, 3vh, 2.25rem);
+  pointer-events: none;
+  z-index: 30;
+}
+
+.process-shuttle {
+  grid-column: 2;
+  justify-self: center;
+  width: min(100%, clamp(340px, 46vw, 520px));
+  aspect-ratio: 1 / 1;
+  position: relative;
+  will-change: transform;
+}
+
+.process-shuttle-layer {
+  position: absolute;
+  inset: 0;
+}
+
+.process-shuttle .process-media {
+  --process-media-size: 100%;
+  width: 100%;
+  margin: 0;
+}
+
+.process-shuttle .process-media-frame {
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+}
+
+/* MUST stay byte-identical to the gsap.matchMedia() query in useProcessPin */
 @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
-  .process-pin {
+  .process-pin--desktop {
+    display: flex;
     height: 100vh;
     height: 100svh;
     overflow: hidden;
     padding-bottom: 0;
   }
 
-  .process-track {
-    flex-direction: row;
-    flex: 1 1 0%;
-    min-height: 0;
-  }
-
-  .process-panel {
-    height: 100%;
-    padding-block: clamp(0.75rem, 2vh, 1.75rem);
-  }
-
-  .process-track > .process-panel + .process-panel {
-    border-top: 0;
+  .process-stack {
+    display: none;
   }
 }

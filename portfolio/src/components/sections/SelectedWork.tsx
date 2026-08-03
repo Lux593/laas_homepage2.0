@@ -44,7 +44,7 @@ export default function SelectedWork() {
                 start="top 95%"
                 className="font-display text-[clamp(1.9rem,4vw,3.5rem)] font-bold leading-[0.95] tracking-tighter text-[#0a0a0a]"
               >
-                MEINE PROJEKTE
+                PROJEKTE
               </TextReveal>
             </div>
 
@@ -54,9 +54,11 @@ export default function SelectedWork() {
             >
               <span
                 ref={counterRef}
-                className="font-display text-[clamp(1.5rem,2.4vw,2.25rem)] font-bold leading-none tracking-tighter tabular-nums text-[#0a0a0a]"
+                className="pin-counter inline-block h-[1em] overflow-hidden font-display text-[clamp(1.5rem,2.4vw,2.25rem)] font-bold leading-none tracking-tighter tabular-nums text-[#0a0a0a]"
               >
-                01
+                <span data-counter-digit className="block h-[1em]">
+                  01
+                </span>
               </span>
               <span className="font-mono text-caption tracking-[0.2em] text-[#6a6a6a]">
                 / {TOTAL}

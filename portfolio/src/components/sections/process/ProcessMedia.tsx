@@ -20,6 +20,7 @@ export default function ProcessMedia({
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hasLoop = Boolean(step.video && step.poster);
+  const hasPoster = Boolean(step.poster);
 
   useEffect(() => {
     const video = videoRef.current;
@@ -48,37 +49,40 @@ export default function ProcessMedia({
     return () => io.disconnect();
   }, [hasLoop, step.video]);
 
-  if (!hasLoop || !step.poster) {
+  if (!hasPoster || !step.poster) {
     return <ProcessCycle step={step} index={index} total={total} />;
   }
 
   return (
-    <figure className="relative mx-auto w-full max-w-[min(100%,340px)]">
-      <div className="relative aspect-square overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03]">
-        <video
-          ref={videoRef}
-          className="absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
-          poster={step.poster}
-          muted
-          loop
-          playsInline
-          preload="metadata"
-          aria-label={`${step.subtitle}: kurze Comic-Animation`}
-        >
-          <source src={step.video} type="video/mp4" />
-        </video>
+    <figure className="process-media relative mx-auto w-full">
+      <div className="process-media-frame relative overflow-hidden">
+        {hasLoop ? (
+          <video
+            ref={videoRef}
+            className="absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
+            poster={step.poster}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            aria-label={`${step.subtitle}: kurze Comic-Animation`}
+          >
+            <source src={step.video} type="video/mp4" />
+          </video>
+        ) : null}
         <Image
           src={step.poster}
           alt=""
           fill
-          sizes="340px"
-          className="object-cover motion-safe:hidden"
+          sizes="580px"
+          className={
+            hasLoop
+              ? "object-cover motion-safe:hidden"
+              : "object-cover"
+          }
           aria-hidden
         />
       </div>
-      <figcaption className="mt-6 text-center font-mono text-caption uppercase tracking-[0.2em] text-text-muted">
-        {step.subtitle}
-      </figcaption>
     </figure>
   );
 }

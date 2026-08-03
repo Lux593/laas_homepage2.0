@@ -15,6 +15,20 @@ export const SITE_CONFIG = {
 export const MANIFESTO_TEXT =
   "Ich verstehe dein Problem und löse es mit Code. Kurze Wege und ehrliche Kommunikation. Ich baue dir, was du brauchst – ohne bla bla.";
 
+export interface AboutFact {
+  label: string;
+  value: string;
+  href?: string;
+}
+
+/** Faktenzeile unter dem Manifest-Satz in „Über mich". */
+export const ABOUT_FACTS: AboutFact[] = [
+  { label: "Rolle", value: "Fullstack Developer" },
+  { label: "Fokus", value: "Web-Apps & KI-Integration" },
+  { label: "Stack", value: "Next.js · TypeScript · Supabase" },
+  { label: "Erreichbar", value: SITE_CONFIG.email, href: `mailto:${SITE_CONFIG.email}` },
+];
+
 export interface ProjectFeature {
   title: string;
   description: string;
@@ -210,6 +224,8 @@ export const PROCESS_STEPS: ProcessStep[] = [
     subtitle: "Gemeinsam den Weg festlegen",
     description:
       "Wir klären Ziel, Umfang und Prioritäten. Du weißt danach, was gebaut wird, warum, und in welcher Reihenfolge.",
+    video: "/process/step-02-plan.mp4",
+    poster: "/process/step-02-plan.png",
     points: [
       {
         title: "Scope schärfen",
@@ -231,6 +247,8 @@ export const PROCESS_STEPS: ProcessStep[] = [
     subtitle: "Bauen, vernetzen, live nehmen",
     description:
       "Ich baue die maßgeschneiderte Lösung: Automatisierungen, Apps und Interfaces, die sich in deinen Alltag einfügen.",
+    video: "/process/step-03-build.mp4",
+    poster: "/process/step-03-build.png",
     points: [
       {
         title: "Automatisieren",
@@ -252,6 +270,8 @@ export const PROCESS_STEPS: ProcessStep[] = [
     subtitle: "Der Loop geht weiter",
     description:
       "Neue Idee, neues Problem, nächster Hebel. Was läuft, wird verbessert. Was fehlt, wird als Nächstes gebaut.",
+    video: "/process/step-04-loop.mp4",
+    poster: "/process/step-04-loop.png",
     points: [
       {
         title: "Feedback nutzen",

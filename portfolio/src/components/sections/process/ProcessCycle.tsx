@@ -9,7 +9,6 @@ const LABELS = ["Idee", "Plan", "Build", "Loop"] as const;
  * contrast and weight, not by glow or decorative chrome.
  */
 export default function ProcessCycle({
-  step,
   index,
   total,
 }: {
@@ -17,7 +16,7 @@ export default function ProcessCycle({
   index: number;
   total: number;
 }) {
-  const size = 340;
+  const size = 480;
   const cx = size / 2;
   const cy = size / 2;
   const r = 118;
@@ -35,10 +34,8 @@ export default function ProcessCycle({
   });
 
   return (
-    <div
-      className="relative mx-auto aspect-square w-full max-w-[min(100%,340px)]"
-      aria-hidden
-    >
+    <div className="process-media relative mx-auto" aria-hidden>
+      <div className="process-media-frame relative">
       <svg
         viewBox={`0 0 ${size} ${size}`}
         className="h-full w-full"
@@ -142,10 +139,7 @@ export default function ProcessCycle({
           );
         })}
       </svg>
-
-      <p className="mt-6 text-center font-mono text-caption uppercase tracking-[0.2em] text-text-muted">
-        {step.subtitle}
-      </p>
+      </div>
     </div>
   );
 }

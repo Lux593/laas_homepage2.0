@@ -1,11 +1,10 @@
 import Navigation from "@/components/ui/Navigation";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import Hero from "@/components/sections/Hero";
-import Manifesto from "@/components/sections/Manifesto";
+import About from "@/components/sections/About";
 import SelectedWork from "@/components/sections/SelectedWork";
 import Process from "@/components/sections/Process";
 import GiganticCTA from "@/components/sections/GiganticCTA";
-import SectionDivider from "@/components/ui/SectionDivider";
 
 export default function Home() {
   return (
@@ -28,11 +27,10 @@ export default function Home() {
 
         <Process />
 
-        <SectionDivider />
-
-        <Manifesto />
-
-        <SectionDivider />
+        {/* Keine Divider um „Über mich": die Section ist ein Cream-Panel und
+            besitzt beide Kanten selbst — eine Haarlinie davor oder dahinter
+            wäre eine zweite Trennung an derselben Stelle. */}
+        <About />
 
         <GiganticCTA />
       </div>

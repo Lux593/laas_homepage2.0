@@ -1,0 +1,246 @@
+/* Über mich — die Schreibtisch-Skizze ist die Establishing-Shot der Section.
+   Auf Desktop fährt die Kamera beim Scrollen in den Monitor, bis dessen
+   Bildschirmfläche exakt die Cream-Fläche IST, auf der die Copy steht.
+   Unter 768px und bei prefers-reduced-motion steht alles gestapelt und statisch. */
+
+.about-track {
+  position: relative;
+}
+
+.about-stage {
+  position: relative;
+}
+
+.about-scene {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* gestapelt trägt der Header darüber den Abstand nach oben */
+  padding-top: clamp(1.5rem, 4vh, 2.5rem);
+}
+
+/* aspect-ratio hält die Bühnengeometrie schon vor dem Bildladen stabil — sonst
+   misst ScrollTrigger auf einer 0-hohen Box und der Zoom sitzt beim ersten
+   Refresh daneben. */
+.about-art {
+  --art-ratio: 1.884; /* 1072 × 569 */
+  /* Lage der Glühbirne in der Skizze, in % der Bildbox. Alle Lichtebenen
+     hängen daran — nur diese zwei Werte anfassen, wenn die Lampe umzieht. */
+  --lamp-x: 83.3%;
+  --lamp-y: 39.5%;
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--art-ratio);
+  min-width: 0;
+}
+
+/* Das Licht liegt UNTER dem <img>: die Skizze ist freigestellt, also scheint
+   das Licht durch das Papier und der Bleistiftstrich bleibt scharf darüber
+   stehen. Läge es darüber, würde es die Zeichnung auswaschen. */
+.about-light {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  animation: about-lamp 5s ease-in-out infinite;
+}
+
+.about-light > span {
+  position: absolute;
+  display: block;
+}
+
+/* Lichtkegel: Trapez von der Birne schräg nach unten-links auf die Platte.
+   ACHTUNG — die harten Kanten sind gewollt. Der grafische, geschnittene Kegel
+   ist der bewusste Stilbruch gegen die weiche Bleistiftskizze und der Grund,
+   warum die Szene nicht wie eine Standard-Illustration wirkt. Nicht in einen
+   weichen Radialverlauf „reparieren"; der 14px-Blur nimmt nur die Treppung der
+   Diagonalen, nicht die Form. */
+.about-light-beam {
+  inset: 0;
+  clip-path: polygon(79.5% 36%, 86.5% 40%, 97% 79%, 47% 93%);
+  background: linear-gradient(
+    197deg,
+    rgba(255, 226, 176, 0.62) 0%,
+    rgba(255, 219, 163, 0.34) 38%,
+    rgba(255, 214, 155, 0) 84%
+  );
+  filter: blur(14px);
+}
+
+/* Lichtpfütze auf der Tischplatte, dort wo der Kegel auftrifft */
+.about-light-pool {
+  left: 68%;
+  top: 82%;
+  width: 52%;
+  height: 20%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 228, 180, 0.5) 0%,
+    rgba(255, 222, 168, 0.22) 45%,
+    rgba(255, 218, 160, 0) 75%
+  );
+}
+
+/* Heißer Kern an der Birne selbst */
+.about-light-bulb {
+  left: var(--lamp-x);
+  top: var(--lamp-y);
+  width: 22%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle at center,
+    rgba(255, 236, 196, 0.85) 0%,
+    rgba(255, 216, 152, 0.42) 26%,
+    rgba(255, 210, 140, 0) 68%
+  );
+}
+
+/* Ohne Abdunkelung gegenüber liest sich das Licht nicht als Licht — auf einer
+   ohnehin hellen Fläche entsteht der Kontrast erst durch die Gegenrichtung. */
+.about-light-shade {
+  inset: 0;
+  background: radial-gradient(
+    115% 95% at var(--lamp-x) var(--lamp-y),
+    rgba(70, 56, 40, 0) 34%,
+    rgba(70, 56, 40, 0.075) 78%,
+    rgba(70, 56, 40, 0.115) 100%
+  );
+}
+
+@keyframes about-lamp {
+  0%,
+  100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-light {
+    animation: none;
+  }
+}
+
+/* desk-scene.png ist freigestellt (RGBA, Papier = transparent), deshalb braucht
+   es hier weder mix-blend-mode noch Helligkeitskorrektur: die Skizze liegt von
+   sich aus auf dem Cream. Die Maske löst nur noch die Dateikante auf — die
+   Tischplatte läuft links und rechts bis an den Rand, und in den unteren Ecken
+   sitzt im Original eine Schattierung, die sonst als Rechteck stehenbliebe. */
+.about-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  -webkit-mask-image:
+    linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 6%, #000 93%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(to bottom, transparent 0, #000 6%, #000 93%, transparent 100%);
+  mask-composite: intersect;
+}
+
+/* Section-Header in derselben Sprache wie „Meine Projekte" und „Prozess":
+   sitzt oben in der Bühne und bleibt über die gesamte Section stehen. */
+.about-header {
+  position: relative;
+  padding-top: clamp(4rem, 8vh, 5.5rem);
+}
+
+/* Das Portrait liegt auf reinem Weiß. multiply legt es genauso ins Papier wie
+   die Skizze — statt eines weißen Kärtchens auf dem Cream steht der Kopf frei,
+   und die Maske lässt den harten Schulter-Beschnitt unten auslaufen.
+   Der Cream muss dafür auf dem Elternelement liegen: gemischt wird gegen das,
+   was im selben Stacking Context unter dem Bild gemalt ist. */
+.about-portrait {
+  mix-blend-mode: multiply;
+  filter: contrast(1.06);
+  -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
+}
+
+/* Die Spalte, in der das Portrait steht. Gestapelt bindet die Breite, auf
+   Desktop die Höhe: dort sitzt die Copy in einer 100svh-Bühne, ein rein in vw
+   bemessenes Bild würde auf flachen Fenstern die Faktenzeile hinausschieben.
+   1.266 = 1206 / 953, das Seitenverhältnis von personal_pic.jpg. */
+.about-figure {
+  width: clamp(12rem, 56vw, 18rem);
+}
+
+@media (min-width: 768px) {
+  .about-figure {
+    width: min(36vw, calc(44svh * 1.266));
+  }
+}
+
+.about-content {
+  position: relative;
+  padding-top: clamp(3rem, 8vh, 5rem);
+  padding-bottom: clamp(4rem, 10vh, 7rem);
+}
+
+/* MUSS byte-identisch zur gsap.matchMedia()-Query in About.tsx bleiben —
+   driften die beiden auseinander, läuft entweder die Zoom-Mathematik ohne
+   Sticky-Bühne oder die Copy bleibt auf opacity: 0 stehen. */
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  /* 340vh = 100vh Bühne + 240vh Scrollweg. Der Zoom verbraucht davon die
+     ersten ~52 % (≈125vh), der Rest ist Lesezeit auf dem fertigen Bildschirm. */
+  .about-track {
+    height: 340vh;
+  }
+
+  .about-stage {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
+  }
+
+  .about-scene {
+    position: absolute;
+    inset: 0;
+    padding-top: 0;
+    will-change: transform;
+  }
+
+  /* Die Skizze nimmt die volle Bühnenbreite. Erst wenn das Bild dabei höher
+     als die Bühne würde, bindet die Höhe — deshalb min() statt max-width:
+     max-* kann ein Bild nur verkleinern, nie auf Bühnengröße hochziehen.
+     Je größer die Skizze steht, desto kleiner der Upscale-Faktor am Zoomende. */
+  .about-art {
+    width: min(100%, calc(100svh * var(--art-ratio)));
+  }
+
+  .about-header {
+    position: absolute;
+    inset: 0 0 auto 0;
+    z-index: 2;
+    padding-top: clamp(4rem, 8vh, 5.5rem);
+    /* rein typografisch, darf nichts abfangen */
+    pointer-events: none;
+  }
+
+  .about-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    /* Trägt die Blende: die Ebene ist deckend cremefarben und wird per
+       clip-path aus der Mitte aufgezogen. Ohne eigenen Grund wäre die
+       wachsende Kugel unsichtbar, weil die Szene darunter durchschiene.
+       GSAP setzt den geschlossenen Startzustand — bleibt JS aus, steht hier
+       der Inhalt sichtbar statt versteckt. */
+    background-color: #f2ede4;
+    /* Der Header ist längst ausgeblendet, wenn die Copy kommt — hier muss nur
+       noch die fixe Navigation freibleiben. */
+    padding-top: clamp(5rem, 10vh, 7rem);
+    padding-bottom: clamp(2rem, 6vh, 4rem);
+  }
+}
