@@ -1,11 +1,13 @@
 /* Process — shuttle wipe on desktop, stacked reading on mobile */
 
+/* max() mit env(): siehe .container-custom in globals.css — ohne Notch
+   identisch zum alten Padding. */
 .process-container {
   max-width: max(1600px, min(1920px, 92vw));
   margin-left: auto;
   margin-right: auto;
-  padding-left: var(--container-padding);
-  padding-right: var(--container-padding);
+  padding-left: max(var(--container-padding), env(safe-area-inset-left));
+  padding-right: max(var(--container-padding), env(safe-area-inset-right));
 }
 
 .process-pin {

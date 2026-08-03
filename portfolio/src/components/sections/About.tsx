@@ -305,11 +305,15 @@ export default function About() {
                     <dt className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-[#5f574e]">
                       {fact.label}
                     </dt>
-                    <dd className="mt-2 font-display text-[clamp(0.95rem,1.15vw,1.15rem)] font-bold leading-snug tracking-tight">
+                    {/* overflow-wrap: anywhere, weil die Mail-Adresse ein
+                        einziges unteilbares Wort ist: in der zweispaltigen
+                        Faktenzeile ist die Spalte auf 320px nur 120px breit,
+                        die 164px Adresse liefen bisher aus dem Bild. */}
+                    <dd className="mt-2 font-display text-[clamp(0.95rem,1.15vw,1.15rem)] font-bold leading-snug tracking-tight [overflow-wrap:anywhere]">
                       {fact.href ? (
                         <a
                           href={fact.href}
-                          className="underline decoration-[rgba(10,10,10,0.25)] decoration-1 underline-offset-4 transition-colors duration-300 hover:decoration-[#0a0a0a]"
+                          className="inline-block py-1 underline decoration-[rgba(10,10,10,0.25)] decoration-1 underline-offset-4 transition-colors duration-300 hover:decoration-[#0a0a0a]"
                         >
                           {fact.value}
                         </a>

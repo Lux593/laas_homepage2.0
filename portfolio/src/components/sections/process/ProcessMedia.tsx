@@ -62,32 +62,36 @@ export default function ProcessMedia({
         data-reveal="media-inner"
         className="process-media-frame relative overflow-hidden"
       >
+        {/* Das Standbild liegt UNTER dem Video und wird nie versteckt: es ist
+            zugleich Platzhalter, bis der Clip da ist, und das ganze Bild bei
+            reduzierter Bewegung. Vorher hing dasselbe PNG zusätzlich am
+            poster-Attribut — und ein poster wird roh geladen, an next/image
+            vorbei: 25 MB unkomprimierte PNGs allein für vier Standbilder. */}
+        <Image
+          src={step.poster}
+          alt=""
+          fill
+          sizes="(max-width: 1023px) 92vw, 580px"
+          className="object-cover"
+          aria-hidden
+        />
         {hasLoop ? (
           <video
             ref={videoRef}
             className="absolute inset-0 h-full w-full object-cover motion-reduce:hidden"
-            poster={step.poster}
             muted
             loop
             playsInline
-            preload="metadata"
+            // "none" statt "metadata": mit metadata zog der Browser alle vier
+            // Clips schon beim Seitenaufruf komplett — auf dem Handy 31 MB,
+            // bevor der Prozess-Block überhaupt in Sicht war. Geladen wird
+            // jetzt erst, wenn der Schritt im Bild steht und play() ruft.
+            preload="none"
             aria-label={`${step.subtitle}: kurze Comic-Animation`}
           >
             <source src={step.video} type="video/mp4" />
           </video>
         ) : null}
-        <Image
-          src={step.poster}
-          alt=""
-          fill
-          sizes="580px"
-          className={
-            hasLoop
-              ? "object-cover motion-safe:hidden"
-              : "object-cover"
-          }
-          aria-hidden
-        />
       </div>
     </figure>
   );

@@ -242,12 +242,16 @@
    Utility Classes
    ============================================ */
 @layer utilities {
+  /* max() mit env(): das Layout hat viewportFit "cover" (siehe layout.tsx), im
+     Querformat schiebt ein Notch die sichere Fläche also um bis zu 44px ein.
+     Ohne Notch lösen die env()-Werte zu 0 auf — dann ist es exakt das alte
+     Padding. Gilt für alle drei Spines, die Fließtext tragen. */
   .container-custom {
     max-width: var(--container-max);
     margin-left: auto;
     margin-right: auto;
-    padding-left: var(--container-padding);
-    padding-right: var(--container-padding);
+    padding-left: max(var(--container-padding), env(safe-area-inset-left));
+    padding-right: max(var(--container-padding), env(safe-area-inset-right));
   }
 
   /* The pinned work spread runs wider than the site's 1440 spine so the device
@@ -263,8 +267,8 @@
     max-width: max(1600px, min(1920px, 92vw));
     margin-left: auto;
     margin-right: auto;
-    padding-left: var(--container-padding);
-    padding-right: var(--container-padding);
+    padding-left: max(var(--container-padding), env(safe-area-inset-left));
+    padding-right: max(var(--container-padding), env(safe-area-inset-right));
   }
 
 

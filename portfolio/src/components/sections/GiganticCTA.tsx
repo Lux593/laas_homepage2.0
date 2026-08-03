@@ -93,7 +93,10 @@ export default function GiganticCTA() {
           transformOrigin: "center center",
         }}
       >
-        <div className="relative z-10 text-center container-custom py-section flex flex-col items-center">
+        {/* py-section (min 8rem) sprengte zusammen mit der Fußzeile kurze
+            Handy-Displays; der eigene clamp lässt erst unterhalb von ~850px
+            Fensterhöhe nach und ist auf dem Desktop identisch zu vorher. */}
+        <div className="relative z-10 text-center container-custom py-[clamp(5rem,15vh,16rem)] flex flex-col items-center">
           <TextReveal
             as="h2"
             variant="words"
@@ -103,10 +106,12 @@ export default function GiganticCTA() {
             Lust auf ein Projekt ?
           </TextReveal>
 
+          {/* nowrap erst ab md: auf 320px stand der Satz sonst 273px breit in
+              einer 272px-Spalte und wurde am Rand abgeschnitten. */}
           <TextReveal
             as="p"
             variant="words"
-            className="text-[clamp(1.2rem,2.2vw,2rem)] font-body mb-12 text-[#3a3a3a] whitespace-nowrap"
+            className="text-[clamp(1.2rem,2.2vw,2rem)] font-body mb-12 text-[#3a3a3a] md:whitespace-nowrap"
             start="top 90%"
           >
             schreib mir - dann starten wir.
@@ -128,7 +133,13 @@ export default function GiganticCTA() {
             </a>
           </MagneticButton>
 
-          <div className="mt-16 flex items-center gap-8">
+          {/* Umbruchfähig und mit engerem Abstand: die drei Namen plus 2×2rem
+              Lücke ergaben eine Mindestbreite von 330px, an der die ganze
+              Spalte hing — auf 320px lief „instagram" aus dem Bild.
+              pointer-coarse:min-h-11 macht aus den 18px hohen Zeilen ein
+              44px-Tippziel — an der Eingabeart festgemacht, nicht an der
+              Breite, sonst hätte das Handy im Querformat wieder Mausmaße. */}
+          <div className="mt-14 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 md:mt-16 md:gap-x-8">
             {Object.entries(SITE_CONFIG.socials).map(([platform, url]) => (
               <a
                 key={platform}
@@ -136,7 +147,7 @@ export default function GiganticCTA() {
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`${platform}-Profil besuchen`}
-                className="flex items-center gap-2 text-caption font-mono uppercase tracking-widest transition-colors duration-300"
+                className="flex items-center gap-2 text-caption font-mono uppercase tracking-widest transition-colors duration-300 pointer-coarse:min-h-11"
                 style={{ color: "#6a6a6a" }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#0a0a0a")}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "#6a6a6a")}
@@ -162,14 +173,31 @@ export default function GiganticCTA() {
           </div>
         </div>
 
-        <div className="absolute bottom-8 left-0 right-0 px-[var(--container-padding)] max-w-[var(--container-max)] mx-auto flex flex-col items-center gap-3 text-center md:flex-row md:justify-between md:text-left">
+        {/* Gestapelt läuft die Fußzeile im Fluss mit: absolut positioniert lag
+            sie auf kurzen Displays über der CTA-Copy (auf 320×568 rund 80px
+            Überlappung). Ab md sitzt sie wieder unten in der Karte.
+            env(safe-area-inset-bottom) ist bei viewportFit "cover" nötig,
+            damit der Home-Indicator die Links nicht verdeckt — ohne Notch
+            löst es zu 0 auf und ändert nichts. */}
+        <div className="relative mt-14 w-full px-[var(--container-padding)] pb-[env(safe-area-inset-bottom)] max-w-[var(--container-max)] mx-auto flex flex-col items-center gap-3 text-center md:absolute md:bottom-8 md:left-0 md:right-0 md:mt-0 md:pb-0 md:flex-row md:justify-between md:text-left">
           <p className="text-caption font-mono" style={{ color: "#9a9a9a" }}>
             © {new Date().getFullYear()} {SITE_CONFIG.name}
           </p>
-          <div className="flex items-center gap-4 md:gap-8">
-            <a href="/agb" className="text-caption font-mono transition-colors duration-300" style={{ color: "#9a9a9a" }}>AGB</a>
-            <a href="/datenschutz" className="text-caption font-mono transition-colors duration-300" style={{ color: "#9a9a9a" }}>Datenschutz</a>
-            <a href="/impressum" className="text-caption font-mono transition-colors duration-300" style={{ color: "#9a9a9a" }}>Impressum</a>
+          <div className="flex items-center gap-5 md:gap-8">
+            {[
+              { href: "/agb", label: "AGB" },
+              { href: "/datenschutz", label: "Datenschutz" },
+              { href: "/impressum", label: "Impressum" },
+            ].map((link) => (
+              <a
+                key={link.href}
+                href={link.href}
+                className="inline-flex items-center text-caption font-mono transition-colors duration-300 pointer-coarse:min-h-11"
+                style={{ color: "#9a9a9a" }}
+              >
+                {link.label}
+              </a>
+            ))}
           </div>
         </div>
       </div>

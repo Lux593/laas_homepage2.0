@@ -28,7 +28,10 @@ export default function Navigation() {
         // The overlay is dark and sits *below* the nav, so force dark chrome while
         // the menu is open — otherwise the logo goes dark-on-dark over cream sections.
         data-ui-theme={isMenuOpen ? "dark" : undefined}
-        className="fixed top-0 left-0 right-0 z-[var(--z-nav)] py-5 px-[var(--container-padding)] opacity-0"
+        // Safe-Area: das Layout läuft mit viewportFit "cover", die feste Leiste
+        // säße im Querformat sonst unter dem Notch. Ohne Notch sind die
+        // env()-Werte 0, dann bleibt es bei py-5 / --container-padding.
+        className="fixed top-0 left-0 right-0 z-[var(--z-nav)] pt-[max(1.25rem,env(safe-area-inset-top))] pb-5 pl-[max(var(--container-padding),env(safe-area-inset-left))] pr-[max(var(--container-padding),env(safe-area-inset-right))] opacity-0"
       >
         <div className="mx-auto max-w-[var(--container-max)] flex items-center justify-between">
           {/* Logo */}
