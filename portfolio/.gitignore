@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# vom Build erzeugter Versions-Stempel
+/public/build.txt
