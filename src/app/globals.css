@@ -1,0 +1,408 @@
+@import "tailwindcss";
+
+/* ============================================
+   Tailwind CSS v4 Theme Configuration
+   ============================================ */
+@theme inline {
+  /* Colors - Dark Cinematic Bronze */
+  --color-bg-primary: #050505;
+  --color-bg-secondary: #0e0e0e;
+  --color-bg-elevated: #161616;
+  --color-text-primary: #fcfcfc;
+  --color-text-secondary: #a8a098;
+  --color-text-muted: #7a7268;
+  --color-accent-primary: #C49F7B;
+  --color-accent-secondary: #DFBE9F;
+  --color-accent-warm: #A07850;
+
+  /* Font Families */
+  --font-display: var(--font-clash), system-ui, sans-serif;
+  --font-body: var(--font-satoshi), system-ui, sans-serif;
+  --font-serif: var(--font-instrument), Georgia, serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+  /* Fluid Typography */
+  --text-display-xl: clamp(4rem, 12vw, 12rem);
+  --text-display-lg: clamp(3rem, 8vw, 8rem);
+  --text-display-md: clamp(2rem, 5vw, 5rem);
+  --text-display-sm: clamp(1.5rem, 3vw, 3rem);
+  --text-body-lg: clamp(1.125rem, 1.5vw, 1.5rem);
+  --text-body-md: clamp(1rem, 1.2vw, 1.25rem);
+  --text-body-sm: clamp(0.875rem, 1vw, 1rem);
+  --text-caption: clamp(0.75rem, 0.8vw, 0.875rem);
+
+  /* Spacing */
+  --spacing-section: clamp(8rem, 15vh, 16rem);
+  --spacing-section-sm: clamp(4rem, 8vh, 8rem);
+
+  /* Border Radius */
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+  --radius-4xl: 2rem;
+
+  /* Easing */
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out-quart: cubic-bezier(0.76, 0, 0.24, 1);
+
+  /* Animations */
+  --animate-grain: grain 8s steps(10) infinite;
+  --animate-glow-pulse: glow-pulse 4s ease-in-out infinite;
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-scroll-down: scrollDown 2s ease-in-out infinite;
+
+  /* Glass tokens */
+  --color-glass-border: rgba(255, 255, 255, 0.10);
+  --color-glass-bg: rgba(255, 255, 255, 0.04);
+}
+
+@keyframes grain {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5%, -10%); }
+  20% { transform: translate(-15%, 5%); }
+  30% { transform: translate(7%, -25%); }
+  40% { transform: translate(-5%, 25%); }
+  50% { transform: translate(-15%, 10%); }
+  60% { transform: translate(15%, 0%); }
+  70% { transform: translate(0%, 15%); }
+  80% { transform: translate(3%, 35%); }
+  90% { transform: translate(-10%, 10%); }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes scrollDown {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(300%); }
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+/* 3D Workflow pipeline animations */
+@keyframes flowPulse {
+  0%, 15% { border-color: rgba(223,190,159,0.08); }
+  25%, 40% { border-color: rgba(223,190,159,0.35); transform: translateZ(var(--tw-translate-z, 0px)) scale(1.05); }
+  55%, 100% { border-color: rgba(223,190,159,0.08); transform: translateZ(var(--tw-translate-z, 0px)) scale(1); }
+}
+@keyframes flowGlow {
+  0%, 15% { opacity: 0; }
+  25%, 40% { opacity: 1; }
+  55%, 100% { opacity: 0; }
+}
+@keyframes flowText {
+  0%, 15% { color: rgba(223,190,159,0.25); }
+  25%, 40% { color: rgba(223,190,159,0.9); }
+  55%, 100% { color: rgba(223,190,159,0.25); }
+}
+@keyframes flowParticle {
+  0%, 10% { left: 0%; opacity: 0; }
+  15% { opacity: 1; }
+  50% { left: 100%; opacity: 1; }
+  55%, 100% { left: 100%; opacity: 0; }
+}
+
+/* ============================================
+   CSS Custom Properties (Design Tokens)
+   ============================================ */
+:root {
+  --section-padding: clamp(8rem, 15vh, 16rem);
+  --container-max: 1440px;
+  --container-padding: clamp(1.5rem, 4vw, 4rem);
+
+  --duration-fast: 300ms;
+  --duration-medium: 600ms;
+  --duration-slow: 1000ms;
+  --duration-ultra: 1500ms;
+
+  --z-behind: -1;
+  --z-base: 0;
+  --z-above: 10;
+  --z-nav: 100;
+  --z-overlay: 200;
+  --z-cursor: 9999;
+
+  /* Fixed chrome (nav, progress bar, focus ring) — flipped by useLightSection */
+  --ui-fg: #fcfcfc;
+  --ui-logo-invert: 1;
+  --ui-progress-from: #ffffff;
+  --ui-progress-to: #a0a0a0;
+  --ui-focus: var(--color-accent-primary);
+}
+
+[data-ui-theme="dark"] {
+  --ui-fg: #fcfcfc;
+  --ui-logo-invert: 1;
+  --ui-progress-from: #ffffff;
+  --ui-progress-to: #a0a0a0;
+  --ui-focus: var(--color-accent-primary);
+}
+
+[data-ui-theme="light"] {
+  --ui-fg: #0a0a0a;
+  --ui-logo-invert: 0;
+  --ui-progress-from: #0a0a0a;
+  --ui-progress-to: #6a6a6a;
+  --ui-focus: #0a0a0a;
+}
+
+/* ============================================
+   Base Reset & Overrides
+   ============================================ */
+@layer base {
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-text-muted) transparent;
+  }
+
+  html {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    scroll-behavior: auto;
+  }
+
+  body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    background-color: var(--color-bg-primary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ui-focus);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  ::selection {
+    background-color: #C49F7B;
+    color: #050505;
+  }
+
+  ::-webkit-scrollbar {
+    width: 4px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-text-muted);
+    border-radius: 2px;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img, video, canvas {
+    display: block;
+    max-width: 100%;
+  }
+
+  button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+  }
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+@layer utilities {
+  .container-custom {
+    max-width: var(--container-max);
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--container-padding);
+    padding-right: var(--container-padding);
+  }
+
+  /* The pinned work spread runs wider than the site's 1440 spine so the device
+     previews are readable at a glance. Header, hairline and panels all use it,
+     so the section stays aligned with itself.
+
+     Above ~1900px the 1600 cap left ~200px dead on each side, so the spread
+     tracks the viewport up to 1920. max() keeps 1600 as a floor so the
+     viewports this section was measured against (1440, 1600) are untouched;
+     the 1920 stays a hard cap because past it the text column would outrun
+     its measure and the eye would travel too far between copy and device. */
+  .work-container {
+    max-width: max(1600px, min(1920px, 92vw));
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: var(--container-padding);
+    padding-right: var(--container-padding);
+  }
+
+
+  .gpu {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+  }
+
+  .perspective-2000 {
+    perspective: 2000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .text-gradient-accent {
+    background: linear-gradient(135deg, #DFBE9F, #C49F7B);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .glass {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.10);
+  }
+
+  .glass-hover {
+    background: rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+  }
+
+  .py-section {
+    padding-top: var(--spacing-section);
+    padding-bottom: var(--spacing-section);
+  }
+
+  .pt-section {
+    padding-top: var(--spacing-section);
+  }
+}
+
+/* ============================================
+   Selected Work — stacked by default, pinned
+   horizontal track on wide + motion-safe
+   ============================================ */
+@layer components {
+  .work-pin {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: clamp(4rem, 10vh, 8rem);
+  }
+
+  .work-track {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .work-panel {
+    width: 100%;
+    flex-shrink: 0;
+    padding-block: clamp(3rem, 8vh, 6rem);
+    /* Stacked, the device frame is width-driven and this is only an upper bound. */
+    --frame-h: clamp(240px, 60vh, 560px);
+  }
+
+  .work-track > .work-panel + .work-panel {
+    border-top: 1px solid rgba(10, 10, 10, 0.12);
+  }
+
+  /* MUST stay byte-identical to the gsap.matchMedia() query in
+     src/hooks/useHorizontalPin.ts — if the two drift apart you get either
+     a permanently off-screen panel or a 200vw horizontal overflow. */
+  @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+    .work-pin {
+      height: 100vh;
+      height: 100svh;
+      overflow: hidden;
+      padding-bottom: 0;
+    }
+
+    .work-track {
+      flex-direction: row;
+      flex: 1 1 0%;
+      min-height: 0;
+    }
+
+    .work-panel {
+      height: 100%;
+      padding-block: clamp(0.75rem, 2vh, 1.75rem);
+      /* Pinned, everything shares one 100svh budget. This is what is left for the
+         device frame after the section header, hairline, panel padding and the
+         title band. Widen any of those and re-measure.
+
+         The reserve dropped from 250px to 180px when the thumbnail strip was
+         removed — that strip plus its gap was 66-84px of the budget, and it now
+         goes to the device instead. Verified clear from 800 to 1400px tall;
+         170 is already too tight (clips by ~3px around 1044).
+
+         The 780 ceiling only binds above ~1230px tall, so shorter viewports
+         land on the calc term. */
+      --frame-h: clamp(240px, calc(78vh - 180px), 780px);
+    }
+
+    .work-track > .work-panel + .work-panel {
+      border-top: 0;
+    }
+  }
+}
+
+/* ============================================
+   Noise / Grain Overlay
+   ============================================ */
+.grain-overlay {
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  z-index: var(--z-overlay);
+  pointer-events: none;
+  opacity: 0.035;
+  animation: grain 8s steps(10) infinite;
+}
+
+/* Grain reads dirtier on cream than on near-black — pull it back on light sections */
+[data-ui-theme="light"] .grain-overlay {
+  opacity: 0.02;
+}
+
+/* Nav logo is a white PNG; invert flips with the chrome theme */
+.nav-logo {
+  filter: brightness(0) invert(var(--ui-logo-invert));
+  transition: filter 350ms var(--ease-out-quint);
+}

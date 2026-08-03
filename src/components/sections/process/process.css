@@ -1,0 +1,56 @@
+/* Process — same pin/track language as Selected Work, dark surface */
+
+.process-container {
+  max-width: max(1600px, min(1920px, 92vw));
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+}
+
+.process-pin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: clamp(4rem, 10vh, 8rem);
+}
+
+.process-track {
+  display: flex;
+  flex-direction: column;
+}
+
+.process-panel {
+  width: 100%;
+  flex-shrink: 0;
+  padding-block: clamp(3rem, 8vh, 6rem);
+}
+
+.process-track > .process-panel + .process-panel {
+  border-top: 1px solid rgba(252, 252, 252, 0.1);
+}
+
+/* MUST stay byte-identical to the gsap.matchMedia() query in useHorizontalPin */
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  .process-pin {
+    height: 100vh;
+    height: 100svh;
+    overflow: hidden;
+    padding-bottom: 0;
+  }
+
+  .process-track {
+    flex-direction: row;
+    flex: 1 1 0%;
+    min-height: 0;
+  }
+
+  .process-panel {
+    height: 100%;
+    padding-block: clamp(0.75rem, 2vh, 1.75rem);
+  }
+
+  .process-track > .process-panel + .process-panel {
+    border-top: 0;
+  }
+}
