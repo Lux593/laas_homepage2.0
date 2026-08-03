@@ -2,7 +2,7 @@
 
 import { Suspense, useRef, useEffect, useState } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Float, Environment, Preload } from "@react-three/drei";
+import { Float, Environment, Lightformer, Preload } from "@react-three/drei";
 import * as THREE from "three";
 import { useIsMobile, usePrefersReducedMotion } from "@/hooks/useMediaQuery";
 import { detectGPUTier } from "@/lib/gpu-detect";
@@ -125,7 +125,29 @@ export default function Scene() {
 
           <ElegantRibbon />
 
-          <Environment preset="night" />
+          {/* Selbe Falle wie in HeroCanvas: preset="night" holt eine HDR von
+              raw.githack.com. Umgebung stattdessen lokal im Scene-Graph. */}
+          <Environment resolution={256} frames={1}>
+            <color attach="background" args={["#050505"]} />
+            <Lightformer
+              intensity={2}
+              color="#C49F7B"
+              position={[0, 4, -9]}
+              scale={[12, 12, 1]}
+            />
+            <Lightformer
+              intensity={0.7}
+              color="#DFBE9F"
+              position={[-6, 1, -6]}
+              scale={[6, 6, 1]}
+            />
+            <Lightformer
+              intensity={0.35}
+              color="#ffffff"
+              position={[6, -3, -4]}
+              scale={[4, 4, 1]}
+            />
+          </Environment>
           <Preload all />
         </Suspense>
       </Canvas>

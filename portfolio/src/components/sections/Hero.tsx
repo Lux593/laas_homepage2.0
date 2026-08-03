@@ -10,6 +10,8 @@ import { heroScroll } from "@/lib/heroScroll";
 
 gsap.registerPlugin(ScrollTrigger);
 
+import CanvasErrorBoundary from "@/components/canvas/CanvasErrorBoundary";
+
 // Lazy-load the 3D canvas to avoid SSR issues
 const HeroCanvas = dynamic(() => import("@/components/canvas/HeroCanvas"), {
   ssr: false,
@@ -241,7 +243,13 @@ export default function Hero() {
           ref={canvasLayerRef}
           className="absolute inset-0 z-0 opacity-80 mix-blend-screen pointer-events-none will-change-[transform,opacity]"
         >
-          <HeroCanvas active={heroActive} />
+          {/* Das 3D-Canvas ist Deko. Ohne diese Boundary steigt jeder Fehler
+              daraus bis zum React-Root und nimmt die ganze Seite mit — genau
+              so wurde aus einer fehlgeschlagenen Umgebungs-Textur eine leere
+              Website. Scheitert das Canvas, fehlt jetzt nur das Objekt. */}
+          <CanvasErrorBoundary fallback={null}>
+            <HeroCanvas active={heroActive} />
+          </CanvasErrorBoundary>
         </div>
 
         {/* Main Content */}

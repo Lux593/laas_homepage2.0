@@ -2,7 +2,7 @@
 
 import { Suspense, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Float, Environment, Preload } from "@react-three/drei";
+import { Float, Environment, Lightformer, Preload } from "@react-three/drei";
 import * as THREE from "three";
 import { useIsMobile, usePrefersReducedMotion } from "@/hooks/useMediaQuery";
 import { heroScroll } from "@/lib/heroScroll";
@@ -102,7 +102,34 @@ export default function HeroCanvas({ active = true }: { active?: boolean }) {
 
         <ElegantRibbon />
 
-        <Environment preset="night" />
+        {/* KEIN preset="night". Das Preset lädt zur Laufzeit
+            dikhololo_night_1k.hdr von raw.githack.com — einem fremden Host.
+            Antwortet der nicht, wirft drei innerhalb des Suspense, und ein
+            Suspense fängt nur Ladezustände, keine Fehler: der Fehler steigt
+            bis zum React-Root und reißt die komplette Seite weg (<main> war
+            danach nicht mehr im DOM). Die Umgebung wird deshalb hier im
+            Scene-Graph gebaut — gleiche Optik, kein Netzwerk-Abruf. */}
+        <Environment resolution={256} frames={1}>
+          <color attach="background" args={["#050505"]} />
+          <Lightformer
+            intensity={2}
+            color="#C49F7B"
+            position={[0, 4, -9]}
+            scale={[12, 12, 1]}
+          />
+          <Lightformer
+            intensity={0.7}
+            color="#DFBE9F"
+            position={[-6, 1, -6]}
+            scale={[6, 6, 1]}
+          />
+          <Lightformer
+            intensity={0.35}
+            color="#ffffff"
+            position={[6, -3, -4]}
+            scale={[4, 4, 1]}
+          />
+        </Environment>
         <Preload all />
       </Suspense>
     </Canvas>
