@@ -6,8 +6,19 @@ import type { Project } from "@/lib/constants";
 /**
  * One project, laid out as a centered spread rather than a card. Structure comes
  * from the grid and the horizontal hairlines, not from a container box.
+ *
+ * The data-reveal hooks are for the stacked layout only (useStackReveal, below
+ * 1024px). Pinned, the panels slide in horizontally and nothing reads them.
  */
-export default function ProjectPanel({ project }: { project: Project }) {
+export default function ProjectPanel({
+  project,
+  index,
+  total,
+}: {
+  project: Project;
+  index: number;
+  total: number;
+}) {
   return (
     // Top-aligned (not centered): iPhone vs iPad frames have different total
     // heights, and justify-center would push the grid pair to different Y.
@@ -20,7 +31,25 @@ export default function ProjectPanel({ project }: { project: Project }) {
         <div className="mt-[clamp(1.75rem,4vh,3rem)]">
           <div className="grid w-full max-w-full grid-cols-1 items-center gap-y-10 lg:grid-cols-[minmax(0,48ch)_1fr] lg:gap-x-[clamp(3rem,5vw,5rem)] lg:gap-y-0">
             <div className="min-w-0 max-w-[48ch]">
-              <header>
+              {/* Stacked, the header counter is out of sight by the time a panel
+                  is on screen — so the position belongs to the panel itself.
+                  Pinned, the counter in the section header already says it. */}
+              <div
+                data-reveal="copy"
+                className="mb-7 flex items-center gap-4 lg:hidden"
+                aria-hidden
+              >
+                <span className="shrink-0 font-mono text-caption tabular-nums tracking-[0.2em] text-[#6a6a6a]">
+                  {String(index + 1).padStart(2, "0")} /{" "}
+                  {String(total).padStart(2, "0")}
+                </span>
+                <span
+                  data-reveal="rule"
+                  className="h-px flex-1 bg-[#0a0a0a]/15"
+                />
+              </div>
+
+              <header data-reveal="copy">
                 <h3 className="font-display text-[clamp(1.9rem,3.1vw,3.1rem)] font-bold leading-[0.98] tracking-tighter text-[#0a0a0a] uppercase">
                   {project.title}
                 </h3>
@@ -30,7 +59,10 @@ export default function ProjectPanel({ project }: { project: Project }) {
                 </p>
               </header>
 
-              <p className="mt-6 max-w-[46ch] font-body text-body-sm leading-relaxed text-[#3a3a3a]">
+              <p
+                data-reveal="copy"
+                className="mt-6 max-w-[46ch] font-body text-body-sm leading-relaxed text-[#3a3a3a]"
+              >
                 {project.description}
               </p>
 
@@ -38,6 +70,7 @@ export default function ProjectPanel({ project }: { project: Project }) {
                 {project.features.map((feature, i) => (
                   <li
                     key={feature.title}
+                    data-reveal="copy"
                     className="grid grid-cols-[2.25rem_1fr] items-baseline gap-x-3 border-b border-[#0a0a0a]/12 py-2.5"
                   >
                     <span className="font-mono text-caption tabular-nums text-[#6a6a6a]">
@@ -61,7 +94,7 @@ export default function ProjectPanel({ project }: { project: Project }) {
 
             {/* No min-w-0 here: it lets the auto column collapse and max-w-full
                 then squeezes the device frame to 0 width. */}
-            <div className="relative shrink-0 justify-self-center">
+            <div data-reveal="media" className="relative shrink-0 justify-self-center">
               <FramerMoveableThumbnails
                 items={project.gallery}
                 frame={project.device}

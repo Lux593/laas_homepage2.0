@@ -6,6 +6,7 @@ import ProcessCopy from "@/components/sections/process/ProcessCopy";
 import ProcessMedia from "@/components/sections/process/ProcessMedia";
 import ProcessPanel from "@/components/sections/process/ProcessPanel";
 import { useProcessPin } from "@/hooks/useProcessPin";
+import { useStackReveal } from "@/hooks/useStackReveal";
 import { PROCESS_STEPS } from "@/lib/constants";
 import "./process/process.css";
 
@@ -62,9 +63,13 @@ function ProcessHeader({
  */
 export default function Process() {
   const sectionRef = useRef<HTMLElement>(null);
+  const stackRef = useRef<HTMLDivElement>(null);
   const { pinRef, stageRef, shuttleRef, counterRef } = useProcessPin(
     PROCESS_STEPS.length
   );
+  // Gegenstück zum Shuttle: unter 1024px steht der Stapel, und die Schritte
+  // decken sich beim Hereinscrollen einzeln auf, statt fertig dazuliegen.
+  useStackReveal(stackRef, { panel: ".process-panel", media: "wipe" });
 
   return (
     <section
@@ -129,7 +134,7 @@ export default function Process() {
       </div>
 
       {/* Mobile / reduced-motion stack */}
-      <div className="process-stack">
+      <div ref={stackRef} className="process-stack">
         <ProcessHeader />
         <div className="process-track">
           {PROCESS_STEPS.map((step, index) => (

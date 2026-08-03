@@ -5,6 +5,7 @@ import TextReveal from "@/components/ui/TextReveal";
 import ProjectPanel from "@/components/sections/work/ProjectPanel";
 import { useHorizontalPin } from "@/hooks/useHorizontalPin";
 import { useLightSection } from "@/hooks/useLightSection";
+import { useStackReveal } from "@/hooks/useStackReveal";
 import { PROJECTS } from "@/lib/constants";
 
 const TOTAL = String(PROJECTS.length).padStart(2, "0");
@@ -13,6 +14,9 @@ export default function SelectedWork() {
   const sectionRef = useRef<HTMLElement>(null);
   const { pinRef, trackRef, counterRef } = useHorizontalPin(PROJECTS.length);
   useLightSection(sectionRef);
+  // Gegenstück zum horizontalen Pin: unter 1024px stehen die Projekte
+  // untereinander und decken sich beim Hereinscrollen einzeln auf.
+  useStackReveal(trackRef, { panel: ".work-panel", media: "rise" });
 
   return (
     // Cream lives on the section, not on .work-pin — GSAP's generated pin-spacer
@@ -68,8 +72,13 @@ export default function SelectedWork() {
         </header>
 
         <div ref={trackRef} className="work-track min-w-0 will-change-transform">
-          {PROJECTS.map((project) => (
-            <ProjectPanel key={project.id} project={project} />
+          {PROJECTS.map((project, index) => (
+            <ProjectPanel
+              key={project.id}
+              project={project}
+              index={index}
+              total={PROJECTS.length}
+            />
           ))}
         </div>
       </div>

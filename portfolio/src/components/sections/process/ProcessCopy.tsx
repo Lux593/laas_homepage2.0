@@ -5,8 +5,11 @@ import type { ProcessStep } from "@/lib/constants";
  */
 export default function ProcessCopy({ step }: { step: ProcessStep }) {
   return (
+    // data-reveal markiert die Ziele für useStackReveal im gestapelten Aufbau.
+    // Im gepinnten Desktop-Layout ist es wirkungslos: dort blendet useProcessPin
+    // die ganze Copy-Ebene, und der Stapel-Hook läuft erst unter 1024px.
     <div className="process-copy-inner min-w-0 max-w-[48ch]">
-      <header>
+      <header data-reveal="copy">
         <h3 className="font-display text-[clamp(1.7rem,3vw,2.85rem)] font-bold leading-[0.98] tracking-tighter text-[#f2ede4] uppercase">
           {step.title}
         </h3>
@@ -15,7 +18,10 @@ export default function ProcessCopy({ step }: { step: ProcessStep }) {
         </p>
       </header>
 
-      <p className="mt-6 max-w-[46ch] font-body text-body-sm leading-relaxed text-[#f2ede4]/70">
+      <p
+        data-reveal="copy"
+        className="mt-6 max-w-[46ch] font-body text-body-sm leading-relaxed text-[#f2ede4]/70"
+      >
         {step.description}
       </p>
 
@@ -23,6 +29,7 @@ export default function ProcessCopy({ step }: { step: ProcessStep }) {
         {step.points.map((point, i) => (
           <li
             key={point.title}
+            data-reveal="copy"
             className="process-point grid grid-cols-[2.25rem_minmax(0,46ch)] items-baseline gap-x-3 py-4"
           >
             <span className="font-mono text-caption tabular-nums text-[#f2ede4]/55">

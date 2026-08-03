@@ -38,8 +38,13 @@ const FRAMES = {
     // never desync from the absolutely positioned screen. --frame-h (the pinned
     // 100svh budget, see globals.css) sets a definite width — percentages of an
     // auto-sized parent collapse to 0 once the project spread shrink-wraps.
-    // Arrow clearance lives on the outer px-14, not inside this width.
-    box: "w-[calc(var(--frame-h)*1.4596)] max-w-full",
+    //
+    // --frame-avail is the second term for the same reason: stacked, --frame-h
+    // is a share of the viewport HEIGHT, and on a portrait phone that made the
+    // landscape iPad ~740px wide. max-w-full cannot catch it (see --frame-w in
+    // globals.css), so the cap has to be part of the width itself. Arrow
+    // clearance is already deducted inside --frame-avail by .device-well.
+    box: "w-[min(calc(var(--frame-h)*1.4596),var(--frame-avail))] max-w-full",
     // Beside the device once pinned. Stacked, the frame fills the column edge to
     // edge and there is no room outside it, so the arrows go back on the screen
     // and flip to cream-on-dark to stay legible there.
@@ -62,8 +67,9 @@ const FRAMES = {
     // axes are stated explicitly off the same height term (566/1156 = 0.4896) —
     // Safari resolves an aspect-ratio flex item's inline size before applying the
     // definite height, so `w-auto` collapses the box to 0 there and only the nav
-    // arrows remain visible. The vw term keeps it inside the column on narrow phones.
-    box: "h-[min(var(--frame-h),150vw)] w-[calc(min(var(--frame-h),150vw)*0.4896)] max-w-full shrink-0",
+    // arrows remain visible. The --frame-avail term (1156/566 = 2.0424 converts
+    // the width budget into a height) keeps it inside the column on narrow phones.
+    box: "h-[min(var(--frame-h),calc(var(--frame-avail)*2.0424))] w-[calc(min(var(--frame-h),calc(var(--frame-avail)*2.0424))*0.4896)] max-w-full shrink-0",
     // The portrait screen is only ~180px wide — arrows on top would bury the game.
     // Narrow enough that they fit beside the device at every viewport.
     nav: {
@@ -188,8 +194,9 @@ export default function FramerMoveableThumbnails({
   return (
     <div className="mx-auto w-fit max-w-full">
       {/* Frame box — the bezel stays put, the screenshots slide behind it.
-          px-14 clears the off-bezel arrows (-left/right-14). */}
-      <div className="flex justify-center px-14">
+          .device-well carries the clearance for the off-bezel arrows and hands
+          the remaining width down as --frame-avail (see globals.css). */}
+      <div className={`device-well device-well--${frame}`}>
         <div
           className={`relative ${device.box}`}
           style={{ aspectRatio: device.aspect }}

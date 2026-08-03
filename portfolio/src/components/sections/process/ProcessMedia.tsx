@@ -54,8 +54,14 @@ export default function ProcessMedia({
   }
 
   return (
-    <figure className="process-media relative mx-auto w-full">
-      <div className="process-media-frame relative overflow-hidden">
+    // Blende und Push-in liegen bewusst auf zwei Ebenen: die Maske sitzt auf
+    // der Bildkante (figure), der Zoom auf dem Rahmen darunter — siehe
+    // useStackReveal. Im gepinnten Desktop-Layout bleibt beides ungenutzt.
+    <figure data-reveal="media" className="process-media relative mx-auto w-full">
+      <div
+        data-reveal="media-inner"
+        className="process-media-frame relative overflow-hidden"
+      >
         {hasLoop ? (
           <video
             ref={videoRef}

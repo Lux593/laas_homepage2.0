@@ -185,16 +185,16 @@
   padding-bottom: clamp(4rem, 10vh, 7rem);
 }
 
-/* MUSS byte-identisch zur gsap.matchMedia()-Query in About.tsx bleiben —
-   driften die beiden auseinander, läuft entweder die Zoom-Mathematik ohne
-   Sticky-Bühne oder die Copy bleibt auf opacity: 0 stehen. */
-@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
-  /* 340vh = 100vh Bühne + 240vh Scrollweg. Der Zoom verbraucht davon die
-     ersten ~52 % (≈125vh), der Rest ist Lesezeit auf dem fertigen Bildschirm. */
-  .about-track {
-    height: 340vh;
-  }
-
+/* Die Bühne selbst ist in beiden Kontexten gleich gebaut — quer wie hochkant
+   klebt sie im Track und trägt Szene, Header und Blende übereinander. Nur die
+   Scrollstrecke und die Maße darin unterscheiden sich, siehe die zwei Blöcke
+   darunter.
+   Die Liste ist genau die Vereinigung der beiden Queries und darf nicht zu
+   einem bloßen (prefers-reduced-motion: no-preference) vereinfacht werden:
+   ohne die Bedingungen stünde auf kurzen Fenstern eine klebende Bühne ohne
+   Scrollstrecke, in der Szene und Copy übereinanderfielen. */
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference),
+  (max-width: 767px) and (min-height: 660px) and (prefers-reduced-motion: no-preference) {
   .about-stage {
     position: sticky;
     top: 0;
@@ -208,14 +208,6 @@
     inset: 0;
     padding-top: 0;
     will-change: transform;
-  }
-
-  /* Die Skizze nimmt die volle Bühnenbreite. Erst wenn das Bild dabei höher
-     als die Bühne würde, bindet die Höhe — deshalb min() statt max-width:
-     max-* kann ein Bild nur verkleinern, nie auf Bühnengröße hochziehen.
-     Je größer die Skizze steht, desto kleiner der Upscale-Faktor am Zoomende. */
-  .about-art {
-    width: min(100%, calc(100svh * var(--art-ratio)));
   }
 
   .about-header {
@@ -238,9 +230,55 @@
        GSAP setzt den geschlossenen Startzustand — bleibt JS aus, steht hier
        der Inhalt sichtbar statt versteckt. */
     background-color: #f2ede4;
+  }
+}
+
+/* MUSS byte-identisch zur „desktop"-Query in About.tsx bleiben — driften die
+   beiden auseinander, läuft entweder die Zoom-Mathematik ohne Sticky-Bühne
+   oder die Copy bleibt auf opacity: 0 stehen. */
+@media (min-width: 768px) and (prefers-reduced-motion: no-preference) {
+  /* 340vh = 100vh Bühne + 240vh Scrollweg. Der Zoom verbraucht davon die
+     ersten ~52 % (≈125vh), der Rest ist Lesezeit auf dem fertigen Bildschirm. */
+  .about-track {
+    height: 340vh;
+  }
+
+  /* Die Skizze nimmt die volle Bühnenbreite. Erst wenn das Bild dabei höher
+     als die Bühne würde, bindet die Höhe — deshalb min() statt max-width:
+     max-* kann ein Bild nur verkleinern, nie auf Bühnengröße hochziehen.
+     Je größer die Skizze steht, desto kleiner der Upscale-Faktor am Zoomende. */
+  .about-art {
+    width: min(100%, calc(100svh * var(--art-ratio)));
+  }
+
+  .about-content {
     /* Der Header ist längst ausgeblendet, wenn die Copy kommt — hier muss nur
        noch die fixe Navigation freibleiben. */
     padding-top: clamp(5rem, 10vh, 7rem);
     padding-bottom: clamp(2rem, 6vh, 4rem);
+  }
+}
+
+/* MUSS byte-identisch zur „mobile"-Query in About.tsx bleiben.
+   Die Höhenbedingung ist kein Schönheitswert: in der Blende steht die Copy in
+   einer 100svh-Bühne, und unter ~660px Fensterhöhe passt sie dort nicht mehr
+   hinein. Darunter bleibt die Section gestapelt und statisch. */
+@media (max-width: 767px) and (min-height: 660px) and (prefers-reduced-motion: no-preference) {
+  /* 280vh = 100vh Bühne + 180vh Scrollweg. Kürzer als quer, weil die Kamera
+     hochkant nur bis zur Bildschirmbreite fährt (ZOOM_END.mobile = 0.46). */
+  .about-track {
+    height: 280vh;
+  }
+
+  .about-content {
+    padding-top: clamp(4rem, 9vh, 5.5rem);
+    padding-bottom: clamp(1.5rem, 4vh, 2.5rem);
+  }
+
+  /* Gestapelt bindet die Breite, in der Blende die Höhe: Portrait, Manifest
+     und Faktenzeile müssen zusammen in eine 100svh-Bühne passen. Ohne den
+     svh-Term schöbe das Portrait auf flachen Fenstern die Fakten heraus. */
+  .about-figure {
+    width: min(42vw, calc(24svh * 1.266));
   }
 }

@@ -336,6 +336,38 @@
     padding-block: clamp(3rem, 8vh, 6rem);
     /* Stacked, the device frame is width-driven and this is only an upper bound. */
     --frame-h: clamp(240px, 60vh, 560px);
+    /* Width actually available to the device, stated in viewport units on
+       purpose. The frame hangs inside a grid item with justify-self:center,
+       whose used width comes from intrinsic sizing — and percentage max-widths
+       of descendants do not count towards an intrinsic size. That is why the
+       chain of max-w-full could not stop the height-driven iPad from growing to
+       ~740px on a 390px phone and bleeding off both edges. */
+    --frame-w: calc(100vw - 2 * var(--container-padding));
+  }
+
+  /* Well around the device: carries the clearance the nav arrows need and takes
+     it back out of the width budget, so the frame below always fits. */
+  .device-well {
+    --frame-pad: 3.5rem;
+    /* The fallback only ever applies if the well is used outside a .work-panel;
+       inside one it inherits that panel's --frame-w. Without it an undefined
+       --frame-w would make the whole calc invalid, the width fall back to auto,
+       and the frame — all absolutely positioned inside — collapse to zero. */
+    --frame-avail: calc(
+      var(--frame-w, calc(100vw - 2 * var(--container-padding))) - 2 *
+        var(--frame-pad)
+    );
+    display: flex;
+    justify-content: center;
+    padding-inline: var(--frame-pad);
+  }
+
+  /* Below lg the iPad arrows sit on the screen itself (left-5 / right-5), so the
+     well needs no clearance there and the device gets the full column. */
+  @media (max-width: 1023px) {
+    .device-well--ipad {
+      --frame-pad: 0rem;
+    }
   }
 
   .work-track > .work-panel + .work-panel {

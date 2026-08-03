@@ -31,8 +31,9 @@ const IRIS_CLOSED = "circle(0% at 50% 50%)";
  */
 const SCREEN = { left: 40.95, top: 25.66, width: 28.17, height: 29.7 };
 
-/** Anteil der Scrollstrecke, nach dem der Zoom seine Endgröße erreicht hat. */
-const ZOOM_END = 0.52;
+/** Anteil der Scrollstrecke, nach dem der Zoom seine Endgröße erreicht hat.
+ *  Hochkant fällt die Blende früher, weil die Kamera dort weniger Weg hat. */
+const ZOOM_END = { desktop: 0.52, mobile: 0.46 };
 
 export default function About() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -49,119 +50,145 @@ export default function About() {
   useEffect(() => {
     const mm = gsap.matchMedia();
 
-    mm.add("(min-width: 768px) and (prefers-reduced-motion: no-preference)", () => {
-      const track = trackRef.current;
-      const stage = stageRef.current;
-      const header = headerRef.current;
-      const scene = sceneRef.current;
-      const art = artRef.current;
-      const target = targetRef.current;
-      const content = contentRef.current;
-      if (!track || !stage || !header || !scene || !art || !target || !content) return;
+    // Zwei Kontexte auf derselben Bühne: quer fährt die Kamera in den Monitor,
+    // bis er das Bild deckt, hochkant nur bis er die Breite füllt. Beide Queries
+    // MÜSSEN byte-identisch zu den @media-Blöcken in about.css bleiben.
+    mm.add(
+      {
+        desktop: "(min-width: 768px) and (prefers-reduced-motion: no-preference)",
+        mobile:
+          "(max-width: 767px) and (min-height: 660px) and (prefers-reduced-motion: no-preference)",
+      },
+      (context) => {
+        const isMobile = Boolean(context.conditions?.mobile);
+        const zoomEnd = isMobile ? ZOOM_END.mobile : ZOOM_END.desktop;
 
-      const groups = gsap.utils.toArray<HTMLElement>(".about-in", content);
-      gsap.set(groups, { opacity: 0, y: 32 });
-      gsap.set(content, { clipPath: IRIS_CLOSED });
+        const track = trackRef.current;
+        const stage = stageRef.current;
+        const header = headerRef.current;
+        const scene = sceneRef.current;
+        const art = artRef.current;
+        const target = targetRef.current;
+        const content = contentRef.current;
+        if (!track || !stage || !header || !scene || !art || !target || !content) return;
 
-      // Wird bei jedem Refresh neu hergeleitet: die Skizze ist in vw/svh
-      // dimensioniert, also wandern Zielgröße UND Außermittigkeit mit dem
-      // Viewport. Hardcodierte Werte wären auf genau einer Fenstergröße richtig.
-      let endScale = 1;
-      let offsetX = 0;
-      let offsetY = 0;
+        const groups = gsap.utils.toArray<HTMLElement>(".about-in", content);
+        gsap.set(groups, { opacity: 0, y: 32 });
+        gsap.set(content, { clipPath: IRIS_CLOSED });
 
-      const measure = () => {
-        gsap.set(scene, { x: 0, y: 0, scale: 1 });
-        const s = target.getBoundingClientRect();
-        const v = stage.getBoundingClientRect();
+        // Wird bei jedem Refresh neu hergeleitet: die Skizze ist in vw/svh
+        // dimensioniert, also wandern Zielgröße UND Außermittigkeit mit dem
+        // Viewport. Hardcodierte Werte wären auf genau einer Fenstergröße richtig.
+        let endScale = 1;
+        let offsetX = 0;
+        let offsetY = 0;
 
-        // Fehlt die Bilddatei noch oder ist sie nicht dekodiert, schrumpft die
-        // Bildbox auf ein paar Pixel — daraus berechnete Faktoren wären absurd.
-        // Dann lieber gar kein Zoom als ein 400-facher.
-        if (s.width < 40 || s.height < 40) {
-          endScale = 1;
-          offsetX = 0;
-          offsetY = 0;
-          return;
-        }
+        const measure = () => {
+          gsap.set(scene, { x: 0, y: 0, scale: 1 });
+          const s = target.getBoundingClientRect();
+          const v = stage.getBoundingClientRect();
 
-        // 1.04 schiebt die Monitorblende über die Viewport-Kante hinaus, bevor
-        // die Skizze ausblendet — ohne den Zuschlag steht am Ende eine
-        // unscharfe Rahmenlinie im Bild.
-        endScale = Math.max(v.width / s.width, v.height / s.height) * 1.04;
-        offsetX = s.left + s.width / 2 - (v.left + v.width / 2);
-        offsetY = s.top + s.height / 2 - (v.top + v.height / 2);
-      };
+          // Fehlt die Bilddatei noch oder ist sie nicht dekodiert, schrumpft die
+          // Bildbox auf ein paar Pixel — daraus berechnete Faktoren wären absurd.
+          // Dann lieber gar kein Zoom als ein 400-facher.
+          if (s.width < 40 || s.height < 40) {
+            endScale = 1;
+            offsetX = 0;
+            offsetY = 0;
+            return;
+          }
 
-      const push = gsap.parseEase("power2.in");
+          // 1.04 schiebt die Monitorblende über die Viewport-Kante hinaus, bevor
+          // die Skizze ausblendet — ohne den Zuschlag steht am Ende eine
+          // unscharfe Rahmenlinie im Bild.
+          //
+          // Hochkant deckt bewusst nur die Breite: die Bildschirmfläche ist dort
+          // rund 110 × 60 px groß, „cover" bräuchte den ~14-fachen Maßstab und
+          // machte aus der Skizze Brei. Die Kamera fährt also nur, bis der Monitor
+          // die Breite füllt — die Blende deckt den Rest der Höhe ohnehin zu.
+          endScale =
+            (isMobile
+              ? v.width / s.width
+              : Math.max(v.width / s.width, v.height / s.height)) * 1.04;
+          offsetX = s.left + s.width / 2 - (v.left + v.width / 2);
+          offsetY = s.top + s.height / 2 - (v.top + v.height / 2);
+        };
 
-      const applyZoom = (progress: number) => {
-        // power2.in lässt den Schreibtisch den ersten Moment ruhig stehen und
-        // beschleunigt dann hinein — eine Kamerafahrt, kein linearer Zug.
-        const t = push(gsap.utils.clamp(0, 1, progress / ZOOM_END));
-        const scale = 1 + (endScale - 1) * t;
-        // Skaliert wird um die Bühnenmitte: ein Punkt mit Abstand offset
-        // landet bei offset·scale. Wir wollen ihn stattdessen bei
-        // offset·(1-t) — also linear von seiner Startlage in die Mitte.
-        // x = offset·((1-t) - scale) leistet genau das. Die frühere Formel
-        // `-offset·scale·t` ließ den Restfehler mit dem Scale mitwachsen;
-        // deshalb saß die Iris in der Viewport-Mitte, das Icon aber daneben.
-        gsap.set(scene, {
-          x: offsetX * (1 - t - scale),
-          y: offsetY * (1 - t - scale),
-          scale,
-          force3D: true,
-        });
-      };
+        const push = gsap.parseEase("power2.in");
 
-      const spine = { p: 0 };
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: track,
-          start: "top top",
-          end: "bottom bottom",
-          scrub: true,
-          onRefresh: (self) => {
-            measure();
-            applyZoom(self.progress);
+        const applyZoom = (progress: number) => {
+          // power2.in lässt den Schreibtisch den ersten Moment ruhig stehen und
+          // beschleunigt dann hinein — eine Kamerafahrt, kein linearer Zug.
+          const t = push(gsap.utils.clamp(0, 1, progress / zoomEnd));
+          const scale = 1 + (endScale - 1) * t;
+          // Skaliert wird um die Bühnenmitte: ein Punkt mit Abstand offset
+          // landet bei offset·scale. Wir wollen ihn stattdessen bei
+          // offset·(1-t) — also linear von seiner Startlage in die Mitte.
+          // x = offset·((1-t) - scale) leistet genau das. Die frühere Formel
+          // `-offset·scale·t` ließ den Restfehler mit dem Scale mitwachsen;
+          // deshalb saß die Iris in der Viewport-Mitte, das Icon aber daneben.
+          gsap.set(scene, {
+            x: offsetX * (1 - t - scale),
+            y: offsetY * (1 - t - scale),
+            scale,
+            force3D: true,
+          });
+        };
+
+        const spine = { p: 0 };
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: track,
+            start: "top top",
+            end: "bottom bottom",
+            scrub: true,
+            onRefresh: (self) => {
+              measure();
+              applyZoom(self.progress);
+            },
+            onUpdate: (self) => applyZoom(self.progress),
           },
-          onUpdate: (self) => applyZoom(self.progress),
-        },
-      });
+        });
 
-      // Der Spine hält die Timeline-Dauer auf exakt 1, damit die Positionen
-      // unten direkt als Scroll-Fortschritt lesbar sind.
-      tl.to(spine, { p: 1, duration: 1, ease: "none" }, 0)
-        // Der Header gehört zum Raum, nicht zum Bildschirm: sobald die Kamera
-        // losfährt, zieht er nach oben aus dem Bild. Er ist lange weg, bevor die
-        // Copy von unten hereinkommt — Altes raus nach oben, Neues rein von unten.
-        .to(header, { opacity: 0, y: -28, ease: "power2.in", duration: 0.24 }, 0.14)
-        // Schärfeverlagerung: macht aus dem unvermeidlichen Upscale des
-        // Rasterbilds eine gewollte Kamerabewegung statt sichtbarer Pixel.
-        // Bewusst flach gehalten, damit sie der Blende nicht die Schau stiehlt.
-        .fromTo(
-          art,
-          { filter: "blur(0px)" },
-          { filter: "blur(3px)", ease: "power2.in", duration: 0.18 },
-          0.32
-        )
-        // Die Blende: erst wenn der Zoom das Icon in die Mitte gelegt hat
-        // (ZOOM_END), wächst die Kugel aus genau diesem Punkt — sonst öffnet
-        // die nächste Seite zentriert, während das Icon noch versetzt sitzt.
-        .fromTo(
-          content,
-          { clipPath: IRIS_CLOSED },
-          { clipPath: IRIS_OPEN, ease: IRIS_EASE, duration: 0.2 },
-          ZOOM_END
-        )
-        // Läuft wie im Sidebar-Overlay leicht versetzt in der offenen Blende mit,
-        // statt danach als zweite, eigene Bewegung.
-        .to(
-          groups,
-          { opacity: 1, y: 0, ease: "power3.out", duration: 0.14, stagger: 0.055 },
-          ZOOM_END + 0.04
-        );
-    });
+        // Der Spine hält die Timeline-Dauer auf exakt 1, damit die Positionen
+        // unten direkt als Scroll-Fortschritt lesbar sind.
+        tl.to(spine, { p: 1, duration: 1, ease: "none" }, 0)
+          // Der Header gehört zum Raum, nicht zum Bildschirm: sobald die Kamera
+          // losfährt, zieht er nach oben aus dem Bild. Er ist lange weg, bevor die
+          // Copy von unten hereinkommt — Altes raus nach oben, Neues rein von unten.
+          .to(header, { opacity: 0, y: -28, ease: "power2.in", duration: 0.24 }, 0.14)
+          // Schärfeverlagerung: macht aus dem unvermeidlichen Upscale des
+          // Rasterbilds eine gewollte Kamerabewegung statt sichtbarer Pixel.
+          // Bewusst flach gehalten, damit sie der Blende nicht die Schau stiehlt.
+          // Hochkant einen Tick stärker: dort steht am Ende ein gröberer Upscale.
+          .fromTo(
+            art,
+            { filter: "blur(0px)" },
+            {
+              filter: `blur(${isMobile ? 4 : 3}px)`,
+              ease: "power2.in",
+              duration: 0.18,
+            },
+            zoomEnd - 0.2
+          )
+          // Die Blende: erst wenn der Zoom das Icon in die Mitte gelegt hat
+          // (zoomEnd), wächst die Kugel aus genau diesem Punkt — sonst öffnet
+          // die nächste Seite zentriert, während das Icon noch versetzt sitzt.
+          .fromTo(
+            content,
+            { clipPath: IRIS_CLOSED },
+            { clipPath: IRIS_OPEN, ease: IRIS_EASE, duration: 0.2 },
+            zoomEnd
+          )
+          // Läuft wie im Sidebar-Overlay leicht versetzt in der offenen Blende mit,
+          // statt danach als zweite, eigene Bewegung.
+          .to(
+            groups,
+            { opacity: 1, y: 0, ease: "power3.out", duration: 0.14, stagger: 0.055 },
+            zoomEnd + 0.04
+          );
+      }
+    );
 
     return () => mm.revert();
   }, []);
