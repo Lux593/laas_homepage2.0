@@ -100,13 +100,15 @@ export default function About() {
         // beschleunigt dann hinein — eine Kamerafahrt, kein linearer Zug.
         const t = push(gsap.utils.clamp(0, 1, progress / ZOOM_END));
         const scale = 1 + (endScale - 1) * t;
-        // Skaliert wird um die Bühnenmitte, also wächst der Abstand des
-        // Bildschirms zur Mitte mit dem Faktor mit. Genau das wird
-        // gegengerechnet, gewichtet mit t, damit die Zentrierung bei t = 0
-        // noch nichts tut und bei t = 1 exakt aufgeht.
+        // Skaliert wird um die Bühnenmitte: ein Punkt mit Abstand offset
+        // landet bei offset·scale. Wir wollen ihn stattdessen bei
+        // offset·(1-t) — also linear von seiner Startlage in die Mitte.
+        // x = offset·((1-t) - scale) leistet genau das. Die frühere Formel
+        // `-offset·scale·t` ließ den Restfehler mit dem Scale mitwachsen;
+        // deshalb saß die Iris in der Viewport-Mitte, das Icon aber daneben.
         gsap.set(scene, {
-          x: -offsetX * scale * t,
-          y: -offsetY * scale * t,
+          x: offsetX * (1 - t - scale),
+          y: offsetY * (1 - t - scale),
           scale,
           force3D: true,
         });
@@ -143,21 +145,21 @@ export default function About() {
           { filter: "blur(3px)", ease: "power2.in", duration: 0.18 },
           0.32
         )
-        // Die Blende: eine Kugel wächst aus der Mitte über den Schreibtisch,
-        // gleiche Geste und gleiche Kurve wie das Sidebar-Overlay. Sie deckt die
-        // Szene vollständig ab — deshalb braucht es hier keine Ausblendung mehr.
+        // Die Blende: erst wenn der Zoom das Icon in die Mitte gelegt hat
+        // (ZOOM_END), wächst die Kugel aus genau diesem Punkt — sonst öffnet
+        // die nächste Seite zentriert, während das Icon noch versetzt sitzt.
         .fromTo(
           content,
           { clipPath: IRIS_CLOSED },
           { clipPath: IRIS_OPEN, ease: IRIS_EASE, duration: 0.2 },
-          0.44
+          ZOOM_END
         )
         // Läuft wie im Sidebar-Overlay leicht versetzt in der offenen Blende mit,
         // statt danach als zweite, eigene Bewegung.
         .to(
           groups,
           { opacity: 1, y: 0, ease: "power3.out", duration: 0.14, stagger: 0.055 },
-          0.48
+          ZOOM_END + 0.04
         );
     });
 
@@ -193,7 +195,7 @@ export default function About() {
 
           <div ref={sceneRef} className="about-scene">
             <div ref={artRef} className="about-art">
-              {/* Steht vor dem <img>, liegt damit darunter — siehe about.css */}
+              {/* Licht liegt unter der Skizze — siehe about.css */}
               <div className="about-light" aria-hidden>
                 <span className="about-light-shade" />
                 <span className="about-light-beam" />
@@ -230,7 +232,7 @@ export default function About() {
               >
                 {/* Die Breite gehört auf den Wrapper, nicht auf das Bild:
                     next/image schreibt aus width/height eigene Maße und
-                    überstimmt eine Utility-Klasse auf dem <img>.
+                    überstimmt eine Utility-Klasse am Bild-Element.
                     Der Prozentwert ist nicht die Sehfläche — liftapp.png trägt
                     rund 19 % transparenten Rand je Seite, sichtbar bleiben von
                     36 % also nur ~22 % der Bildschirmbreite. */}
