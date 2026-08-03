@@ -35,7 +35,7 @@
   min-width: 0;
 }
 
-/* Das Licht liegt UNTER dem <img>: die Skizze ist freigestellt, also scheint
+/* Das Licht liegt UNTER dem Bild: die Skizze ist freigestellt, also scheint
    das Licht durch das Papier und der Bleistiftstrich bleibt scharf darüber
    stehen. Läge es darüber, würde es die Zeichnung auswaschen. */
 .about-light {
@@ -62,8 +62,8 @@
   clip-path: polygon(79.5% 36%, 86.5% 40%, 97% 79%, 47% 93%);
   background: linear-gradient(
     197deg,
-    rgba(255, 226, 176, 0.62) 0%,
-    rgba(255, 219, 163, 0.34) 38%,
+    rgba(255, 226, 176, 0.88) 0%,
+    rgba(255, 219, 163, 0.52) 38%,
     rgba(255, 214, 155, 0) 84%
   );
   filter: blur(14px);
