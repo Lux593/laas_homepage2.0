@@ -52,9 +52,9 @@ export const metadata: Metadata = {
     siteName: "Luca Arnoldi",
     images: [
       {
-        url: "/images/og-image.png",
-        width: 1200,
-        height: 630,
+        url: "/desk-scene.png",
+        width: 1072,
+        height: 569,
         alt: "Luca Arnoldi Portfolio",
       },
     ],
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Luca Arnoldi — Fullstack Developer",
     description: "Ich baue digitale Erlebnisse, die faszinieren.",
-    images: ["/images/og-image.png"],
+    images: ["/desk-scene.png"],
   },
   robots: {
     index: true,

@@ -11,6 +11,14 @@ import type { NextConfig } from "next";
  * KEIN `output: "export"`. Das Framework-Preset "Next.js" fährt einen Node-Server;
  * ein Static Export erzeugt aber nur `out/` und kein `.next` — `next start` bricht
  * dann ab mit "Could not find a production build in the '.next' directory".
+ *
+ * Wo Dateien hingehören — die App ist ALLES unterhalb von portfolio/:
+ * - Bilder/Videos NUR nach portfolio/public/. Von dort werden sie unter `/...`
+ *   ausgeliefert (portfolio/public/vorschaubilder/x.png → /vorschaubilder/x.png).
+ * - Ein Ordner im Repo-Root (z. B. /vorschaubilder) landet NICHT auf der Website.
+ *   Er wird nur mitgeklont und macht den Deploy größer.
+ * - Genau eine Lockfile: pnpm-lock.yaml. Liegt zusätzlich eine package-lock.json
+ *   daneben, ist der erkannte Paketmanager mehrdeutig.
  */
 const nextConfig: NextConfig = {
   reactStrictMode: true,
