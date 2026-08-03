@@ -4,6 +4,8 @@ export const SITE_CONFIG = {
   name: "Luca Arnoldi App Studio",
   title: "Fullstack Developer & Digital Experience Engineer",
   tagline: "Code, die sich lebendig anfühlt",
+  /** Live-Domain — Basis für metadataBase, OG-Tags, Sitemap und JSON-LD. */
+  url: "https://laas.website",
   email: "hello@lucaarnoldi.com",
   socials: {
     github: "https://github.com/Lux593",

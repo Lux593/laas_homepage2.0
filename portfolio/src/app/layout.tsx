@@ -29,6 +29,7 @@ const dmSansBody = DM_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_CONFIG.url),
   title: "Luca Arnoldi — Fullstack Developer & Digital Experience Engineer",
   description:
     "Ich baue digitale Erlebnisse, die nicht nur funktionieren — sie faszinieren. Fullstack Developer spezialisiert auf React, Next.js, KI-Integration & Premium Web Experiences.",
@@ -45,7 +46,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "de_DE",
-    url: "https://lucaarnoldi.com",
+    url: SITE_CONFIG.url,
     title: "Luca Arnoldi — Fullstack Developer",
     description: "Ich baue digitale Erlebnisse, die faszinieren.",
     siteName: "Luca Arnoldi",
@@ -102,7 +103,7 @@ export default function RootLayout({
               "@type": "Person",
               name: "Luca Arnoldi",
               jobTitle: "Fullstack Developer",
-              url: "https://lucaarnoldi.com",
+              url: SITE_CONFIG.url,
               sameAs: [
                 SITE_CONFIG.socials.github,
                 SITE_CONFIG.socials.linkedin,

@@ -1,25 +1,24 @@
 import type { NextConfig } from "next";
 
 /**
- * Hostinger: App-Root ist `portfolio/` (hPanel → Root directory).
- * Static Export (`out/`) — CSS/JS liegen als echte Dateien unter `out/_next/`,
- * damit Styles auch ohne Next-Node-Proxy laden.
+ * Hostinger (hPanel → Einstellungen und erneute Bereitstellung):
+ * - Framework-Voreinstellung: Next.js  → Hostinger startet `next start`
+ * - Root-Verzeichnis:         portfolio
+ * - Build-Befehl:             pnpm run build
+ * - Paketmanager:             pnpm     → braucht pnpm-lock.yaml im Repo
+ * - Ausgabeverzeichnis:       .next
  *
- * hPanel:
- * - Application type: next
- * - Root directory: portfolio
- * - Build script: build
- * - Output directory: out
+ * KEIN `output: "export"`. Das Framework-Preset "Next.js" fährt einen Node-Server;
+ * ein Static Export erzeugt aber nur `out/` und kein `.next` — `next start` bricht
+ * dann ab mit "Could not find a production build in the '.next' directory".
  */
 const nextConfig: NextConfig = {
-  output: "export",
   reactStrictMode: true,
   compress: true,
 
   transpilePackages: ["three"],
 
   images: {
-    unoptimized: true,
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
@@ -39,6 +38,20 @@ const nextConfig: NextConfig = {
       use: ["raw-loader"],
     });
     return config;
+  },
+
+  async headers() {
+    return [
+      {
+        source: "/fonts/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+    ];
   },
 };
 

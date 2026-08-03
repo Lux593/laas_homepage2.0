@@ -1,6 +1,12 @@
 # dependencies
 node_modules
 
+# build artefacts (Altlasten aus der Zeit vor dem Umzug nach portfolio/)
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
 # misc
 .DS_Store
 *.pem
