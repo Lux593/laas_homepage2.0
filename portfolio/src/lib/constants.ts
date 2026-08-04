@@ -17,6 +17,16 @@ export const SITE_CONFIG = {
 export const MANIFESTO_TEXT =
   "Ich verstehe dein Problem und löse es mit Code. Kurze Wege und ehrliche Kommunikation. Ich baue dir, was du brauchst – ohne bla bla.";
 
+/** Section-Header + linke Spalte der Leistungen-Aufteilung. */
+export const SERVICES_INTRO = {
+  eyebrow: "01 - Was ich anbiete",
+  headline: "LEISTUNGEN",
+  /** Große Aussage links an der Mittelachse (Referenz: Editorial-Split). */
+  statement: "Wenn Standardtools nicht reichen, baue ich dir den Weg.",
+  support:
+    "Software, die passt. Prozesse, die laufen. KI, die wirklich hilft — klar, direkt, ohne Theater.",
+} as const;
+
 export interface AboutFact {
   label: string;
   value: string;
@@ -291,6 +301,39 @@ export const PROCESS_STEPS: ProcessStep[] = [
   },
 ];
 
+export interface Service {
+  id: string;
+  /** Marker in der Kreismarke — 1 / 2 / 3 */
+  mark: string;
+  title: string;
+  description: string;
+}
+
+/** Angebot (Was) — bewusst getrennt von PROCESS_STEPS (Wie wir zusammenarbeiten). */
+export const SERVICES: Service[] = [
+  {
+    id: "software",
+    mark: "1",
+    title: "Individuelle Software",
+    description:
+      "Maßgeschneiderte Web-Apps und Interfaces, die zu deinem Alltag passen — statt Standardsoftware, die du verbiegen musst.",
+  },
+  {
+    id: "automation",
+    mark: "2",
+    title: "Prozess Automationen",
+    description:
+      "Wiederkehrende Abläufe digitalisieren, verbinden und entlasten — weniger Copy-Paste, mehr ruhiger Betrieb.",
+  },
+  {
+    id: "ai",
+    mark: "3",
+    title: "KI Integrationen",
+    description:
+      "KI dort einbauen, wo sie echten Hebel hat — in bestehende Produkte und Workflows, nicht als Spielerei.",
+  },
+];
+
 export interface TechItem {
   name: string;
   icon: string;
@@ -308,8 +351,9 @@ export const TECH_STACK: TechItem[] = [
 ];
 
 export const NAV_ITEMS = [
-  { label: "Projekte", href: "#work" },
+  { label: "Leistungen", href: "#services" },
   { label: "Prozess", href: "#process" },
+  { label: "Projekte", href: "#work" },
   { label: "Über mich", href: "#about" },
   { label: "Kontakt", href: "#contact" },
 ] as const;

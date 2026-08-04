@@ -52,9 +52,9 @@ export const metadata: Metadata = {
     siteName: "Luca Arnoldi",
     images: [
       {
-        url: "/desk-scene.png",
-        width: 1072,
-        height: 569,
+        url: "/vorschaubilder/office_new.png",
+        width: 2834,
+        height: 1504,
         alt: "Luca Arnoldi Portfolio",
       },
     ],
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Luca Arnoldi — Fullstack Developer",
     description: "Ich baue digitale Erlebnisse, die faszinieren.",
-    images: ["/desk-scene.png"],
+    images: ["/vorschaubilder/office_new.png"],
   },
   robots: {
     index: true,
@@ -114,7 +114,9 @@ export default function RootLayout({
                 "React",
                 "Next.js",
                 "TypeScript",
-                "AI Integration",
+                "Individuelle Software",
+                "Prozess Automationen",
+                "KI Integrationen",
               ],
             }),
           }}

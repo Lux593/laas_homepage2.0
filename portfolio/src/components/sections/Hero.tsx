@@ -324,7 +324,7 @@ export default function Hero() {
 
       {/* Rückzugs-Strecke: transparent, der klebende Hero bleibt dahinter
           sichtbar. Ihre Höhe ist die einzige Stellschraube dafür, wie früh die
-          Projekte-Section anfängt sich darüberzuschieben — hier 50vh, die
+          Leistungen-Section anfängt sich darüberzuschieben — hier 50vh, die
           Panel-Kante taucht also nach einer halben Bildschirmhöhe auf. */}
       <div
         ref={runwayRef}

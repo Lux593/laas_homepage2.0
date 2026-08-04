@@ -24,126 +24,62 @@
    misst ScrollTrigger auf einer 0-hohen Box und der Zoom sitzt beim ersten
    Refresh daneben. */
 .about-art {
-  --art-ratio: 1.884; /* 1072 × 569 */
-  /* Lage der Glühbirne in der Skizze, in % der Bildbox. Alle Lichtebenen
-     hängen daran — nur diese zwei Werte anfassen, wenn die Lampe umzieht. */
-  --lamp-x: 83.3%;
-  --lamp-y: 39.5%;
+  --art-ratio: 1.884; /* 2834 × 1504 — office_new.png */
   position: relative;
   width: 100%;
   aspect-ratio: var(--art-ratio);
   min-width: 0;
+  /* Weicher Auslauf am Rand: vw-Stopps = auf Ultrawides langer Auslauf, auf
+     normalen Breiten nur ein sanfter Rand ohne die Tischkante wegzufressen. */
+  -webkit-mask-image:
+    linear-gradient(
+      to right,
+      transparent 0%,
+      rgb(0 0 0 / 0.2) 3vw,
+      rgb(0 0 0 / 0.55) 7vw,
+      #000 14vw,
+      #000 calc(100% - 14vw),
+      rgb(0 0 0 / 0.55) calc(100% - 7vw),
+      rgb(0 0 0 / 0.2) calc(100% - 3vw),
+      transparent 100%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 8%,
+      #000 90%,
+      transparent 100%
+    );
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(
+      to right,
+      transparent 0%,
+      rgb(0 0 0 / 0.2) 3vw,
+      rgb(0 0 0 / 0.55) 7vw,
+      #000 14vw,
+      #000 calc(100% - 14vw),
+      rgb(0 0 0 / 0.55) calc(100% - 7vw),
+      rgb(0 0 0 / 0.2) calc(100% - 3vw),
+      transparent 100%
+    ),
+    linear-gradient(
+      to bottom,
+      transparent 0%,
+      #000 8%,
+      #000 90%,
+      transparent 100%
+    );
+  mask-composite: intersect;
 }
 
-/* Das Licht liegt UNTER dem Bild: die Skizze ist freigestellt, also scheint
-   das Licht durch das Papier und der Bleistiftstrich bleibt scharf darüber
-   stehen. Läge es darüber, würde es die Zeichnung auswaschen. */
-.about-light {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  animation: about-lamp 5s ease-in-out infinite;
-}
-
-.about-light > span {
-  position: absolute;
-  display: block;
-}
-
-/* Lichtkegel: Trapez von der Birne schräg nach unten-links auf die Platte.
-   ACHTUNG — die harten Kanten sind gewollt. Der grafische, geschnittene Kegel
-   ist der bewusste Stilbruch gegen die weiche Bleistiftskizze und der Grund,
-   warum die Szene nicht wie eine Standard-Illustration wirkt. Nicht in einen
-   weichen Radialverlauf „reparieren"; der 14px-Blur nimmt nur die Treppung der
-   Diagonalen, nicht die Form. */
-.about-light-beam {
-  inset: 0;
-  clip-path: polygon(79.5% 36%, 86.5% 40%, 97% 79%, 47% 93%);
-  background: linear-gradient(
-    197deg,
-    rgba(255, 226, 176, 0.88) 0%,
-    rgba(255, 219, 163, 0.52) 38%,
-    rgba(255, 214, 155, 0) 84%
-  );
-  filter: blur(14px);
-}
-
-/* Lichtpfütze auf der Tischplatte, dort wo der Kegel auftrifft */
-.about-light-pool {
-  left: 68%;
-  top: 82%;
-  width: 52%;
-  height: 20%;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 228, 180, 0.5) 0%,
-    rgba(255, 222, 168, 0.22) 45%,
-    rgba(255, 218, 160, 0) 75%
-  );
-}
-
-/* Heißer Kern an der Birne selbst */
-.about-light-bulb {
-  left: var(--lamp-x);
-  top: var(--lamp-y);
-  width: 22%;
-  aspect-ratio: 1;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(
-    circle at center,
-    rgba(255, 236, 196, 0.85) 0%,
-    rgba(255, 216, 152, 0.42) 26%,
-    rgba(255, 210, 140, 0) 68%
-  );
-}
-
-/* Ohne Abdunkelung gegenüber liest sich das Licht nicht als Licht — auf einer
-   ohnehin hellen Fläche entsteht der Kontrast erst durch die Gegenrichtung. */
-.about-light-shade {
-  inset: 0;
-  background: radial-gradient(
-    115% 95% at var(--lamp-x) var(--lamp-y),
-    rgba(70, 56, 40, 0) 34%,
-    rgba(70, 56, 40, 0.075) 78%,
-    rgba(70, 56, 40, 0.115) 100%
-  );
-}
-
-@keyframes about-lamp {
-  0%,
-  100% {
-    opacity: 0.9;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .about-light {
-    animation: none;
-  }
-}
-
-/* desk-scene.png ist freigestellt (RGBA, Papier = transparent), deshalb braucht
-   es hier weder mix-blend-mode noch Helligkeitskorrektur: die Skizze liegt von
-   sich aus auf dem Cream. Die Maske löst nur noch die Dateikante auf — die
-   Tischplatte läuft links und rechts bis an den Rand, und in den unteren Ecken
-   sitzt im Original eine Schattierung, die sonst als Rechteck stehenbliebe. */
+/* office_new.png bringt Lampenlicht und Wand schon mit — kein CSS-Overlay.
+   Der weiche Rand sitzt auf .about-art. */
 .about-art img {
   display: block;
   width: 100%;
   height: 100%;
-  -webkit-mask-image:
-    linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%),
-    linear-gradient(to bottom, transparent 0, #000 6%, #000 93%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%),
-    linear-gradient(to bottom, transparent 0, #000 6%, #000 93%, transparent 100%);
-  mask-composite: intersect;
+  object-fit: cover;
 }
 
 /* Section-Header in derselben Sprache wie „Meine Projekte" und „Prozess":
@@ -243,12 +179,14 @@
     height: 340vh;
   }
 
-  /* Die Skizze nimmt die volle Bühnenbreite. Erst wenn das Bild dabei höher
-     als die Bühne würde, bindet die Höhe — deshalb min() statt max-width:
-     max-* kann ein Bild nur verkleinern, nie auf Bühnengröße hochziehen.
-     Je größer die Skizze steht, desto kleiner der Upscale-Faktor am Zoomende. */
+  /* Cover statt Contain: die Skizze füllt die Bühne immer randlos. Auf
+     Ultrawides würde min(100%, 100svh·Ratio) die Breite kappen und harte
+     Vertikalkanten lassen — max() zieht über die knappe Achse hinaus;
+     overflow:hidden an der Bühne schneidet den Überstand. */
   .about-art {
-    width: min(100%, calc(100svh * var(--art-ratio)));
+    width: max(100%, calc(100svh * var(--art-ratio)));
+    /* Flex darf die Cover-Breite nicht wieder auf die Bühne zusammenziehen. */
+    flex-shrink: 0;
   }
 
   .about-content {

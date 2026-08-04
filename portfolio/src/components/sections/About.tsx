@@ -24,12 +24,12 @@ const IRIS_OPEN = "circle(78% at 50% 50%)";
 const IRIS_CLOSED = "circle(0% at 50% 50%)";
 
 /**
- * Lage der Monitor-Bildschirmfläche innerhalb von /desk-scene.png, in Prozent
- * der gerenderten Bildbox. Nur diese vier Werte anfassen, wenn die Skizze durch
- * einen anderen Ausschnitt ersetzt wird — die gesamte Zoom-Mathematik misst sich
- * zur Laufzeit daraus.
+ * Lage der Monitor-Bildschirmfläche innerhalb von
+ * /vorschaubilder/office_new.png, in Prozent der gerenderten Bildbox. Nur diese
+ * vier Werte anfassen, wenn die Skizze durch einen anderen Ausschnitt ersetzt
+ * wird — die gesamte Zoom-Mathematik misst sich zur Laufzeit daraus.
  */
-const SCREEN = { left: 40.95, top: 25.66, width: 28.17, height: 29.7 };
+const SCREEN = { left: 40.68, top: 25.6, width: 28.58, height: 29.32 };
 
 /** Anteil der Scrollstrecke, nach dem der Zoom seine Endgröße erreicht hat.
  *  Hochkant fällt die Blende früher, weil die Kamera dort weniger Weg hat. */
@@ -194,48 +194,42 @@ export default function About() {
   }, []);
 
   return (
-    // Cream-Panel auf dem dunklen Grund — gleiche Sprache wie „Meine Projekte":
-    // Radius plus Schlagschatten nach oben, damit sich die Section beim Scrollen
-    // sichtbar vor den dunklen Prozess-Block legt statt an ihn zu stoßen.
+    // Cream-Fortsetzung nach Projekte: kein Top-Radius/Aufwärtsschatten —
+    // sonst entstünde ein zweites Panel-Slide auf derselben Cream-Fläche.
+    // Unten bleibt der Radius + Schatten Richtung CTA.
     <section
       id="about"
       ref={sectionRef}
-      className="relative z-10 rounded-t-[1.5rem] rounded-b-[1.5rem] bg-[#f2ede4] text-[#0a0a0a] shadow-[0_-40px_80px_-24px_rgba(0,0,0,0.8),0_40px_80px_-24px_rgba(0,0,0,0.6)] md:rounded-t-[2rem] md:rounded-b-[2rem]"
+      className="relative z-10 rounded-b-[1.5rem] bg-[#f2ede4] text-[#0a0a0a] shadow-[0_40px_80px_-24px_rgba(0,0,0,0.6)] md:rounded-b-[2rem]"
     >
       <div ref={trackRef} className="about-track">
         <div ref={stageRef} className="about-stage">
-          <header ref={headerRef} className="about-header">
-            <div className="container-custom">
-              <span className="mb-3 block font-mono text-caption uppercase tracking-[0.2em] text-[#5f574e]">
-                03 - Wer das hier baut
-              </span>
-              <TextReveal
-                as="h2"
-                variant="words"
-                start="top 95%"
-                className="font-display text-[clamp(1.9rem,4vw,3.5rem)] font-bold uppercase leading-[0.95] tracking-tighter text-[#0a0a0a]"
-              >
-                ÜBER MICH
-              </TextReveal>
-            </div>
+          {/* work-container statt container-custom: dieselbe Spine wie Projekte
+              und Prozess (bis 1920), sonst sitzt „Über mich" auf Ultrawides
+              weiter innen als die Header darüber. */}
+          <header ref={headerRef} className="about-header work-container w-full">
+            <span className="mb-3 block font-mono text-caption uppercase tracking-[0.2em] text-[#5f574e]">
+              04 - Wer das hier baut
+            </span>
+            <TextReveal
+              as="h2"
+              variant="words"
+              start="top 95%"
+              className="font-display text-[clamp(1.9rem,4vw,3.5rem)] font-bold uppercase leading-[0.95] tracking-tighter text-[#0a0a0a]"
+            >
+              ÜBER MICH
+            </TextReveal>
           </header>
 
           <div ref={sceneRef} className="about-scene">
             <div ref={artRef} className="about-art">
-              {/* Licht liegt unter der Skizze — siehe about.css */}
-              <div className="about-light" aria-hidden>
-                <span className="about-light-shade" />
-                <span className="about-light-beam" />
-                <span className="about-light-pool" />
-                <span className="about-light-bulb" />
-              </div>
-
               {/* Bewusst kein next/image: die Datei liefert der Nutzer, ihre
                   Maße stehen nicht fest, und ein falsches width/height-Paar
-                  würde das Seitenverhältnis der Bühne verfälschen. */}
+                  würde das Seitenverhältnis der Bühne verfälschen.
+                  Lampenlicht ist bereits im Bild — kein CSS-Licht-Overlay. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/desk-scene.png"
+                src="/vorschaubilder/office_new.png"
                 alt=""
                 aria-hidden
                 decoding="async"
@@ -263,7 +257,7 @@ export default function About() {
                     Der Prozentwert ist nicht die Sehfläche — liftapp.png trägt
                     rund 19 % transparenten Rand je Seite, sichtbar bleiben von
                     36 % also nur ~22 % der Bildschirmbreite. */}
-                <div className="absolute left-1/2 top-1/2 w-[36%] -translate-x-1/2 -translate-y-1/2 opacity-[0.24]">
+                <div className="absolute left-1/2 top-1/2 w-[36%] -translate-x-1/2 -translate-y-1/2 opacity-[0.32]">
                   <Image
                     src="/liftapp.png"
                     alt=""
@@ -278,7 +272,7 @@ export default function About() {
           </div>
 
           <div ref={contentRef} className="about-content">
-            <div className="container-custom w-full">
+            <div className="work-container w-full">
               {/* Vorlage: Copy links, Portrait groß rechts. Die Spalten werden
                   explizit gesetzt statt über die DOM-Reihenfolge — gestapelt
                   soll das Gesicht weiter oben stehen, auf Desktop rechts. */}

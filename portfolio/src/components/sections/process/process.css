@@ -88,7 +88,13 @@
   gap: clamp(1.5rem, 3vw, 3rem);
   align-items: start;
   height: 100%;
-  padding-top: clamp(1rem, 3vh, 2.25rem);
+  /* Match the gap under „PROJEKTE": work-panel padding-block + the
+     ProjectPanel mt, plus the optical lift items-center gives the work
+     copy in the remaining pin height. */
+  padding-top: calc(
+    clamp(0.75rem, 2vh, 1.75rem) + clamp(1.75rem, 4vh, 3rem) +
+      clamp(1.5rem, 4vh, 2.5rem)
+  );
 }
 
 .process-slot {
@@ -117,7 +123,11 @@
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: clamp(1.5rem, 3vw, 3rem);
   align-items: start;
-  padding-top: clamp(1rem, 3vh, 2.25rem);
+  /* Must stay byte-identical to .process-stage-grid padding-top */
+  padding-top: calc(
+    clamp(0.75rem, 2vh, 1.75rem) + clamp(1.75rem, 4vh, 3rem) +
+      clamp(1.5rem, 4vh, 2.5rem)
+  );
   pointer-events: none;
   z-index: 30;
 }

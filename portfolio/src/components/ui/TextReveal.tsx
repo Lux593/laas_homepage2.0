@@ -17,6 +17,9 @@ interface TextRevealProps {
   fromVars?: gsap.TweenVars;
 }
 
+/** Stable default — inline `fromVars = {}` would remount the tween on every parent render. */
+const EMPTY_FROM: gsap.TweenVars = {};
+
 export default function TextReveal({
   children,
   className,
@@ -24,7 +27,7 @@ export default function TextReveal({
   stagger = 0.03,
   start = "top 85%",
   as: Tag = "p",
-  fromVars = {},
+  fromVars = EMPTY_FROM,
 }: TextRevealProps) {
   const containerRef = useRef<HTMLElement>(null);
   useEffect(() => {

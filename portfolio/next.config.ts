@@ -1,3 +1,4 @@
+import path from "node:path";
 import type { NextConfig } from "next";
 
 /**
@@ -33,6 +34,9 @@ const nextConfig: NextConfig = {
   },
 
   turbopack: {
+    // Parent repo has a leftover package-lock.json; without this, Next
+    // resolves modules from the monorepo root and misses portfolio deps.
+    root: path.join(__dirname),
     rules: {
       "*.glsl": { loaders: ["raw-loader"], as: "*.js" },
       "*.vert": { loaders: ["raw-loader"], as: "*.js" },
