@@ -11,6 +11,24 @@
   position: relative;
 }
 
+/* Cream-Schleier an der Naht zu Projekte: deckt den Masken-Auslauf der Skizze
+   und gleicht Papiergrau ↔ #f2ede4 an. Unter dem Header (z-index: 2), über der
+   Szene — sonst würde die Headline im Schleier sitzen. */
+.about-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: clamp(5rem, 18vh, 9rem);
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    #f2ede4 0%,
+    rgb(242 237 228 / 0.7) 42%,
+    rgb(242 237 228 / 0) 100%
+  );
+}
+
 .about-scene {
   position: relative;
   display: flex;
@@ -29,8 +47,9 @@
   width: 100%;
   aspect-ratio: var(--art-ratio);
   min-width: 0;
-  /* Weicher Auslauf am Rand: vw-Stopps = auf Ultrawides langer Auslauf, auf
-     normalen Breiten nur ein sanfter Rand ohne die Tischkante wegzufressen. */
+  /* Weicher Auslauf: oben länger in die Cream von Projekte hinein, damit
+     die Naht Work→About nicht als dunkles Band lesbar wird. vw-Stopps
+     seitlich = auf Ultrawides langer Auslauf ohne die Tischkante wegzuradieren. */
   -webkit-mask-image:
     linear-gradient(
       to right,
@@ -46,8 +65,12 @@
     linear-gradient(
       to bottom,
       transparent 0%,
-      #000 8%,
-      #000 90%,
+      rgb(0 0 0 / 0.12) 6%,
+      rgb(0 0 0 / 0.45) 14%,
+      #000 24%,
+      #000 82%,
+      rgb(0 0 0 / 0.45) 90%,
+      rgb(0 0 0 / 0.12) 96%,
       transparent 100%
     );
   -webkit-mask-composite: source-in;
@@ -66,8 +89,12 @@
     linear-gradient(
       to bottom,
       transparent 0%,
-      #000 8%,
-      #000 90%,
+      rgb(0 0 0 / 0.12) 6%,
+      rgb(0 0 0 / 0.45) 14%,
+      #000 24%,
+      #000 82%,
+      rgb(0 0 0 / 0.45) 90%,
+      rgb(0 0 0 / 0.12) 96%,
       transparent 100%
     );
   mask-composite: intersect;
@@ -83,35 +110,251 @@
 }
 
 /* Section-Header in derselben Sprache wie „Meine Projekte" und „Prozess":
-   sitzt oben in der Bühne und bleibt über die gesamte Section stehen. */
+   sitzt oben in der Bühne und bleibt über die gesamte Section stehen.
+   z-index über dem Cream-Schleier (::before). */
 .about-header {
   position: relative;
+  z-index: 2;
   padding-top: clamp(4rem, 8vh, 5.5rem);
 }
 
-/* Das Portrait liegt auf reinem Weiß. multiply legt es genauso ins Papier wie
-   die Skizze — statt eines weißen Kärtchens auf dem Cream steht der Kopf frei,
-   und die Maske lässt den harten Schulter-Beschnitt unten auslaufen.
-   Der Cream muss dafür auf dem Elternelement liegen: gemischt wird gegen das,
-   was im selben Stacking Context unter dem Bild gemalt ist. */
-.about-portrait {
+/* ─────────────────────────────────────────────────────────────────────────
+   Annotiertes Porträt
+
+   Die Iris öffnet nicht auf eine Textspalte, sondern auf ein Blatt: in der
+   Mitte die Porträtplatte, links wer das ist, rechts hängen die Rollen als
+   beschriftete Auszüge daran, unten das Schriftfeld mit dem Werkzeug.
+   Die Sprache ist dieselbe wie in der Bauzeichnung unter „Leistungen" —
+   Hairline, Punkt, Beschriftung —, nur in Cream auf Schwarz statt umgekehrt.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.about-plan {
+  display: grid;
+  gap: clamp(1.25rem, 3.5vh, 2.75rem) 0;
+  align-items: start;
+}
+
+/* 1206 / 953 — das Seitenverhältnis von personal_pic.jpg. Gestapelt bindet die
+   Breite, ab 768px zusätzlich die Höhe: in der Blende steht alles in einer
+   100svh-Bühne, ein rein in vw bemessenes Bild schöbe auf flachen Fenstern das
+   Schriftfeld hinaus. */
+.about-plate {
+  position: relative;
+  width: min(44vw, calc(30svh * 1.266));
+  justify-self: center;
+  /* Der Abzug: die Cremefläche ist Teil des Bildes, nicht sein Hintergrund. */
+  background-color: #f2ede4;
+}
+
+/* Der weiße Studiogrund des Fotos hat auf Schwarz als hartes Rechteck gestanden.
+   multiply legt ihn deckungsgleich in die Cremeplatte: Weiß × Creme = Creme,
+   die Tonwerte des Gesichts bleiben und werden warm. Dieselbe Technik wie bei
+   der Bauzeichnung in „Leistungen", nur andersherum eingesetzt. */
+.about-plate-img {
+  display: block;
+  width: 100%;
+  height: auto;
   mix-blend-mode: multiply;
   filter: contrast(1.06);
-  -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
-  mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
 }
 
-/* Die Spalte, in der das Portrait steht. Gestapelt bindet die Breite, auf
-   Desktop die Höhe: dort sitzt die Copy in einer 100svh-Bühne, ein rein in vw
-   bemessenes Bild würde auf flachen Fenstern die Faktenzeile hinausschieben.
-   1.266 = 1206 / 953, das Seitenverhältnis von personal_pic.jpg. */
-.about-figure {
-  width: clamp(12rem, 56vw, 18rem);
+/* Vorbereitete Rollen-Porträts liegen deckungsgleich darüber und werden
+   aufgeblendet. Ohne solche Bilder existiert dieses Element gar nicht. */
+.about-plate-alt {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 320ms var(--ease-out-quint, cubic-bezier(0.22, 1, 0.36, 1));
 }
 
+.about-plate-alt[data-shown] {
+  opacity: 1;
+}
+
+/* ── Werdegang und Hobbys ────────────────────────────────────────────────
+   Bewusst ohne Linien, Rahmen und Aufzählungszeichen: die Platte trägt die
+   Fläche, alles daneben ist reiner Satz. Getrennt wird über Abstand. */
+
+.about-roles {
+  display: grid;
+  gap: clamp(1rem, 2.8vh, 1.9rem);
+}
+
+.about-role:focus-visible {
+  outline: 2px solid rgb(242 237 228 / 0.7);
+  outline-offset: 6px;
+}
+
+.about-hobby-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem clamp(1rem, 2.2vw, 2rem);
+}
+
+/* ── Schriftfeld ─────────────────────────────────────────────────────────── */
+
+.about-titleblock {
+  margin-top: clamp(1.25rem, 3.5vh, 2.75rem);
+  border-top: 1px solid rgb(242 237 228 / 0.16);
+  padding-top: clamp(1rem, 2.6vh, 1.6rem);
+}
+
+.about-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(0.85rem, 1.6vh, 1.15rem) clamp(1.25rem, 2.6vw, 2.5rem);
+  margin-top: clamp(0.85rem, 2vh, 1.25rem);
+}
+
+/* Legendenzeile statt Icon-Galerie: Zeichen und Bezeichnung nebeneinander,
+   wie in der Legende einer Zeichnung — das spart die Höhe, die die Platte
+   jetzt braucht. */
+.about-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  /* 44px Tippziel, ohne dass die Legende dadurch aufträgt: die Zeile ist so
+     hoch wie ein Finger breit, der Inhalt bleibt eine Zeile Text. */
+  min-height: 2.75rem;
+  color: rgb(242 237 228 / 0.55);
+  transition: color 300ms ease;
+}
+
+.about-tool:hover,
+.about-tool:focus-visible {
+  color: #f2ede4;
+}
+
+.about-tool-icon {
+  display: block;
+  width: 1.15rem;
+  height: 1.15rem;
+  object-fit: contain;
+  opacity: 0.7;
+  transition: opacity 300ms ease;
+}
+
+.about-tool:hover .about-tool-icon,
+.about-tool:focus-visible .about-tool-icon {
+  opacity: 1;
+}
+
+/* Ohne Bewegung stehen Linien und Blenden sofort da — sie sind Zeichnung,
+   keine Animation. */
+@media (prefers-reduced-motion: reduce) {
+  .about-plate-alt,
+  .about-tool,
+  .about-tool-icon {
+    transition: none;
+  }
+}
+
+/* Schmal: Name und Platte teilen sich die erste Zeile, darunter läuft alles
+   über die volle Breite. Gestapelt wäre die Section höher als die Blende. */
+.about-left {
+  display: contents;
+}
+
+.about-plan {
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: clamp(0.9rem, 4vw, 1.5rem);
+}
+
+.about-identity {
+  grid-column: 1;
+  grid-row: 1;
+  /* Der Name sitzt auf der Unterkante der Platte statt in der Luft daneben. */
+  align-self: end;
+}
+
+.about-plate {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.about-statement {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.about-annotations {
+  grid-column: 1 / -1;
+  grid-row: 3;
+}
+
+.about-hobbies {
+  grid-column: 1 / -1;
+  grid-row: 4;
+}
+
+/* Mehr Breite: Name und Aussage stehen oben über der ganzen Anlage, darunter
+   Platte und Werdegang nebeneinander. */
 @media (min-width: 768px) {
-  .about-figure {
-    width: min(36vw, calc(44svh * 1.266));
+  .about-plan {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .about-identity {
+    grid-column: 1 / -1;
+    align-self: start;
+  }
+
+  .about-plate {
+    grid-column: 1;
+    grid-row: 3;
+    width: min(40vw, calc(38svh * 1.266));
+    justify-self: start;
+  }
+
+  .about-annotations {
+    grid-column: 2;
+    grid-row: 3;
+    align-self: start;
+    padding-left: clamp(1.5rem, 3.5vw, 3rem);
+  }
+
+  .about-hobbies {
+    grid-row: 4;
+  }
+}
+
+/* Volle Anlage: wer links, Gesicht in der Mitte, was rechts — drei Spalten,
+   die alle an derselben Oberkante hängen. */
+@media (min-width: 1024px) {
+  .about-left {
+    display: flex;
+    flex-direction: column;
+    grid-column: 1;
+    grid-row: 1;
+    gap: clamp(1rem, 2.6vh, 1.9rem);
+    padding-right: clamp(1.5rem, 3.5vw, 3.5rem);
+  }
+
+  .about-plan {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 0.9fr);
+    align-items: start;
+  }
+
+  /* Innerhalb von .about-left sortiert der Fluss, nicht das Raster. */
+  .about-identity,
+  .about-statement,
+  .about-annotations,
+  .about-hobbies {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .about-plate {
+    grid-column: 2;
+    grid-row: 1;
+    width: min(33vw, calc(50svh * 1.266));
+  }
+
+  .about-annotations {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: start;
+    padding-left: clamp(2rem, 4vw, 4rem);
   }
 }
 
@@ -119,6 +362,9 @@
   position: relative;
   padding-top: clamp(3rem, 8vh, 5rem);
   padding-bottom: clamp(4rem, 10vh, 7rem);
+  /* Schwarz auch im gestapelten Fallback (kein Iris-Zoom) — die Section
+     darunter bleibt cream für die Desk-Letterbox während der Zoom-Phase. */
+  background-color: #000000;
 }
 
 /* Die Bühne selbst ist in beiden Kontexten gleich gebaut — quer wie hochkant
@@ -158,14 +404,15 @@
   .about-content {
     position: absolute;
     inset: 0;
+    z-index: 4;
     display: flex;
     align-items: center;
-    /* Trägt die Blende: die Ebene ist deckend cremefarben und wird per
-       clip-path aus der Mitte aufgezogen. Ohne eigenen Grund wäre die
-       wachsende Kugel unsichtbar, weil die Szene darunter durchschiene.
+    /* Trägt die Blende: die Ebene ist deckend schwarz und wird per
+       clip-path aus der Mitte aufgezogen (kleiner Punkt im Monitor).
+       Ohne eigenen Grund wäre die wachsende Kugel unsichtbar.
        GSAP setzt den geschlossenen Startzustand — bleibt JS aus, steht hier
        der Inhalt sichtbar statt versteckt. */
-    background-color: #f2ede4;
+    background-color: #000000;
   }
 }
 
@@ -213,10 +460,10 @@
     padding-bottom: clamp(1.5rem, 4vh, 2.5rem);
   }
 
-  /* Gestapelt bindet die Breite, in der Blende die Höhe: Portrait, Manifest
-     und Faktenzeile müssen zusammen in eine 100svh-Bühne passen. Ohne den
-     svh-Term schöbe das Portrait auf flachen Fenstern die Fakten heraus. */
-  .about-figure {
-    width: min(42vw, calc(24svh * 1.266));
+  /* Gestapelt bindet die Breite, in der Blende die Höhe: Platte, Name, Auszüge
+     und Schriftfeld müssen zusammen in eine 100svh-Bühne passen. Ohne den
+     svh-Term schöbe die Platte auf flachen Fenstern das Schriftfeld heraus. */
+  .about-plate {
+    width: min(46vw, calc(22svh * 1.266));
   }
 }

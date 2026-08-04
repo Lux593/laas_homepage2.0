@@ -39,28 +39,39 @@
       clamp(1.5rem, 4vh, 2.5rem)
   );
   bottom: clamp(2.75rem, 8vh, 5rem);
-  width: min(72%, 56rem);
+  /* Linke Grid-Spalte (1.25fr von 2.15fr) — Bild darin zentrieren */
+  width: calc(
+    (100% - max(var(--container-padding), env(safe-area-inset-left)) -
+      max(var(--container-padding), env(safe-area-inset-right))) * (1.25 / 2.15)
+  );
   z-index: 0;
   display: flex;
-  align-items: stretch;
+  align-items: center;
+  justify-content: center;
   pointer-events: none;
+  /* Darf nach oben hinter den Header laufen (Header liegt per z-index darüber) */
   overflow: visible;
 }
 
+/* Zeichnung ist hochformatig — größer, mittig im linken Slot. */
 .services-landscape--desktop {
-  width: 100%;
-  height: 100%;
-  /* Rechts stark hinter die Copy; links/oben/unten nur 3% Auslauf */
+  align-self: center;
+  flex: 0 0 auto;
+  height: min(100%, 52rem);
+  width: auto;
+  max-width: 100%;
+  aspect-ratio: 1200 / 1697;
+  transform: scale(1.55);
+  transform-origin: center center;
+  /* Nur noch Kanten-Auslauf: die Ordnung rechts soll sichtbar bleiben */
   -webkit-mask-image:
     linear-gradient(
       to right,
       transparent 0%,
       rgba(0, 0, 0, 0.55) 1.2%,
-      #000 3%,
-      #000 42%,
-      rgba(0, 0, 0, 0.82) 60%,
-      rgba(0, 0, 0, 0.38) 78%,
-      rgba(0, 0, 0, 0.1) 90%,
+      #000 4%,
+      #000 90%,
+      rgba(0, 0, 0, 0.55) 97%,
       transparent 100%
     ),
     linear-gradient(
@@ -78,11 +89,9 @@
       to right,
       transparent 0%,
       rgba(0, 0, 0, 0.55) 1.2%,
-      #000 3%,
-      #000 42%,
-      rgba(0, 0, 0, 0.82) 60%,
-      rgba(0, 0, 0, 0.38) 78%,
-      rgba(0, 0, 0, 0.1) 90%,
+      #000 4%,
+      #000 90%,
+      rgba(0, 0, 0, 0.55) 97%,
       transparent 100%
     ),
     linear-gradient(
@@ -101,28 +110,28 @@
   mask-repeat: no-repeat;
 }
 
-.services-landscape > img,
-.services-landscape > video {
-  object-fit: cover;
+/* multiply: Das Weiß der Zeichnung geht im Creme auf, nur die Linien bleiben. */
+.services-landscape > img {
+  object-fit: contain;
   object-position: center center;
-  transform: scale(1.08);
-  transform-origin: center center;
+  mix-blend-mode: multiply;
 }
 
 .services-landscape--stack {
-  height: min(58vw, 22rem);
-  width: min(78vw, 24rem);
+  height: min(88vw, 24rem);
+  width: auto;
+  aspect-ratio: 1200 / 1697;
   margin-left: max(var(--container-padding), env(safe-area-inset-left));
   -webkit-mask-image: linear-gradient(
     to right,
     #000 0%,
-    #000 55%,
+    #000 88%,
     transparent 100%
   );
   mask-image: linear-gradient(
     to right,
     #000 0%,
-    #000 55%,
+    #000 88%,
     transparent 100%
   );
 }

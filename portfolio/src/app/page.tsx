@@ -4,6 +4,7 @@ import Hero from "@/components/sections/Hero";
 import Services from "@/components/sections/Services";
 import About from "@/components/sections/About";
 import SelectedWork from "@/components/sections/SelectedWork";
+import Clients from "@/components/sections/Clients";
 import Process from "@/components/sections/Process";
 import GiganticCTA from "@/components/sections/GiganticCTA";
 
@@ -26,11 +27,12 @@ export default function Home() {
 
         <Process />
 
-        {/* Cream über dunklem Prozess; About folgt flach ohne zweites Panel-Slide. */}
+        {/* Cream über dunklem Prozess; schwarzer Kunden-Balken trennt zu About. */}
         <SelectedWork />
+        <Clients />
 
-        {/* Keine Divider um „Über mich": Cream-Naht zu Projekte ist flach —
-            About besitzt nur noch die untere Kante Richtung CTA. */}
+        {/* About behält flachen Cream-Einstieg (kein Top-Radius) nach dem Balken —
+            nur noch die untere Kante Richtung CTA. */}
         <About />
 
         <GiganticCTA />

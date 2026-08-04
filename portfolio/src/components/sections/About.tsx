@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { CustomEase } from "gsap/CustomEase";
 import TextReveal from "@/components/ui/TextReveal";
 import { useLightSection } from "@/hooks/useLightSection";
-import { ABOUT_FACTS, MANIFESTO_TEXT } from "@/lib/constants";
+import {
+  ABOUT_HOBBIES,
+  ABOUT_INTRO,
+  ABOUT_PORTRAIT,
+  ABOUT_ROLES,
+  ABOUT_TOOLS,
+} from "@/lib/constants";
 import "./about/about.css";
 
 gsap.registerPlugin(ScrollTrigger, CustomEase);
@@ -22,6 +28,11 @@ const IRIS_EASE = CustomEase.create("aboutIris", "M0,0 C0.76,0 0.24,1 1,1");
  *  lässt also überall dieselbe kleine Reserve. */
 const IRIS_OPEN = "circle(78% at 50% 50%)";
 const IRIS_CLOSED = "circle(0% at 50% 50%)";
+
+/** Startfarbe der Iris — dasselbe Hellgrau wie der gezoomte LAAS-Schriftzug
+ *  auf dem Monitor (liftapp.png @ 0.32 auf heller Bildschirmfläche). Wird beim
+ *  Ausbreiten zu #000, noch bevor die Kugel groß ist. */
+const IRIS_GREY = "#dddcd8";
 
 /**
  * Lage der Monitor-Bildschirmfläche innerhalb von
@@ -45,7 +56,23 @@ export default function About() {
   const targetRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  useLightSection(sectionRef);
+  /** Welche Rolle gerade angetippt/gehovert ist. Nur wirksam, wenn die Rolle in
+   *  den Konstanten ein eigenes Foto trägt — sonst bleibt die Platte stehen. */
+  const [activeRole, setActiveRole] = useState<number | null>(null);
+
+  // Cream only while the desk sketch is visible. Once the black iris opens
+  // (ZOOM_END of the scrub), nav flips back to dark chrome.
+  useLightSection(sectionRef, {
+    end: () => {
+      const track = trackRef.current;
+      if (!track) return "bottom top+=40";
+      const mobile =
+        window.matchMedia("(max-width: 767px)").matches &&
+        window.matchMedia("(min-height: 660px)").matches;
+      const zoomEnd = mobile ? ZOOM_END.mobile : ZOOM_END.desktop;
+      return `top+=${track.offsetHeight * zoomEnd} top+=40`;
+    },
+  });
 
   useEffect(() => {
     const mm = gsap.matchMedia();
@@ -74,7 +101,10 @@ export default function About() {
 
         const groups = gsap.utils.toArray<HTMLElement>(".about-in", content);
         gsap.set(groups, { opacity: 0, y: 32 });
-        gsap.set(content, { clipPath: IRIS_CLOSED });
+        gsap.set(content, {
+          clipPath: IRIS_CLOSED,
+          backgroundColor: IRIS_GREY,
+        });
 
         // Wird bei jedem Refresh neu hergeleitet: die Skizze ist in vw/svh
         // dimensioniert, also wandern Zielgröße UND Außermittigkeit mit dem
@@ -174,17 +204,25 @@ export default function About() {
           // Die Blende: erst wenn der Zoom das Icon in die Mitte gelegt hat
           // (zoomEnd), wächst die Kugel aus genau diesem Punkt — sonst öffnet
           // die nächste Seite zentriert, während das Icon noch versetzt sitzt.
+          // Farbe läuft über die ersten 40 % der Clip-Dauer: startet im
+          // LAAS-Grau, ist bei 40 % Ausbreitung schwarz — danach wächst nur
+          // noch die schwarze Fläche.
           .fromTo(
             content,
-            { clipPath: IRIS_CLOSED },
+            { clipPath: IRIS_CLOSED, backgroundColor: IRIS_GREY },
             { clipPath: IRIS_OPEN, ease: IRIS_EASE, duration: 0.2 },
+            zoomEnd
+          )
+          .to(
+            content,
+            { backgroundColor: "#000000", ease: "power2.in", duration: 0.08 },
             zoomEnd
           )
           // Läuft wie im Sidebar-Overlay leicht versetzt in der offenen Blende mit,
           // statt danach als zweite, eigene Bewegung.
           .to(
             groups,
-            { opacity: 1, y: 0, ease: "power3.out", duration: 0.14, stagger: 0.055 },
+            { opacity: 1, y: 0, ease: "power3.out", duration: 0.14, stagger: 0.05 },
             zoomEnd + 0.04
           );
       }
@@ -196,11 +234,13 @@ export default function About() {
   return (
     // Cream-Fortsetzung nach Projekte: kein Top-Radius/Aufwärtsschatten —
     // sonst entstünde ein zweites Panel-Slide auf derselben Cream-Fläche.
-    // Unten bleibt der Radius + Schatten Richtung CTA.
+    // Die Iris (.about-content) ist schwarz; die Section bleibt cream, damit
+    // die Skizze oben/unten nicht von schwarzen Letterbox-Balken gerahmt wird.
+    // Unten weicher Schatten Richtung CTA (weniger hart als zuvor).
     <section
       id="about"
       ref={sectionRef}
-      className="relative z-10 rounded-b-[1.5rem] bg-[#f2ede4] text-[#0a0a0a] shadow-[0_40px_80px_-24px_rgba(0,0,0,0.6)] md:rounded-b-[2rem]"
+      className="relative z-10 rounded-b-[1.5rem] bg-[#f2ede4] text-[#0a0a0a] shadow-[0_32px_64px_-28px_rgba(0,0,0,0.35)] md:rounded-b-[2rem]"
     >
       <div ref={trackRef} className="about-track">
         <div ref={stageRef} className="about-stage">
@@ -271,53 +311,154 @@ export default function About() {
             </div>
           </div>
 
-          <div ref={contentRef} className="about-content">
-            <div className="work-container w-full">
-              {/* Vorlage: Copy links, Portrait groß rechts. Die Spalten werden
-                  explizit gesetzt statt über die DOM-Reihenfolge — gestapelt
-                  soll das Gesicht weiter oben stehen, auf Desktop rechts. */}
-              <div className="about-in grid items-center gap-8 md:grid-cols-[1fr_auto] md:gap-12 lg:gap-16">
-                <div className="about-figure justify-self-center bg-[#f2ede4] md:col-start-2 md:row-start-1 md:justify-self-end">
-                  <Image
-                    src="/personal_pic.jpg"
-                    alt="Luca Arnoldi"
-                    width={1206}
-                    height={953}
-                    sizes="(max-width: 768px) 60vw, 36vw"
-                    className="about-portrait h-auto w-full"
-                  />
+          <div ref={contentRef} className="about-content text-[#f2ede4]">
+            <div className="work-container flex w-full flex-col">
+              {/* Annotiertes Porträt: die Platte in der Mitte ist der Anker,
+                  links steht wer das ist, rechts hängen die Rollen als
+                  beschriftete Auszüge daran. Dieselbe Zeichnungssprache wie die
+                  Bauzeichnung in „Leistungen" — Hairline, Punkt, Beschriftung. */}
+              <div className="about-plan">
+                {/* Auf schmalen Fenstern lösen sich diese drei per
+                    `display: contents` aus dem Wrapper und ordnen sich einzeln
+                    im Raster ein — nur so steht das Porträt dort neben dem
+                    Namen statt darunter, und alles passt in eine Blende. */}
+                <div className="about-left">
+                  <div className="about-in about-identity">
+                    <p className="font-mono text-[0.7rem] uppercase tracking-[0.24em] text-[#f2ede4]/50">
+                      {ABOUT_INTRO.greeting}
+                    </p>
+                    {/* Zwei Zeilen statt einer: der Name trägt den Grad, den
+                        die Section vorher gar nicht ausgespielt hat. */}
+                    <h3 className="about-name mt-[clamp(0.5rem,1.4vh,0.9rem)] font-display text-[clamp(2.15rem,5.4vw,4.75rem)] font-bold uppercase leading-[0.86] tracking-[-0.04em]">
+                      {ABOUT_INTRO.name.split(" ").map((part) => (
+                        <span key={part} className="block">
+                          {part}
+                        </span>
+                      ))}
+                    </h3>
+                  </div>
+
+                  <p className="about-in about-statement max-w-[34ch] font-body text-body-md leading-relaxed text-[#f2ede4]/70">
+                    {ABOUT_INTRO.subtitle}
+                  </p>
+
+                  {/* Reine Wortreihe, keine Aufzählungszeichen — der Abstand
+                      trennt. */}
+                  <div className="about-in about-hobbies">
+                    <p className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-[#f2ede4]/50">
+                      Hobbys
+                    </p>
+                    <ul className="about-hobby-list mt-[clamp(0.7rem,1.8vh,1.1rem)] font-body text-body-sm text-[#f2ede4]/70">
+                      {ABOUT_HOBBIES.map((hobby) => (
+                        <li key={hobby}>{hobby}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
 
-                <p className="max-w-[26ch] font-display text-[clamp(1.35rem,2.7vw,2.5rem)] font-bold leading-[1.15] tracking-[-0.03em] text-balance md:col-start-1 md:row-start-1">
-                  {MANIFESTO_TEXT}
-                </p>
+                <figure className="about-in about-plate">
+                  <Image
+                    src={ABOUT_PORTRAIT.src}
+                    alt={ABOUT_PORTRAIT.alt}
+                    width={ABOUT_PORTRAIT.width}
+                    height={ABOUT_PORTRAIT.height}
+                    sizes="(max-width: 767px) 62vw, (max-width: 1023px) 42vw, 36vw"
+                    className="about-plate-img"
+                    priority={false}
+                  />
+                  {/* Sobald eine Rolle in den Konstanten ein eigenes Foto trägt,
+                      liegt es hier vorbereitet auf der Platte und wird beim
+                      Hovern der Annotation aufgeblendet — kein Nachladeruckeln.
+                      Ohne solche Fotos rendert diese Schleife nichts. */}
+                  {ABOUT_ROLES.map((role, index) =>
+                    role.image ? (
+                      <Image
+                        key={role.company}
+                        src={role.image}
+                        alt={role.imageAlt ?? ""}
+                        width={ABOUT_PORTRAIT.width}
+                        height={ABOUT_PORTRAIT.height}
+                        sizes="(max-width: 767px) 62vw, (max-width: 1023px) 42vw, 36vw"
+                        className="about-plate-img about-plate-alt"
+                        data-shown={activeRole === index ? "" : undefined}
+                        aria-hidden={activeRole !== index}
+                      />
+                    ) : null
+                  )}
+                </figure>
+
+                <div className="about-in about-annotations">
+                  <p className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-[#f2ede4]/50">
+                    Was ich gerade beruflich mache
+                  </p>
+                  <ul className="about-roles mt-[clamp(0.85rem,2vh,1.35rem)]">
+                    {ABOUT_ROLES.map((role, index) => (
+                      <li
+                        key={role.company}
+                        className="about-role"
+                        data-active={activeRole === index ? "" : undefined}
+                        // Nur Rollen mit eigenem Foto reagieren. Ohne Bild gäbe
+                        // es einen Hover-Zustand, der nichts tut.
+                        onMouseEnter={() => role.image && setActiveRole(index)}
+                        onMouseLeave={() =>
+                          setActiveRole((current) => (current === index ? null : current))
+                        }
+                        onFocus={() => role.image && setActiveRole(index)}
+                        onBlur={() =>
+                          setActiveRole((current) => (current === index ? null : current))
+                        }
+                        tabIndex={role.image ? 0 : undefined}
+                      >
+                        <div className="about-role-body min-w-0">
+                          <p className="font-display text-body-sm font-semibold leading-tight text-[#f2ede4] md:text-body-md">
+                            {role.company}
+                          </p>
+                          <p className="mt-1.5 font-body text-caption leading-relaxed text-[#f2ede4]/60">
+                            {role.position}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
 
-              <dl className="about-in mt-[clamp(2rem,5vh,3.25rem)] grid grid-cols-2 gap-x-8 gap-y-6 border-t border-[rgba(10,10,10,0.14)] pt-[clamp(1.25rem,3vh,2rem)] md:grid-cols-4">
-                {ABOUT_FACTS.map((fact) => (
-                  <div key={fact.label}>
-                    <dt className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-[#5f574e]">
-                      {fact.label}
-                    </dt>
-                    {/* overflow-wrap: anywhere, weil die Mail-Adresse ein
-                        einziges unteilbares Wort ist: in der zweispaltigen
-                        Faktenzeile ist die Spalte auf 320px nur 120px breit,
-                        die 164px Adresse liefen bisher aus dem Bild. */}
-                    <dd className="mt-2 font-display text-[clamp(0.95rem,1.15vw,1.15rem)] font-bold leading-snug tracking-tight [overflow-wrap:anywhere]">
-                      {fact.href ? (
-                        <a
-                          href={fact.href}
-                          className="inline-block py-1 underline decoration-[rgba(10,10,10,0.25)] decoration-1 underline-offset-4 transition-colors duration-300 hover:decoration-[#0a0a0a]"
-                        >
-                          {fact.value}
-                        </a>
-                      ) : (
-                        fact.value
-                      )}
-                    </dd>
-                  </div>
-                ))}
-              </dl>
+              {/* Schriftfeld: in einer technischen Zeichnung steht unten am Rand,
+                  womit gezeichnet wurde. Hier eben mit diesen Werkzeugen. */}
+              <div className="about-in about-titleblock">
+                <p className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-[#f2ede4]/50">
+                  Tools die ich mag
+                </p>
+                <ul className="about-tools">
+                  {ABOUT_TOOLS.map((tool) => (
+                    <li key={tool.name}>
+                      <a
+                        href={tool.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="about-tool"
+                        data-cursor-hover
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={tool.icon}
+                          alt=""
+                          width={28}
+                          height={28}
+                          className="about-tool-icon"
+                        />
+                        {/* Auf dem Handy stünden sieben beschriftete Einträge
+                            in drei Zeilen — die Blende hat die Höhe nicht. Die
+                            Marken sind erkennbar, der Name bleibt für
+                            Screenreader da und kommt ab sm zurück. */}
+                        <span className="about-tool-name sr-only font-mono text-[0.65rem] uppercase tracking-[0.14em] sm:not-sr-only">
+                          {tool.name}
+                        </span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           </div>
         </div>

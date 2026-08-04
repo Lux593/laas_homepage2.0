@@ -34,9 +34,13 @@ const nextConfig: NextConfig = {
   },
 
   turbopack: {
-    // Parent repo has a leftover package-lock.json; without this, Next
-    // resolves modules from the monorepo root and misses portfolio deps.
+    // Pin workspace root to portfolio/. Next otherwise walks up to the git
+    // parent (or a leftover lockfile) and CSS @import "tailwindcss" fails
+    // because deps live only under portfolio/node_modules (Next #92452).
     root: path.join(__dirname),
+    resolveAlias: {
+      tailwindcss: path.join(__dirname, "node_modules/tailwindcss"),
+    },
     rules: {
       "*.glsl": { loaders: ["raw-loader"], as: "*.js" },
       "*.vert": { loaders: ["raw-loader"], as: "*.js" },

@@ -1,5 +1,8 @@
 # dependencies
 node_modules
+# npm lockfile at repo root confuses Next/Turbopack root detection;
+# the app uses pnpm (portfolio/pnpm-lock.yaml) only.
+/package-lock.json
 
 # build artefacts (Altlasten aus der Zeit vor dem Umzug nach portfolio/)
 .next/

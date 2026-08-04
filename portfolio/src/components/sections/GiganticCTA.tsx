@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useEffect } from "react";
+import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import TextReveal from "@/components/ui/TextReveal";
@@ -117,21 +118,34 @@ export default function GiganticCTA() {
             schreib mir - dann starten wir.
           </TextReveal>
 
-          <MagneticButton>
-            <a
-              href={`mailto:${SITE_CONFIG.email}`}
-              className="inline-flex items-center gap-3 px-10 py-5 text-body-md font-display font-bold tracking-tight rounded-full transition-colors duration-500 ease-out-expo group"
-              style={{
-                backgroundColor: "#0a0a0a",
-                color: "#f0ede8",
-              }}
-            >
-              Projekt starten
-              <span className="inline-block transition-transform duration-500 ease-out-expo group-hover:translate-x-1">
-                →
-              </span>
-            </a>
-          </MagneticButton>
+          {/* relative + absolute cow: Button bleibt optisch zentriert,
+              die Kuh hängt als Easter Egg links daneben ohne Layout-Shift. */}
+          <div className="relative inline-flex items-center justify-center">
+            <Image
+              src="/cow-easter-egg.png"
+              alt=""
+              width={670}
+              height={650}
+              aria-hidden
+              draggable={false}
+              className="pointer-events-none absolute right-[calc(100%+1.25rem)] top-1/2 w-[5rem] -translate-y-[48%] select-none sm:right-[calc(100%+1.75rem)] sm:w-[6.25rem] md:right-[calc(100%+2.25rem)] md:w-[7.5rem]"
+            />
+            <MagneticButton>
+              <a
+                href={`mailto:${SITE_CONFIG.email}`}
+                className="inline-flex items-center gap-3 px-10 py-5 text-body-md font-display font-bold tracking-tight rounded-full transition-colors duration-500 ease-out-expo group"
+                style={{
+                  backgroundColor: "#0a0a0a",
+                  color: "#f0ede8",
+                }}
+              >
+                Projekt starten
+                <span className="inline-block transition-transform duration-500 ease-out-expo group-hover:translate-x-1">
+                  →
+                </span>
+              </a>
+            </MagneticButton>
+          </div>
 
           {/* Umbruchfähig und mit engerem Abstand: die drei Namen plus 2×2rem
               Lücke ergaben eine Mindestbreite von 330px, an der die ganze
@@ -139,7 +153,7 @@ export default function GiganticCTA() {
               pointer-coarse:min-h-11 macht aus den 18px hohen Zeilen ein
               44px-Tippziel — an der Eingabeart festgemacht, nicht an der
               Breite, sonst hätte das Handy im Querformat wieder Mausmaße. */}
-          <div className="mt-14 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 md:mt-16 md:gap-x-8">
+          <div className="mt-24 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 md:mt-28 md:gap-x-8">
             {Object.entries(SITE_CONFIG.socials).map(([platform, url]) => (
               <a
                 key={platform}

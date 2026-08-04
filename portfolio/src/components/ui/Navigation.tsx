@@ -15,7 +15,7 @@ export default function Navigation() {
     const tween = gsap.fromTo(
       navRef.current,
       { y: -100, opacity: 0 },
-      { y: 0, opacity: 1, duration: 1, delay: 2.5, ease: "expo.out" }
+      { y: 0, opacity: 1, duration: 0.8, delay: 0.65, ease: "expo.out" }
     );
     return () => { tween.kill(); };
   }, []);

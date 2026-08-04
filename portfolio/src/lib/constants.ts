@@ -14,8 +14,63 @@ export const SITE_CONFIG = {
   },
 } as const;
 
-export const MANIFESTO_TEXT =
-  "Ich verstehe dein Problem und löse es mit Code. Kurze Wege und ehrliche Kommunikation. Ich baue dir, was du brauchst – ohne bla bla.";
+/** Anrede und Name stehen getrennt, weil sie in der Iris zwei Typo-Grade sind:
+ *  die Anrede klein über dem Namen im Displaygrad. */
+export const ABOUT_INTRO = {
+  greeting: "Hey, ich bin",
+  name: "Luca Arnoldi",
+  subtitle:
+    "Ich interessiere mich für Technik, KI und das ganze verrückte Zeug.",
+} as const;
+
+export interface AboutRole {
+  company: string;
+  position: string;
+  /**
+   * Optionales Porträt für genau diese Rolle. Steht hier ein Pfad, wechselt die
+   * Platte in „Über mich", sobald die Annotation gehovert oder fokussiert wird
+   * — ein Gesicht, drei Leben. Fehlt der Pfad, bleibt ABOUT_PORTRAIT stehen;
+   * die Section funktioniert vollständig mit einem einzigen Foto.
+   */
+  image?: string;
+  /** Nur nötig, wenn `image` gesetzt ist: was auf dem Foto zu sehen ist. */
+  imageAlt?: string;
+}
+
+/** Standardbild der Platte. Freigestellt ist es nicht — der weiße Studiogrund
+ *  verschmilzt per `mix-blend-mode: multiply` mit der Cremeplatte, genau wie
+ *  die Bauzeichnung in „Leistungen" im Cremegrund der Section verschwindet. */
+export const ABOUT_PORTRAIT = {
+  src: "/personal_pic.jpg",
+  width: 1206,
+  height: 953,
+  alt: "Luca Arnoldi",
+} as const;
+
+/** Beruflicher Werdegang — hängt als Annotation rechts an der Porträtplatte. */
+export const ABOUT_ROLES: AboutRole[] = [
+  {
+    company: "Feldschlösschen Getränke AG",
+    position: "Teamleiter Logistic System & Process Development",
+  },
+  {
+    company: "mobileObjects GmbH",
+    position: "Full Stack Developer (Teilzeit)",
+  },
+  {
+    company: "LAAS – Luca Arnoldi App Solutions",
+    position: "Selbstständig",
+  },
+];
+
+/** Hobbys unter der Vita in „Über mich". */
+export const ABOUT_HOBBIES = [
+  "Programmieren",
+  "Smart Home",
+  "Fussball",
+  "Sport",
+  "Netflix & Co.",
+];
 
 /** Section-Header + linke Spalte der Leistungen-Aufteilung. */
 export const SERVICES_INTRO = {
@@ -25,23 +80,62 @@ export const SERVICES_INTRO = {
   statement: "Wenn Standardtools nicht reichen, baue ich dir den Weg.",
   support:
     "Software, die passt. Prozesse, die laufen. KI, die wirklich hilft: klar, direkt, ohne Theater.",
-  /** Papier-Landschaft (Halbkreis links) — gleiches Loop-Muster wie Prozess-Clips. */
-  video: "/services/landscape.mp4",
-  poster: "/services/landscape-poster.webp",
+  /** Bauzeichnung „Transition from Disorder to Efficiency" — Chaos links, Ordnung rechts. */
+  visual: "/services/disorder-to-efficiency.webp",
 } as const;
 
-export interface AboutFact {
-  label: string;
-  value: string;
-  href?: string;
+export interface AboutTool {
+  name: string;
+  icon: string;
+  url: string;
 }
 
-/** Faktenzeile unter dem Manifest-Satz in „Über mich". */
-export const ABOUT_FACTS: AboutFact[] = [
-  { label: "Rolle", value: "Fullstack Developer" },
-  { label: "Fokus", value: "Web-Apps & KI-Integration" },
-  { label: "Stack", value: "Next.js · TypeScript · Supabase" },
-  { label: "Erreichbar", value: SITE_CONFIG.email, href: `mailto:${SITE_CONFIG.email}` },
+/** Tools-Zeile unter dem Manifest-Satz in „Über mich". */
+export const ABOUT_TOOLS: AboutTool[] = [
+  { name: "Cursor AI", icon: "/cursor-icon-white.svg", url: "https://www.cursor.com" },
+  { name: "Claude AI", icon: "/anthropic-icon.svg", url: "https://claude.ai" },
+  { name: "n8n", icon: "/n8n-icon.svg", url: "https://n8n.io" },
+  { name: "Supabase", icon: "/supabase-icon.svg", url: "https://supabase.com" },
+  { name: "GitHub", icon: "/github-icon.svg", url: "https://github.com" },
+  { name: "Spotify", icon: "/spotify-icon.svg", url: "https://www.spotify.com" },
+  { name: "YouTube", icon: "/youtube-icon.svg", url: "https://www.youtube.com" },
+];
+
+export interface ClientTickerItem {
+  name: string;
+  /** Vorhandenes Kunden-Logo; fehlt → Platzhalter vor dem Namen. */
+  icon?: string;
+  /**
+   * Extra Klassen fürs Logo im Icon-Slot
+   * (Crop/Zoom gegen schwarzen Bildrand / feine Striche).
+   */
+  iconClass?: string;
+  /** Override für den Slot (z. B. Querformat bei Wordmarks). */
+  slotClass?: string;
+}
+
+/** Kunden-Ticker zwischen Projekte und Über mich. */
+export const CLIENTS: ClientTickerItem[] = [
+  {
+    name: "Harley Davidson Powershop",
+    icon: "/power-shop-icon.svg",
+  },
+  {
+    name: "Intersport Gemo",
+    icon: "/intersport-gemo-logo.png",
+    // Querformat: volles Logo sichtbar, kein Square-Crop.
+    slotClass: "w-[8.5rem] md:w-[10.5rem]",
+    iconClass: "object-contain scale-[1.15]",
+  },
+  {
+    name: "Mobile Objects",
+    icon: "/mobileobjects-logo.png",
+    // Marke sitzt oben; Wordmark unten abschneiden, Icon vergrößern.
+    iconClass: "object-cover object-[center_22%] scale-[2.4]",
+  },
+  { name: "Für Privatkunden" },
+  { name: "Ash Projects" },
+  { name: "La Cilentana Pastamanufaktur" },
 ];
 
 export interface ProjectFeature {
@@ -335,22 +429,6 @@ export const SERVICES: Service[] = [
     description:
       "KI dort einbauen, wo sie echten Hebel hat: in bestehende Produkte und Workflows, nicht als Spielerei.",
   },
-];
-
-export interface TechItem {
-  name: string;
-  icon: string;
-  url: string;
-}
-
-export const TECH_STACK: TechItem[] = [
-  { name: "n8n", icon: "/n8n-icon.svg", url: "https://n8n.io" },
-  { name: "Supabase", icon: "/supabase-icon.svg", url: "https://supabase.com" },
-  { name: "Hostinger", icon: "/hostinger-icon.svg", url: "https://www.hostinger.com" },
-  { name: "Cursor AI", icon: "/cursor-icon-white.svg", url: "https://www.cursor.com" },
-  { name: "GitHub", icon: "/github-icon.svg", url: "https://github.com" },
-  { name: "Spotify", icon: "/spotify-icon.svg", url: "https://www.spotify.com" },
-  { name: "YouTube", icon: "/youtube-icon.svg", url: "https://www.youtube.com" },
 ];
 
 export const NAV_ITEMS = [

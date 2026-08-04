@@ -15,6 +15,9 @@ gsap.registerPlugin(ScrollTrigger);
 const TOTAL = String(SERVICES.length).padStart(2, "0");
 const CHAPTER = 1 / SERVICES.length;
 
+/** Seitlicher Einzug des einfahrenden Balkens in Prozent — bündig zur Hero-Copy. */
+const ENTER_INSET = 9;
+
 function titleLines(title: string) {
   const parts = title.trim().split(/\s+/);
   if (parts.length < 2) return [title];
@@ -27,7 +30,7 @@ function ServicesHeader({
   counterRef?: RefObject<HTMLSpanElement | null>;
 }) {
   return (
-    <header className="work-container w-full shrink-0 pt-[clamp(4rem,8vh,5.5rem)] pb-[clamp(0.875rem,2vh,1.375rem)]">
+    <header className="work-container relative z-20 w-full shrink-0 pt-[clamp(4rem,8vh,5.5rem)] pb-[clamp(0.875rem,2vh,1.375rem)]">
       <div className="flex items-end justify-between gap-8">
         <div className="min-w-0">
           <span className="mb-2 block font-mono text-caption uppercase tracking-[0.2em] text-[#6a6a6a] lg:mb-3">
@@ -183,6 +186,82 @@ export default function Services() {
 
     const mm = gsap.matchMedia();
 
+    // ── Einfahrt der zweiten Seite ────────────────────────────────────────
+    //
+    // Kein vorauseilender Stummel mehr: die Section selbst kommt als schmaler,
+    // seitlich eingezogener Balken herein und klappt dann auf volle Breite auf.
+    // Die Höhe macht der Scroll von allein — die Oberkante der Section IST die
+    // Oberkante des Balkens. Animiert wird deshalb nur der seitliche Einzug und
+    // der Radius, und zwar über clip-path: box-shadow/Radien am Element würden
+    // beim Aufklappen eine zweite Kante in die Cremefläche zeichnen.
+    mm.add("(prefers-reduced-motion: no-preference)", () => {
+      const section = sectionRef.current;
+      if (!section) return;
+
+      const token = (name: string, fallback: string) =>
+        getComputedStyle(document.documentElement).getPropertyValue(name).trim() ||
+        fallback;
+
+      const wide = window.matchMedia("(min-width: 768px)").matches;
+      const openRadius = wide ? 3 : 2.5;
+      const restRadius = parseFloat(
+        wide ? token("--radius-panel-lg", "2rem") : token("--radius-panel", "1.5rem")
+      );
+
+      // clip-path als Ganzes tweenen geht nicht: Chrome meldet den eingezogenen
+      // Startwert in der Kurzform (`inset(0% 9% round …)`) zurück, GSAP mischt
+      // dann Rechts-Einzug gegen Unten-Einzug und der Radius springt. Also
+      // werden zwei Zahlen getweent und der String selbst geschrieben.
+      const state = { inset: ENTER_INSET, radius: openRadius };
+      const apply = () => {
+        section.style.clipPath =
+          `inset(0% ${state.inset}% 0% ${state.inset}% ` +
+          `round ${state.radius}rem ${state.radius}rem 0px 0px)`;
+      };
+      apply();
+
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: section,
+          start: "top bottom",
+          end: "top 55%",
+          scrub: 0.4,
+          invalidateOnRefresh: true,
+        },
+      });
+
+      // Erst als Balken hereinfahren (Werte stehen still), dann aufklappen.
+      tl.to(state, { duration: 0.45, ease: "none", onUpdate: apply }).to(state, {
+        inset: 0,
+        radius: restRadius,
+        duration: 0.55,
+        ease: "power2.out",
+        onUpdate: apply,
+      });
+
+      // Der Balken fährt leer herein. Sonst steht die Kopfzeile schon in dem
+      // schmalen Streifen und wird von der Clip-Kante mitten im Wort
+      // abgeschnitten — der Inhalt kommt erst, wenn die Fläche fast offen ist.
+      const content = [track, stackRef.current].filter(
+        (el): el is HTMLDivElement => el !== null
+      );
+      if (content.length) {
+        tl.fromTo(
+          content,
+          { opacity: 0 },
+          { opacity: 0, duration: 0.55, ease: "none" },
+          0
+        ).to(content, { opacity: 1, duration: 0.4, ease: "power1.out" }, 0.55);
+      }
+
+      return () => {
+        tl.scrollTrigger?.kill();
+        tl.kill();
+        section.style.clipPath = "";
+        if (content.length) gsap.set(content, { clearProps: "opacity" });
+      };
+    });
+
     // MUSS byte-identisch zur @media-Query für .services-pin--desktop bleiben
     mm.add(
       "(min-width: 1024px) and (prefers-reduced-motion: no-preference)",
@@ -207,10 +286,13 @@ export default function Services() {
   }, []);
 
   return (
+    /* Radius und Schatten als Klassen nur im reduced-motion-Fall: sonst setzt
+       die Einfahrt oben beides über clip-path, und ein zusätzlicher box-shadow
+       würde davon ohnehin weggeschnitten. */
     <section
       id="services"
       ref={sectionRef}
-      className="relative z-10 overflow-x-clip rounded-t-[1.5rem] bg-[#f2ede4] text-[#0a0a0a] shadow-[0_-40px_80px_-24px_rgba(0,0,0,0.8)] md:rounded-t-[2rem]"
+      className="relative z-10 overflow-x-clip bg-panel text-panel-ink motion-reduce:rounded-t-panel motion-reduce:shadow-panel-lift motion-reduce:md:rounded-t-panel-lg"
     >
       <div ref={trackRef} className="services-pin--desktop relative w-full">
         <div className="sticky top-0 z-20 h-[100svh] w-full [backface-visibility:hidden] [transform:translateZ(0)]">

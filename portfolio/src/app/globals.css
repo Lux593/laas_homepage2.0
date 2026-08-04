@@ -40,6 +40,17 @@
   --radius-3xl: 1.5rem;
   --radius-4xl: 2rem;
 
+  /* Panel-Kante — die Cremefläche, die sich über den dunklen Grund schiebt.
+     Kante und Körper leben in verschiedenen Komponenten: die sichtbare
+     Oberkante zeichnet der Stummel im Hero, den Körper die Leistungen-Section.
+     Nur eine von beiden zeichnet sie je gleichzeitig, aber sie müssen exakt
+     dieselbe Fläche ergeben — deshalb stehen die geteilten Werte hier. */
+  --color-panel: #f2ede4;
+  --color-panel-ink: #0a0a0a;
+  --radius-panel: 1.5rem;
+  --radius-panel-lg: 2rem;
+  --shadow-panel-lift: 0 -40px 80px -24px rgba(0, 0, 0, 0.8);
+
   /* Easing */
   --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
   --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);

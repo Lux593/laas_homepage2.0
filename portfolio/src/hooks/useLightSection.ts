@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type RefObject } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
@@ -14,12 +14,25 @@ function apply() {
   document.documentElement.dataset.uiTheme = lightCount > 0 ? "light" : "dark";
 }
 
+type LightSectionOptions = {
+  /** ScrollTrigger `end` — defaults to `"bottom top+=40"`. Use to stop light
+   *  chrome before a dark overlay (e.g. About iris) covers the cream stage. */
+  end?: string | (() => string);
+};
+
 /**
  * Flags the document as "light chrome" (`data-ui-theme="light"` on <html>) while
  * the referenced section owns the top of the viewport, so the fixed white nav and
  * progress bar stay readable over a cream background.
  */
-export function useLightSection(ref: RefObject<HTMLElement | null>) {
+export function useLightSection(
+  ref: RefObject<HTMLElement | null>,
+  options?: LightSectionOptions
+) {
+  // Inline `end` lambdas must not recreate the ScrollTrigger every render.
+  const endRef = useRef(options?.end);
+  endRef.current = options?.end;
+
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -35,11 +48,17 @@ export function useLightSection(ref: RefObject<HTMLElement | null>) {
       apply();
     };
 
+    const resolveEnd = () => {
+      const end = endRef.current;
+      if (typeof end === "function") return end();
+      return end ?? "bottom top+=40";
+    };
+
     const st = ScrollTrigger.create({
       trigger: el,
       // +=40 ≈ the nav's vertical centre (py-5 around a 32px logo)
       start: "top top+=40",
-      end: "bottom top+=40",
+      end: resolveEnd,
       // Resolve after the pin has established this section's final height.
       refreshPriority: -1,
       onToggle: (self) => set(self.isActive),
