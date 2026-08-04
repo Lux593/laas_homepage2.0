@@ -34,6 +34,10 @@ export default function ProcessMedia({
     }
 
     const play = () => {
+      // Im Shuttle liegen alle Clips übereinander — IO sieht auch unsichtbare
+      // Layer. Nicht-aktive nicht anstoßen, sonst laden vier Videos auf einmal.
+      const layer = video.closest<HTMLElement>("[data-process-media]");
+      if (layer && getComputedStyle(layer).opacity === "0") return;
       void video.play().catch(() => {});
     };
 
@@ -42,7 +46,7 @@ export default function ProcessMedia({
         if (entry?.isIntersecting) play();
         else video.pause();
       },
-      { threshold: 0.35 }
+      { threshold: 0.2, rootMargin: "10% 0px" }
     );
 
     io.observe(video);
@@ -73,6 +77,7 @@ export default function ProcessMedia({
           fill
           sizes="(max-width: 1023px) 92vw, 580px"
           className="object-cover"
+          priority={index === 0}
           aria-hidden
         />
         {hasLoop ? (
@@ -82,11 +87,9 @@ export default function ProcessMedia({
             muted
             loop
             playsInline
-            // "none" statt "metadata": mit metadata zog der Browser alle vier
-            // Clips schon beim Seitenaufruf komplett — auf dem Handy 31 MB,
-            // bevor der Prozess-Block überhaupt in Sicht war. Geladen wird
-            // jetzt erst, wenn der Schritt im Bild steht und play() ruft.
-            preload="none"
+            // Erster Schritt: früh laden, damit beim Pin-Eintritt nicht kurz
+            // ein veraltetes/anderes Poster durchscheint. Rest bleibt lazy.
+            preload={index === 0 ? "auto" : "none"}
             aria-label={`${step.subtitle}: kurze Comic-Animation`}
           >
             <source src={step.video} type="video/mp4" />

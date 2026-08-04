@@ -1,108 +1,209 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type RefObject } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import TextReveal from "@/components/ui/TextReveal";
 import { useLightSection } from "@/hooks/useLightSection";
-import { SERVICES, SERVICES_INTRO } from "@/lib/constants";
+import { useStackReveal } from "@/hooks/useStackReveal";
+import { SERVICES, SERVICES_INTRO, type Service } from "@/lib/constants";
+import ServicesLandscape from "@/components/sections/services/ServicesLandscape";
+import "./services/services.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const TOTAL = String(SERVICES.length).padStart(2, "0");
+const CHAPTER = 1 / SERVICES.length;
 
-const THRESHOLDS = [
-  { start: 0, end: 1 / 3 },
-  { start: 1 / 3, end: 2 / 3 },
-  { start: 2 / 3, end: 1 },
-] as const;
+function titleLines(title: string) {
+  const parts = title.trim().split(/\s+/);
+  if (parts.length < 2) return [title];
+  return [parts[0]!, parts.slice(1).join(" ")];
+}
 
-function barHeight(progress: number, start: number, end: number) {
-  if (progress < start) return 0;
-  if (progress > end) return 100;
-  return ((progress - start) / (end - start)) * 100;
+function ServicesHeader({
+  counterRef,
+}: {
+  counterRef?: RefObject<HTMLSpanElement | null>;
+}) {
+  return (
+    <header className="work-container w-full shrink-0 pt-[clamp(4rem,8vh,5.5rem)] pb-[clamp(0.875rem,2vh,1.375rem)]">
+      <div className="flex items-end justify-between gap-8">
+        <div className="min-w-0">
+          <span className="mb-2 block font-mono text-caption uppercase tracking-[0.2em] text-[#6a6a6a] lg:mb-3">
+            {SERVICES_INTRO.eyebrow}
+          </span>
+          <TextReveal
+            as="h2"
+            variant="words"
+            start="top 95%"
+            className="font-display text-[clamp(1.75rem,4vw,3.5rem)] font-bold uppercase leading-[0.95] tracking-tighter text-[#0a0a0a]"
+          >
+            {SERVICES_INTRO.headline}
+          </TextReveal>
+        </div>
+
+        {counterRef ? (
+          <div
+            className="hidden shrink-0 items-baseline gap-2 lg:flex"
+            aria-hidden
+          >
+            <span
+              ref={counterRef}
+              className="font-display text-[clamp(1.5rem,2.4vw,2.25rem)] font-bold leading-none tracking-tighter tabular-nums text-[#0a0a0a]"
+            >
+              01
+            </span>
+            <span className="font-mono text-caption tracking-[0.2em] text-[#6a6a6a]">
+              / {TOTAL}
+            </span>
+          </div>
+        ) : null}
+      </div>
+    </header>
+  );
 }
 
 /**
- * Leistungen — Editorial-Split (Text only) + Scroll-Reveal-Content-A-Motion:
- * sticky Stage, wachsende Progress-Linien, aktive Themen beim Scrollen.
- * Progress über Refs/DOM (kein setState → TextReveal bleibt stabil).
+ * Mobile / reduced-motion: volles Kapitel pro Panel, Lookbook-Typografie.
+ */
+function ServicePanel({
+  service,
+  index,
+  total,
+}: {
+  service: Service;
+  index: number;
+  total: number;
+}) {
+  const lines = titleLines(service.title);
+
+  return (
+    <article className="services-panel relative flex flex-col justify-start">
+      <div className="work-container w-full">
+        <div className="services-panel__inner">
+          <div
+            data-reveal="copy"
+            className="mb-8 flex items-center gap-4"
+            aria-hidden
+          >
+            <span className="font-display text-[clamp(2.5rem,12vw,4rem)] font-bold leading-none tracking-tighter tabular-nums text-[#0a0a0a]/12">
+              {String(index + 1).padStart(2, "0")}
+            </span>
+            <span data-reveal="rule" className="h-px flex-1 bg-[#0a0a0a]/15" />
+            <span className="shrink-0 font-mono text-caption tabular-nums tracking-[0.2em] text-[#0a0a0a]/45">
+              {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+            </span>
+          </div>
+
+          <header data-reveal="copy">
+            <h3 className="services-panel__title font-display font-bold uppercase tracking-tighter text-[#0a0a0a]">
+              {lines.map((line) => (
+                <span key={line} className="block leading-[0.92]">
+                  {line}
+                </span>
+              ))}
+            </h3>
+          </header>
+
+          <p
+            data-reveal="copy"
+            className="mt-7 max-w-[36ch] font-body text-body-md leading-relaxed text-[#5f574e]"
+          >
+            {service.description}
+          </p>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+/**
+ * Leistungen — Lookbook-Theater.
+ *
+ * Desktop: sticky Bühne, asymmetrisches Split, Riesen-Kapiteltypografie,
+ * kontinuierlicher Progress-Scrub, Kapitel-Rail.
+ * Mobile: Stack + useStackReveal, gleiche typografische Sprache.
  */
 export default function Services() {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const counterRef = useRef<HTMLSpanElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const stackRef = useRef<HTMLDivElement>(null);
+  const progressRef = useRef<HTMLDivElement>(null);
 
   useLightSection(sectionRef);
+  useStackReveal(stackRef, { panel: ".services-panel" });
 
   useEffect(() => {
     const track = trackRef.current;
     const stage = stageRef.current;
     if (!track || !stage) return;
 
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const bars = stage.querySelectorAll<HTMLElement>("[data-service-bar]");
-    const items = stage.querySelectorAll<HTMLElement>("[data-service-item]");
-    const marks = stage.querySelectorAll<HTMLElement>("[data-service-mark]");
+    const featured = stage.querySelectorAll<HTMLElement>("[data-featured]");
+    const chapters = stage.querySelectorAll<HTMLElement>("[data-chapter]");
     let lastIndex = -1;
 
-    const apply = (progress: number) => {
-      const activeIndex = progress < 1 / 3 ? 0 : progress < 2 / 3 ? 1 : 2;
-
-      bars.forEach((bar, index) => {
-        const { start, end } = THRESHOLDS[index]!;
-        const fill = barHeight(progress, start, end);
-        bar.style.height = `${Math.max(
-          fill,
-          index === 0 && progress === 0 ? 8 : 0
-        )}%`;
-      });
-
-      items.forEach((item, index) => {
+    const applyActive = (activeIndex: number) => {
+      featured.forEach((layer, index) => {
         const on = index === activeIndex;
-        item.style.opacity = on ? "1" : "0.35";
-        const body = item.querySelector<HTMLElement>("[data-service-body]");
-        if (body) body.style.opacity = on ? "1" : "0.45";
+        layer.classList.toggle("is-active", on);
+        layer.setAttribute("aria-hidden", on ? "false" : "true");
       });
 
-      marks.forEach((mark, index) => {
-        const on = index === activeIndex;
-        mark.style.borderColor = on
-          ? "rgba(10,10,10,0.55)"
-          : "rgba(10,10,10,0.18)";
-        mark.style.backgroundColor = on ? "rgba(10,10,10,0.06)" : "transparent";
+      chapters.forEach((chapter, index) => {
+        chapter.classList.toggle("is-active", index === activeIndex);
       });
 
-      if (activeIndex !== lastIndex) {
-        lastIndex = activeIndex;
-        if (counterRef.current) {
-          counterRef.current.textContent = String(activeIndex + 1).padStart(
-            2,
-            "0"
-          );
-        }
+      if (counterRef.current) {
+        counterRef.current.textContent = String(activeIndex + 1).padStart(
+          2,
+          "0"
+        );
       }
     };
 
-    if (reduce) {
-      apply(1);
-      return;
-    }
+    const applyScrub = (progress: number) => {
+      const activeIndex = Math.min(
+        SERVICES.length - 1,
+        Math.floor(progress / CHAPTER)
+      );
 
-    apply(0);
+      // Kontinuierlicher Progress — pro Frame, nur Transform.
+      if (progressRef.current) {
+        progressRef.current.style.transform = `scaleX(${Math.max(progress, 0.02)})`;
+      }
 
-    const st = ScrollTrigger.create({
-      trigger: track,
-      start: "top top",
-      end: "bottom bottom",
-      scrub: 0.45,
-      onUpdate: (self) => apply(self.progress),
-      invalidateOnRefresh: true,
-      refreshPriority: 1,
-    });
+      if (activeIndex !== lastIndex) {
+        lastIndex = activeIndex;
+        applyActive(activeIndex);
+      }
+    };
 
-    return () => st.kill();
+    const mm = gsap.matchMedia();
+
+    // MUSS byte-identisch zur @media-Query für .services-pin--desktop bleiben
+    mm.add(
+      "(min-width: 1024px) and (prefers-reduced-motion: no-preference)",
+      () => {
+        applyScrub(0);
+
+        const st = ScrollTrigger.create({
+          trigger: track,
+          start: "top top",
+          end: "bottom bottom",
+          scrub: 0.45,
+          onUpdate: (self) => applyScrub(self.progress),
+          invalidateOnRefresh: true,
+          refreshPriority: 1,
+        });
+
+        return () => st.kill();
+      }
+    );
+
+    return () => mm.revert();
   }, []);
 
   return (
@@ -111,130 +212,100 @@ export default function Services() {
       ref={sectionRef}
       className="relative z-10 overflow-x-clip rounded-t-[1.5rem] bg-[#f2ede4] text-[#0a0a0a] shadow-[0_-40px_80px_-24px_rgba(0,0,0,0.8)] md:rounded-t-[2rem]"
     >
-      <div ref={trackRef} className="relative flex w-full">
-        <div className="sticky top-0 z-20 flex h-[100svh] w-full flex-col">
-          <header className="work-container w-full shrink-0 pt-[clamp(4rem,8vh,5.5rem)] pb-[clamp(0.875rem,2vh,1.375rem)]">
-            <div className="flex items-end justify-between gap-8">
-              <div className="min-w-0">
-                <span className="mb-3 block font-mono text-caption uppercase tracking-[0.2em] text-[#6a6a6a]">
-                  {SERVICES_INTRO.eyebrow}
-                </span>
-                <TextReveal
-                  as="h2"
-                  variant="words"
-                  start="top 95%"
-                  className="font-display text-[clamp(1.9rem,4vw,3.5rem)] font-bold uppercase leading-[0.95] tracking-tighter text-[#0a0a0a]"
-                >
-                  {SERVICES_INTRO.headline}
-                </TextReveal>
+      <div ref={trackRef} className="services-pin--desktop relative w-full">
+        <div className="sticky top-0 z-20 h-[100svh] w-full [backface-visibility:hidden] [transform:translateZ(0)]">
+          <div className="flex h-full w-full flex-col overflow-hidden">
+            <ServicesHeader counterRef={counterRef} />
+
+            <div ref={stageRef} className="services-stage work-container">
+              {/* Links: dominante Landschaft */}
+              <div className="services-landscape-slot">
+                <ServicesLandscape className="services-landscape--desktop" />
               </div>
 
-              <div
-                className="hidden shrink-0 items-baseline gap-2 lg:flex"
-                aria-hidden
-              >
-                <span
-                  ref={counterRef}
-                  className="font-display text-[clamp(1.5rem,2.4vw,2.25rem)] font-bold leading-none tracking-tighter tabular-nums text-[#0a0a0a]"
-                >
-                  01
-                </span>
-                <span className="font-mono text-caption tracking-[0.2em] text-[#6a6a6a]">
-                  / {TOTAL}
-                </span>
-              </div>
-            </div>
-          </header>
-
-          <div
-            ref={stageRef}
-            className="work-container grid min-h-0 w-full flex-1 grid-cols-1 items-center pb-10 lg:grid-cols-2"
-          >
-            {/* Links: Statement an der Mittelachse */}
-            <div className="hidden h-full flex-col justify-center border-[#0a0a0a]/12 lg:flex lg:border-r lg:pr-[clamp(2rem,4vw,3.5rem)]">
-              <div className="ml-auto max-w-[28ch] text-right">
-                <p className="text-balance font-serif text-[clamp(1.75rem,3.2vw,2.85rem)] leading-[1.15] tracking-[-0.02em] text-[#0a0a0a]">
-                  {SERVICES_INTRO.statement}
-                </p>
-                <span
-                  aria-hidden
-                  className="mt-6 ml-auto block h-px w-12 bg-[#0a0a0a]/35"
-                />
-                <p className="mt-6 ml-auto max-w-[28ch] font-body text-body-md leading-relaxed text-[#5f574e]">
-                  {SERVICES_INTRO.support}
-                </p>
-              </div>
-            </div>
-
-            {/* Rechts: Themen mit Scroll-Progress */}
-            <div className="flex h-full flex-col justify-center gap-[clamp(1.75rem,4.5vh,2.75rem)] lg:pl-[clamp(2rem,4vw,3.5rem)]">
-              {/* Mobile: Statement über den Punkten */}
-              <div className="mb-2 max-w-[34ch] lg:hidden">
-                <p className="text-balance font-serif text-[clamp(1.5rem,5vw,2rem)] leading-[1.15] tracking-[-0.02em] text-[#0a0a0a]">
-                  {SERVICES_INTRO.statement}
-                </p>
-                <span
-                  aria-hidden
-                  className="mt-4 block h-px w-12 bg-[#0a0a0a]/35"
-                />
-                <p className="mt-4 font-body text-body-sm leading-relaxed text-[#5f574e]">
-                  {SERVICES_INTRO.support}
-                </p>
-              </div>
-
-              {SERVICES.map((service, index) => (
-                <div
-                  key={service.id}
-                  data-service-item
-                  className="flex gap-5 transition-opacity duration-300 md:gap-6"
-                  style={{ opacity: index === 0 ? 1 : 0.35 }}
-                >
-                  <div className="relative flex shrink-0 flex-col items-center">
-                    <span
-                      data-service-mark
-                      aria-hidden
-                      className="relative z-10 flex h-11 w-11 items-center justify-center rounded-full border border-[#0a0a0a]/20 font-display text-body-sm font-bold tracking-tight text-[#0a0a0a] transition-[border-color,background-color] duration-300 md:h-12 md:w-12"
-                      style={{
-                        backgroundColor:
-                          index === 0 ? "rgba(10,10,10,0.06)" : "transparent",
-                        borderColor:
-                          index === 0
-                            ? "rgba(10,10,10,0.55)"
-                            : "rgba(10,10,10,0.18)",
-                      }}
-                    >
-                      {service.mark}
-                    </span>
-                    {/* Progress-Linie unter dem Kreis — Scroll-Kapitel */}
-                    <div className="relative mt-2 w-px flex-1 min-h-[2.5rem]">
-                      <div className="absolute inset-0 bg-[#0a0a0a]/12" />
+              {/* Rechts: Lookbook-Kapitel */}
+              <div className="services-lookbook">
+                <div className="services-featured">
+                  {SERVICES.map((service, index) => {
+                    const lines = titleLines(service.title);
+                    return (
                       <div
-                        data-service-bar
-                        className="absolute top-0 left-0 w-px bg-[#0a0a0a]"
-                        style={{ height: index === 0 ? "8%" : "0%" }}
-                      />
-                    </div>
+                        key={service.id}
+                        data-featured
+                        data-index={index}
+                        className={`services-featured__layer${index === 0 ? " is-active" : ""}`}
+                        aria-hidden={index !== 0}
+                      >
+                        <h3 className="services-featured__title font-display font-bold uppercase tracking-tighter text-[#0a0a0a]">
+                          {lines.map((line) => (
+                            <span key={line} className="block">
+                              {line}
+                            </span>
+                          ))}
+                        </h3>
+                        <p className="services-featured__body font-body text-[#5f574e]">
+                          {service.description}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="services-rail">
+                  <div className="services-rail__track" aria-hidden>
+                    <div
+                      ref={progressRef}
+                      className="services-rail__fill"
+                      style={{ transform: "scaleX(0.02)" }}
+                    />
                   </div>
 
-                  <div className="min-w-0 pt-2">
-                    <h3 className="font-display text-[clamp(1.15rem,1.8vw,1.45rem)] font-bold uppercase leading-[1.1] tracking-tight text-[#0a0a0a]">
-                      {service.title}
-                    </h3>
-                    <p
-                      data-service-body
-                      className="mt-2 max-w-[40ch] font-body text-body-sm leading-relaxed text-[#5f574e] transition-opacity duration-300 md:text-body-md"
-                      style={{ opacity: index === 0 ? 1 : 0.45 }}
-                    >
-                      {service.description}
-                    </p>
-                  </div>
+                  <nav className="services-chapters" aria-label="Leistungen">
+                    {SERVICES.map((service, index) => (
+                      <div
+                        key={service.id}
+                        data-chapter
+                        data-index={index}
+                        className={`services-chapter${index === 0 ? " is-active" : ""}`}
+                      >
+                        <span className="services-chapter__mark font-mono tabular-nums">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <span className="services-chapter__label font-display font-bold uppercase tracking-tight">
+                          {service.title}
+                        </span>
+                      </div>
+                    ))}
+                  </nav>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="pointer-events-none h-[300vh] w-px shrink-0" aria-hidden />
+        <div
+          className="pointer-events-none h-[300vh] w-px shrink-0"
+          aria-hidden
+        />
+      </div>
+
+      <div ref={stackRef} className="services-stack">
+        <ServicesHeader />
+
+        <div className="mt-[clamp(1.25rem,3vh,2.5rem)] w-full">
+          <ServicesLandscape className="services-landscape--stack" />
+        </div>
+
+        <div className="services-track">
+          {SERVICES.map((service, index) => (
+            <ServicePanel
+              key={service.id}
+              service={service}
+              index={index}
+              total={SERVICES.length}
+            />
+          ))}
+        </div>
       </div>
     </section>
   );

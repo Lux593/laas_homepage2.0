@@ -50,11 +50,14 @@ export const metadata: Metadata = {
     title: "Luca Arnoldi — Fullstack Developer",
     description: "Ich baue digitale Erlebnisse, die faszinieren.",
     siteName: "Luca Arnoldi",
+    // Eigenes JPEG statt des Bühnenbilds: Link-Vorschauen laufen über fremde
+    // Scraper, die WebP teils nicht lesen und grosse Dateien verwerfen.
+    // 1200x630 ist das Format, das LinkedIn, Slack und X erwarten.
     images: [
       {
-        url: "/vorschaubilder/office_new.png",
-        width: 2834,
-        height: 1504,
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
         alt: "Luca Arnoldi Portfolio",
       },
     ],
@@ -63,7 +66,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Luca Arnoldi — Fullstack Developer",
     description: "Ich baue digitale Erlebnisse, die faszinieren.",
-    images: ["/vorschaubilder/office_new.png"],
+    images: ["/og-image.jpg"],
   },
   robots: {
     index: true,

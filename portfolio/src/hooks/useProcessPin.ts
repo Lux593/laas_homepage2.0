@@ -167,6 +167,40 @@ export function useProcessPin(stepCount: number) {
           return gsap.utils.clamp(0, steps, index);
         };
 
+        const applyStep = (index: number, animateCounter: boolean) => {
+          if (index === lastIndex) return;
+          const prev = lastIndex;
+          lastIndex = index;
+
+          if (counterRef.current) {
+            const label = String(index + 1).padStart(2, "0");
+            if (!animateCounter || prev < 0) {
+              const digit = counterRef.current.querySelector<HTMLElement>(
+                `[${COUNTER_DIGIT}]`
+              );
+              if (digit) digit.textContent = label;
+              else counterRef.current.textContent = label;
+            } else {
+              rollCounter(
+                counterRef.current,
+                label,
+                index > prev ? 1 : -1
+              );
+            }
+          }
+
+          copies.forEach((copy, i) =>
+            copy.setAttribute("aria-hidden", i === index ? "false" : "true")
+          );
+
+          mediaLayers.forEach((layer, i) => {
+            const video = layer.querySelector("video");
+            if (!video) return;
+            if (i === index) void video.play().catch(() => {});
+            else video.pause();
+          });
+        };
+
         const tl = gsap.timeline({
           defaults: { ease: "none" },
           scrollTrigger: {
@@ -180,43 +214,15 @@ export function useProcessPin(stepCount: number) {
             scrub: 0.65,
             invalidateOnRefresh: true,
             refreshPriority: 1,
-            onUpdate: (self) => {
-              const index = settledIndex(self.progress * totalUnits);
-              if (index === lastIndex) return;
-              const prev = lastIndex;
-              lastIndex = index;
-
-              if (counterRef.current) {
-                const label = String(index + 1).padStart(2, "0");
-                if (prev < 0) {
-                  const digit = counterRef.current.querySelector<HTMLElement>(
-                    `[${COUNTER_DIGIT}]`
-                  );
-                  if (digit) digit.textContent = label;
-                  else counterRef.current.textContent = label;
-                } else {
-                  rollCounter(
-                    counterRef.current,
-                    label,
-                    index > prev ? 1 : -1
-                  );
-                }
-              }
-
-              copies.forEach((copy, i) =>
-                copy.setAttribute(
-                  "aria-hidden",
-                  i === index ? "false" : "true"
-                )
-              );
-
-              mediaLayers.forEach((layer, i) => {
-                const video = layer.querySelector("video");
-                if (!video) return;
-                if (i === index) void video.play().catch(() => {});
-                else video.pause();
-              });
-            },
+            // onUpdate feuert oft erst bei Progress-Änderung — beim Eintritt
+            // in den Pin (progress=0) sonst kein play(), und das Poster bleibt
+            // stehen, bis man weiter scrollt.
+            onEnter: (self) =>
+              applyStep(settledIndex(self.progress * totalUnits), false),
+            onEnterBack: (self) =>
+              applyStep(settledIndex(self.progress * totalUnits), false),
+            onUpdate: (self) =>
+              applyStep(settledIndex(self.progress * totalUnits), true),
           },
         });
 
@@ -302,6 +308,8 @@ export function useProcessPin(stepCount: number) {
         }
 
         requestAnimationFrame(() => {
+          const st = tl.scrollTrigger;
+          if (st) applyStep(settledIndex(st.progress * totalUnits), false);
           ScrollTrigger.refresh();
         });
 

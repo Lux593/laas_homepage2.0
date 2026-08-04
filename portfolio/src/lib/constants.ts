@@ -21,10 +21,13 @@ export const MANIFESTO_TEXT =
 export const SERVICES_INTRO = {
   eyebrow: "01 - Was ich anbiete",
   headline: "LEISTUNGEN",
-  /** Große Aussage links an der Mittelachse (Referenz: Editorial-Split). */
+  /** Große Aussage — bleibt als aria-Label / Fallback-Text für die Landschaft. */
   statement: "Wenn Standardtools nicht reichen, baue ich dir den Weg.",
   support:
-    "Software, die passt. Prozesse, die laufen. KI, die wirklich hilft — klar, direkt, ohne Theater.",
+    "Software, die passt. Prozesse, die laufen. KI, die wirklich hilft: klar, direkt, ohne Theater.",
+  /** Papier-Landschaft (Halbkreis links) — gleiches Loop-Muster wie Prozess-Clips. */
+  video: "/services/landscape.mp4",
+  poster: "/services/landscape-poster.webp",
 } as const;
 
 export interface AboutFact {
@@ -77,7 +80,7 @@ export const PROJECTS: Project[] = [
     year: "2024 – heute",
     tech: ["React", "Next.js", "Python", "OpenAI", "PostgreSQL"],
     description:
-      "Eine maßgeschneiderte Web-App für das Management des Tagesgeschäfts, der Mitarbeiter- und Eventplanung – ergänzt durch Workflow-Automatisierungen und KI-gestützte Prozesse.",
+      "Maßgeschneiderte Web-App für Tagesgeschäft, Planung und Automatisierung – mit KI-gestützten Prozessen.",
     details:
       "Für den Power Shop habe ich eine umfassende Management-Plattform entwickelt, die sämtliche operative Abläufe digitalisiert und optimiert.",
     features: [
@@ -103,11 +106,11 @@ export const PROJECTS: Project[] = [
       },
     ],
     gallery: [
-      { id: 1, url: "/vorschaubilder/powershop1.png", title: "Dashboard Overview" },
-      { id: 2, url: "/vorschaubilder/powershop2.png", title: "Scheduling View" },
-      { id: 3, url: "/vorschaubilder/powershop3.png", title: "Operations Detail" },
-      { id: 4, url: "/vorschaubilder/powershop4.png", title: "Workflow Screen" },
-      { id: 5, url: "/vorschaubilder/powershop5.png", title: "Analytics View" },
+      { id: 1, url: "/vorschaubilder/powershop1.webp", title: "Dashboard Overview" },
+      { id: 2, url: "/vorschaubilder/powershop2.webp", title: "Scheduling View" },
+      { id: 3, url: "/vorschaubilder/powershop3.webp", title: "Operations Detail" },
+      { id: 4, url: "/vorschaubilder/powershop4.webp", title: "Workflow Screen" },
+      { id: 5, url: "/vorschaubilder/powershop5.webp", title: "Analytics View" },
     ],
     color: "#C49F7B",
   },
@@ -140,11 +143,11 @@ export const PROJECTS: Project[] = [
       },
     ],
     gallery: [
-      { id: 1, url: "/vorschaubilder/game1.png", title: "Game Screen 01" },
-      { id: 2, url: "/vorschaubilder/game2.png", title: "Game Screen 02" },
-      { id: 3, url: "/vorschaubilder/game3.png", title: "Game Screen 03" },
-      { id: 4, url: "/vorschaubilder/game4.png", title: "Game Screen 04" },
-      { id: 5, url: "/vorschaubilder/game5.png", title: "Game Screen 05" },
+      { id: 1, url: "/vorschaubilder/game1.webp", title: "Game Screen 01" },
+      { id: 2, url: "/vorschaubilder/game2.webp", title: "Game Screen 02" },
+      { id: 3, url: "/vorschaubilder/game3.webp", title: "Game Screen 03" },
+      { id: 4, url: "/vorschaubilder/game4.webp", title: "Game Screen 04" },
+      { id: 5, url: "/vorschaubilder/game5.webp", title: "Game Screen 05" },
     ],
     color: "#DFBE9F",
     device: "iphone",
@@ -183,11 +186,11 @@ export const PROJECTS: Project[] = [
       },
     ],
     gallery: [
-      { id: 1, url: "/vorschaubilder/wedding1.png", title: "RSVP Screen" },
-      { id: 2, url: "/vorschaubilder/wedding2.png", title: "Navigation Menu" },
-      { id: 3, url: "/vorschaubilder/wedding3.png", title: "Outfits Guide" },
-      { id: 4, url: "/vorschaubilder/wedding4.png", title: "Local Tips" },
-      { id: 5, url: "/vorschaubilder/wedding5.png", title: "FAQ Screen" },
+      { id: 1, url: "/vorschaubilder/wedding1.webp", title: "RSVP Screen" },
+      { id: 2, url: "/vorschaubilder/wedding2.webp", title: "Navigation Menu" },
+      { id: 3, url: "/vorschaubilder/wedding3.webp", title: "Outfits Guide" },
+      { id: 4, url: "/vorschaubilder/wedding4.webp", title: "Local Tips" },
+      { id: 5, url: "/vorschaubilder/wedding5.webp", title: "FAQ Screen" },
     ],
     color: "#B8897A",
     device: "iphone",
@@ -214,7 +217,7 @@ export const PROCESS_STEPS: ProcessStep[] = [
     description:
       "Du kommst mit einer Idee, einem Engpass oder einem Prozess, der dich bremst. Genau dort starten wir.",
     video: "/process/step-01-idea.mp4",
-    poster: "/process/step-01-idea.png",
+    poster: "/process/step-01-idea-poster.webp",
     points: [
       {
         title: "Was dich bremst",
@@ -237,7 +240,7 @@ export const PROCESS_STEPS: ProcessStep[] = [
     description:
       "Wir klären Ziel, Umfang und Prioritäten. Du weißt danach, was gebaut wird, warum, und in welcher Reihenfolge.",
     video: "/process/step-02-plan.mp4",
-    poster: "/process/step-02-plan.png",
+    poster: "/process/step-02-plan.webp",
     points: [
       {
         title: "Scope schärfen",
@@ -260,7 +263,7 @@ export const PROCESS_STEPS: ProcessStep[] = [
     description:
       "Ich baue die maßgeschneiderte Lösung: Automatisierungen, Apps und Interfaces, die sich in deinen Alltag einfügen.",
     video: "/process/step-03-build.mp4",
-    poster: "/process/step-03-build.png",
+    poster: "/process/step-03-build.webp",
     points: [
       {
         title: "Automatisieren",
@@ -283,7 +286,7 @@ export const PROCESS_STEPS: ProcessStep[] = [
     description:
       "Neue Idee, neues Problem, nächster Hebel. Was läuft, wird verbessert. Was fehlt, wird als Nächstes gebaut.",
     video: "/process/step-04-loop.mp4",
-    poster: "/process/step-04-loop.png",
+    poster: "/process/step-04-loop.webp",
     points: [
       {
         title: "Feedback nutzen",
@@ -316,21 +319,21 @@ export const SERVICES: Service[] = [
     mark: "1",
     title: "Individuelle Software",
     description:
-      "Maßgeschneiderte Web-Apps und Interfaces, die zu deinem Alltag passen — statt Standardsoftware, die du verbiegen musst.",
+      "Maßgeschneiderte Web-Apps und Interfaces, die zu deinem Alltag passen. Statt Standardsoftware, die du verbiegen musst.",
   },
   {
     id: "automation",
     mark: "2",
     title: "Prozess Automationen",
     description:
-      "Wiederkehrende Abläufe digitalisieren, verbinden und entlasten — weniger Copy-Paste, mehr ruhiger Betrieb.",
+      "Wiederkehrende Abläufe digitalisieren, verbinden und entlasten. Weniger Copy-Paste, mehr ruhiger Betrieb.",
   },
   {
     id: "ai",
     mark: "3",
     title: "KI Integrationen",
     description:
-      "KI dort einbauen, wo sie echten Hebel hat — in bestehende Produkte und Workflows, nicht als Spielerei.",
+      "KI dort einbauen, wo sie echten Hebel hat: in bestehende Produkte und Workflows, nicht als Spielerei.",
   },
 ];
 

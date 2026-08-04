@@ -410,6 +410,14 @@
          The 780 ceiling only binds above ~1230px tall, so shorter viewports
          land on the calc term. */
       --frame-h: clamp(240px, calc(78vh - 180px), 780px);
+      /* Landscape iPads size off --frame-h and can outgrow the side-by-side
+         spread. Reserve a bit less than the full 48ch text track so the frame
+         can use leftover space in the device column — the grid still locks the
+         copy, so text does not move. Portrait phones stay under this ceiling. */
+      --frame-w: calc(
+        100vw - 2 * var(--container-padding) - 40ch -
+          clamp(3rem, 5vw, 5rem)
+      );
     }
 
     .work-track > .work-panel + .work-panel {

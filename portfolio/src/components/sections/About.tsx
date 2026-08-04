@@ -25,7 +25,7 @@ const IRIS_CLOSED = "circle(0% at 50% 50%)";
 
 /**
  * Lage der Monitor-Bildschirmfläche innerhalb von
- * /vorschaubilder/office_new.png, in Prozent der gerenderten Bildbox. Nur diese
+ * /vorschaubilder/office_new.webp, in Prozent der gerenderten Bildbox. Nur diese
  * vier Werte anfassen, wenn die Skizze durch einen anderen Ausschnitt ersetzt
  * wird — die gesamte Zoom-Mathematik misst sich zur Laufzeit daraus.
  */
@@ -229,7 +229,7 @@ export default function About() {
                   Lampenlicht ist bereits im Bild — kein CSS-Licht-Overlay. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/vorschaubilder/office_new.png"
+                src="/vorschaubilder/office_new.webp"
                 alt=""
                 aria-hidden
                 decoding="async"
