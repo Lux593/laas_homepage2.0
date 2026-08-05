@@ -70,8 +70,13 @@ export default function Hero() {
       const lamp = lampRef.current;
 
       if (reduced) {
-        gsap.set(lamp, { "--glow": 130 });
+        gsap.set(lamp, { "--glow": 130, opacity: 1 });
       } else {
+        // Deckkraft an, sobald die Timeline anläuft. Sie ist zu dem Zeitpunkt
+        // noch komplett wegmaskiert (--glow: -20) — sichtbar wird dadurch
+        // nichts. Warum trotzdem: siehe opacity-0 am <img> weiter unten.
+        tl.set(lamp, { opacity: 1 }, 0);
+
         // Bewusst ohne Zucken der Birne: das Glas ist zu dem Zeitpunkt schon
         // sichtbar, ein Dip danach liest sich als Fehler statt als Einschalten.
         tl.fromTo(
@@ -92,8 +97,9 @@ export default function Hero() {
     // 120 komplett offen.
     if (illuRef.current) {
       if (reduced) {
-        gsap.set(illuRef.current, { "--wipe": 120 });
+        gsap.set(illuRef.current, { "--wipe": 120, opacity: 1 });
       } else {
+        tl.set(illuRef.current, { opacity: 1 }, 0.2);
         tl.fromTo(
           illuRef.current,
           { "--wipe": -25 },
@@ -311,7 +317,7 @@ export default function Hero() {
           },
         });
       }
-    }, 3000);
+    }, 2000);
 
     return () => {
       clearInterval(interval);
@@ -387,7 +393,17 @@ export default function Hero() {
               Ebene darüber löscht das Schwarz gegen den #050505-Grund aus —
               deshalb braucht die Datei keinen Alphakanal.
               mb hält sie über der Balkenkante, max-h verhindert, dass sie auf
-              flachen Fenstern in die Headline wächst. */}
+              flachen Fenstern in die Headline wächst.
+
+              opacity-0 ist der Startzustand, nicht der Wipe. Verdeckt ist die
+              Zeichnung eigentlich schon durch die Maske (--wipe: -25). Nur
+              hängt die Maske am Compositor: in einer Aufnahme des Seitenaufbaus
+              stand die Zeichnung für ein paar Frames komplett im Bild, bevor
+              die Maske griff — genau das "kurz alles sichtbar, dann weg". Die
+              Deckkraft wird auf Style-Ebene ausgewertet und kann diesen Frame
+              nicht verpassen. Die Timeline schaltet sie zum Wipe-Start auf 1,
+              wo die Maske ohnehin noch alles verdeckt — sichtbar ändert sich
+              dadurch nichts. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             ref={illuRef}
@@ -395,7 +411,7 @@ export default function Hero() {
             alt=""
             width={1270}
             height={490}
-            className="mb-[11svh] w-[min(960px,91vw)] max-h-[32svh] md:max-h-[37svh] object-contain select-none"
+            className="mb-[11svh] w-[min(960px,91vw)] max-h-[32svh] md:max-h-[37svh] object-contain select-none opacity-0"
             style={{
               ["--wipe" as string]: -25,
               WebkitMaskImage:
@@ -422,7 +438,7 @@ export default function Hero() {
             alt=""
             width={1587}
             height={1755}
-            className="hero-lamp__art select-none"
+            className="hero-lamp__art select-none opacity-0"
             style={{
               ["--glow" as string]: -20,
               WebkitMaskImage:
@@ -468,7 +484,7 @@ export default function Hero() {
             >
               <div ref={line2Ref} className="mt-3 opacity-0">
                 <span className="block text-[6.5vw] md:text-display-md font-display font-light leading-[1.3] text-text-secondary">
-                  Ich biete
+                  Mein Fokus
                 </span>
                 {/* Line 3 - rotating word */}
                 <span

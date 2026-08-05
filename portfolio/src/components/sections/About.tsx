@@ -671,7 +671,7 @@ export default function About() {
                   <p className="font-mono text-[0.85rem] uppercase tracking-[0.2em] text-[#f2ede4]/50">
                     Was ich gerade beruflich mache
                   </p>
-                  <ul className="about-roles mt-[clamp(1rem,2.4vh,1.6rem)]">
+                  <ul className="about-roles mt-[clamp(1.35rem,3.1vh,2.1rem)]">
                     {ABOUT_ROLES.map((role) => (
                       <li key={role.company} className="about-role">
                         <div className="about-role-body min-w-0">

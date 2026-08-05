@@ -310,10 +310,10 @@
     /* center: die drei Blöcke behalten ihre Boxhöhe und sitzen mittig in der
        Bühne — stretch würde sie auf die volle Viewport-Höhe ziehen. */
     align-items: center;
-    gap: clamp(2.5rem, 5vw, 6rem);
+    gap: clamp(1.75rem, 3.5vw, 4rem);
     min-height: 100%;
-    /* Schwarzer Abstand links und rechts zur Bühnenkante. */
-    padding: clamp(4.5rem, 10vh, 7rem) clamp(2rem, 4.5vw, 5.5rem)
+    /* Etwas mehr Seitenabstand → die drei Boxen rücken ein Stück zusammen. */
+    padding: clamp(4.5rem, 10vh, 7rem) clamp(3.5rem, 7vw, 8rem)
       clamp(2rem, 6vh, 4rem);
   }
 
@@ -356,15 +356,23 @@
     margin-top: clamp(1.25rem, 3vh, 2rem);
   }
 
-  /* Mittlerer Block: Werdegang, zentriert in der Breite. */
+  /* Mittlerer Block: Werdegang — breit genug für „LAAS – Luca Arnoldi App Solutions"
+     in einer Zeile. Inhalt von oben, nicht space-between (sonst klafft unter dem
+     Header). */
   .about-annotations {
-    flex: 0 1 26rem;
-    max-width: 30rem;
+    flex: 0 1 32rem;
+    max-width: 36rem;
+    min-width: min(100%, 28rem);
+    justify-content: flex-start;
+  }
+
+  .about-annotations .about-role-body > p:first-child {
+    white-space: nowrap;
   }
 
   .about-roles {
     flex: 0 0 auto;
-    gap: clamp(1.5rem, 3vh, 2.15rem);
+    gap: clamp(2rem, 4vh, 2.75rem);
   }
 
   /* Rechter Block: Tools, rechts ausgerichtet. Label oben, Raster kompakt

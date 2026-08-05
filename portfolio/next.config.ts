@@ -67,6 +67,35 @@ const nextConfig: NextConfig = {
           },
         ],
       },
+      {
+        /**
+         * Seiten-Antworten duerfen am CDN nicht einfrieren.
+         *
+         * Next schickt fuer vorgerenderte Seiten von sich aus
+         * `Cache-Control: s-maxage=31536000`. Das ist auf Vercel gedacht, wo
+         * der Cache bei jedem Deploy geleert wird. Hostingers CDN (hcdn)
+         * leert nicht — es hat das HTML ein Jahr lang festgehalten und
+         * Besuchern einen alten Build ausgeliefert, dessen gehashte
+         * JS/CSS-Chunks es nach dem naechsten Deploy nicht mehr gab. Ergebnis
+         * im Browser: 404 auf alle Chunks, keine Hydration, halb gestyltes
+         * Markup, das kurz aufblitzt und stehen bleibt.
+         *
+         * max-age=0 + must-revalidate heisst: bei jedem Aufruf beim Origin
+         * nachfragen. Dank ETag ist das im Normalfall ein 304 ohne Body.
+         *
+         * Die Regel trifft nur Dokument-Pfade — alles unter `_next/` und alles
+         * mit Dateiendung ist ausgenommen. Die gehashten Build-Artefakte
+         * behalten damit ihr `immutable`, sie sind ueber den Hash ohnehin
+         * eindeutig und koennen nie veralten.
+         */
+        source: "/((?!_next/)(?!.*\\.[a-zA-Z0-9]+$).*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, must-revalidate",
+          },
+        ],
+      },
     ];
   },
 };
