@@ -120,6 +120,7 @@ export default function RootLayout({
                 "Individuelle Software",
                 "Prozess Automationen",
                 "KI Integrationen",
+                "Website Design",
               ],
             }),
           }}

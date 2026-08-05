@@ -109,6 +109,19 @@
   object-fit: cover;
 }
 
+/* Die mitlaufende Ausgabe des LAAS-Zeichens. Liegt über der Szene und unter
+   der Blende; Breite und Lage setzt About.tsx pro Frame in Pixeln.
+   Ausdrücklich OHNE will-change: genau dieser Hinweis würde das Raster wieder
+   festhalten, das hier bei jeder Größe frisch entstehen soll. */
+.about-logo-hud {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  pointer-events: none;
+  transform-origin: 0 0;
+}
+
 /* Section-Header in derselben Sprache wie „Meine Projekte" und „Prozess":
    sitzt oben in der Bühne und bleibt über die gesamte Section stehen.
    z-index über dem Cream-Schleier (::before). */
@@ -119,65 +132,75 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
-   Annotiertes Porträt
+   Der Streifen
 
-   Die Iris öffnet nicht auf eine Textspalte, sondern auf ein Blatt: in der
-   Mitte die Porträtplatte, links wer das ist, rechts hängen die Rollen als
-   beschriftete Auszüge daran, unten das Schriftfeld mit dem Werkzeug.
-   Die Sprache ist dieselbe wie in der Bauzeichnung unter „Leistungen" —
-   Hairline, Punkt, Beschriftung —, nur in Cream auf Schwarz statt umgekehrt.
+   Drei Blöcke über die Breite: links Porträt+Intro als Einheit, mittig
+   Werdegang, rechts Tools. Gleiche Höhe, Inhalt vertikal verteilt.
+   Sprache wie die Bauzeichnung unter „Leistungen", nur in Cream auf Schwarz.
    ───────────────────────────────────────────────────────────────────────── */
 
-.about-plan {
-  display: grid;
-  gap: clamp(1.25rem, 3.5vh, 2.75rem) 0;
-  align-items: start;
+/* width statt auto-Breite: .about-content ist in der Blende ein Flex-Container,
+   ohne die Angabe schrumpfte das Panel auf seinen Inhalt. */
+.about-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  gap: clamp(1.5rem, 4vh, 2.75rem);
+  padding-left: max(var(--container-padding), env(safe-area-inset-left));
+  padding-right: max(var(--container-padding), env(safe-area-inset-right));
 }
 
-/* 1206 / 953 — das Seitenverhältnis von personal_pic.jpg. Gestapelt bindet die
-   Breite, ab 768px zusätzlich die Höhe: in der Blende steht alles in einer
-   100svh-Bühne, ein rein in vw bemessenes Bild schöbe auf flachen Fenstern das
-   Schriftfeld hinaus. */
+/* Linker Block: Porträt + Intro nebeneinander. */
+.about-lead {
+  display: grid;
+  grid-template-columns: 40% minmax(0, 1fr);
+  column-gap: clamp(0.9rem, 4vw, 1.5rem);
+  align-items: end;
+  min-width: 0;
+}
+
+/* Das Porträt behält sein natürliches Verhältnis; der weiße Studiogrund
+   verschmilzt per multiply mit der Creme — dieselbe Sprache wie die
+   Bauzeichnung unter „Leistungen". */
 .about-plate {
   position: relative;
-  width: min(44vw, calc(30svh * 1.266));
-  justify-self: center;
-  /* Der Abzug: die Cremefläche ist Teil des Bildes, nicht sein Hintergrund. */
+  overflow: hidden;
   background-color: #f2ede4;
+  aspect-ratio: 1206 / 953;
+  width: 100%;
 }
 
-/* Der weiße Studiogrund des Fotos hat auf Schwarz als hartes Rechteck gestanden.
-   multiply legt ihn deckungsgleich in die Cremeplatte: Weiß × Creme = Creme,
-   die Tonwerte des Gesichts bleiben und werden warm. Dieselbe Technik wie bei
-   der Bauzeichnung in „Leistungen", nur andersherum eingesetzt. */
 .about-plate-img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 30%;
   mix-blend-mode: multiply;
   filter: contrast(1.06);
 }
 
-/* Vorbereitete Rollen-Porträts liegen deckungsgleich darüber und werden
-   aufgeblendet. Ohne solche Bilder existiert dieses Element gar nicht. */
-.about-plate-alt {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 320ms var(--ease-out-quint, cubic-bezier(0.22, 1, 0.36, 1));
+.about-identity {
+  min-width: 0;
 }
 
-.about-plate-alt[data-shown] {
-  opacity: 1;
+/* Etwas mehr als unter „Was ich gerade beruflich mache" → erste Rolle. */
+.about-name {
+  margin-top: clamp(1.35rem, 3.1vh, 2.1rem);
 }
 
-/* ── Werdegang und Hobbys ────────────────────────────────────────────────
-   Bewusst ohne Linien, Rahmen und Aufzählungszeichen: die Platte trägt die
-   Fläche, alles daneben ist reiner Satz. Getrennt wird über Abstand. */
+.about-statement {
+  margin-top: clamp(1.1rem, 2.8vh, 1.9rem);
+}
+
+/* ── Werdegang ───────────────────────────────────────────────────────────
+   Bewusst ohne Linien, Rahmen und Aufzählungszeichen: reiner Satz, getrennt
+   über Abstand. */
 
 .about-roles {
   display: grid;
-  gap: clamp(1rem, 2.8vh, 1.9rem);
+  gap: clamp(1rem, 2.4vh, 1.75rem);
 }
 
 .about-role:focus-visible {
@@ -185,37 +208,56 @@
   outline-offset: 6px;
 }
 
-.about-hobby-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem clamp(1rem, 2.2vw, 2rem);
-}
-
-/* ── Schriftfeld ─────────────────────────────────────────────────────────── */
+/* ── Tools-Raster ────────────────────────────────────────────────────────── */
 
 .about-titleblock {
-  margin-top: clamp(1.25rem, 3.5vh, 2.75rem);
-  border-top: 1px solid rgb(242 237 228 / 0.16);
-  padding-top: clamp(1rem, 2.6vh, 1.6rem);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: clamp(0.7rem, 1.8vh, 1.1rem);
+  min-width: 0;
+}
+
+.about-titleblock-label {
+  flex: none;
 }
 
 .about-tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: clamp(0.85rem, 1.6vh, 1.15rem) clamp(1.25rem, 2.6vw, 2.5rem);
-  margin-top: clamp(0.85rem, 2vh, 1.25rem);
+  --about-side-cell: 8rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: clamp(1.25rem, 2.5vw, 2.25rem);
+  row-gap: clamp(1.4rem, 3.2vh, 2.25rem);
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  margin-inline: 0;
+  list-style: none;
 }
 
-/* Legendenzeile statt Icon-Galerie: Zeichen und Bezeichnung nebeneinander,
-   wie in der Legende einer Zeichnung — das spart die Höhe, die die Platte
-   jetzt braucht. */
+.about-tools > li:nth-child(3n + 1) {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.about-tools > li:nth-child(3n + 2) {
+  display: flex;
+  justify-content: center;
+}
+
+.about-tools > li:nth-child(3n + 3) {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .about-tool {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.55rem;
-  /* 44px Tippziel, ohne dass die Legende dadurch aufträgt: die Zeile ist so
-     hoch wie ein Finger breit, der Inhalt bleibt eine Zeile Text. */
+  gap: 0.75rem;
+  width: var(--about-side-cell);
   min-height: 2.75rem;
+  text-align: center;
   color: rgb(242 237 228 / 0.55);
   transition: color 300ms ease;
 }
@@ -225,10 +267,15 @@
   color: #f2ede4;
 }
 
+.about-tool:focus-visible {
+  outline: 2px solid rgb(242 237 228 / 0.7);
+  outline-offset: 4px;
+}
+
 .about-tool-icon {
   display: block;
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1.9rem;
+  height: 1.9rem;
   object-fit: contain;
   opacity: 0.7;
   transition: opacity 300ms ease;
@@ -239,122 +286,118 @@
   opacity: 1;
 }
 
-/* Ohne Bewegung stehen Linien und Blenden sofort da — sie sind Zeichnung,
-   keine Animation. */
+.about-tool-name {
+  line-height: 1.2;
+  word-break: break-word;
+  text-align: center;
+}
+
+/* Ohne Bewegung stehen die Übergänge sofort da — sie sind Zeichnung, keine
+   Animation. */
 @media (prefers-reduced-motion: reduce) {
-  .about-plate-alt,
   .about-tool,
   .about-tool-icon {
     transition: none;
   }
 }
 
-/* Schmal: Name und Platte teilen sich die erste Zeile, darunter läuft alles
-   über die volle Breite. Gestapelt wäre die Section höher als die Blende. */
-.about-left {
-  display: contents;
-}
-
-.about-plan {
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: clamp(0.9rem, 4vw, 1.5rem);
-}
-
-.about-identity {
-  grid-column: 1;
-  grid-row: 1;
-  /* Der Name sitzt auf der Unterkante der Platte statt in der Luft daneben. */
-  align-self: end;
-}
-
-.about-plate {
-  grid-column: 2;
-  grid-row: 1;
-}
-
-.about-statement {
-  grid-column: 1 / -1;
-  grid-row: 2;
-}
-
-.about-annotations {
-  grid-column: 1 / -1;
-  grid-row: 3;
-}
-
-.about-hobbies {
-  grid-column: 1 / -1;
-  grid-row: 4;
-}
-
-/* Mehr Breite: Name und Aussage stehen oben über der ganzen Anlage, darunter
-   Platte und Werdegang nebeneinander. */
+/* Ab 768px: drei Blöcke über die volle Breite — links, Mitte, rechts.
+   Gleiche Mindesthöhe, Inhalt vertikal verteilt (nicht gequetscht). */
 @media (min-width: 768px) {
-  .about-plan {
-    grid-template-columns: auto minmax(0, 1fr);
+  .about-panel {
+    flex-direction: row;
+    justify-content: space-between;
+    /* center: die drei Blöcke behalten ihre Boxhöhe und sitzen mittig in der
+       Bühne — stretch würde sie auf die volle Viewport-Höhe ziehen. */
+    align-items: center;
+    gap: clamp(2.5rem, 5vw, 6rem);
+    min-height: 100%;
+    /* Schwarzer Abstand links und rechts zur Bühnenkante. */
+    padding: clamp(4.5rem, 10vh, 7rem) clamp(2rem, 4.5vw, 5.5rem)
+      clamp(2rem, 6vh, 4rem);
+  }
+
+  .about-lead,
+  .about-annotations,
+  .about-titleblock {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    /* Gleiche Boxhöhe — genug Luft, aber nicht die volle Bühne. */
+    height: clamp(18rem, 36vh, 25rem);
+  }
+
+  /* Linker Block: Porträt + Intro horizontal, als eine Einheit. */
+  .about-lead {
+    flex-direction: row;
+    align-items: stretch;
+    gap: clamp(1.25rem, 2.5vw, 2.5rem);
+    flex: 0 1 auto;
+    max-width: min(44rem, 48%);
+  }
+
+  .about-plate {
+    width: clamp(14rem, 19vw, 22rem);
+    flex: 0 0 auto;
+    align-self: stretch;
+    aspect-ratio: auto;
+    height: auto;
   }
 
   .about-identity {
-    grid-column: 1 / -1;
-    align-self: start;
-  }
-
-  .about-plate {
-    grid-column: 1;
-    grid-row: 3;
-    width: min(40vw, calc(38svh * 1.266));
-    justify-self: start;
-  }
-
-  .about-annotations {
-    grid-column: 2;
-    grid-row: 3;
-    align-self: start;
-    padding-left: clamp(1.5rem, 3.5vw, 3rem);
-  }
-
-  .about-hobbies {
-    grid-row: 4;
-  }
-}
-
-/* Volle Anlage: wer links, Gesicht in der Mitte, was rechts — drei Spalten,
-   die alle an derselben Oberkante hängen. */
-@media (min-width: 1024px) {
-  .about-left {
     display: flex;
     flex-direction: column;
-    grid-column: 1;
-    grid-row: 1;
-    gap: clamp(1rem, 2.6vh, 1.9rem);
-    padding-right: clamp(1.5rem, 3.5vw, 3.5rem);
+    justify-content: flex-start;
+    flex: 1 1 auto;
+    min-width: 0;
   }
 
-  .about-plan {
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 0.9fr);
-    align-items: start;
+  .about-statement {
+    margin-top: clamp(1.25rem, 3vh, 2rem);
   }
 
-  /* Innerhalb von .about-left sortiert der Fluss, nicht das Raster. */
-  .about-identity,
-  .about-statement,
-  .about-annotations,
-  .about-hobbies {
-    grid-column: auto;
-    grid-row: auto;
-  }
-
-  .about-plate {
-    grid-column: 2;
-    grid-row: 1;
-    width: min(33vw, calc(50svh * 1.266));
-  }
-
+  /* Mittlerer Block: Werdegang, zentriert in der Breite. */
   .about-annotations {
-    grid-column: 3;
-    grid-row: 1;
-    align-self: start;
-    padding-left: clamp(2rem, 4vw, 4rem);
+    flex: 0 1 26rem;
+    max-width: 30rem;
+  }
+
+  .about-roles {
+    flex: 0 0 auto;
+    gap: clamp(1.5rem, 3vh, 2.15rem);
+  }
+
+  /* Rechter Block: Tools, rechts ausgerichtet. Label oben, Raster kompakt
+     darunter — nicht space-between, sonst klaffen die zwei Tool-Reihen. */
+  .about-titleblock {
+    flex: 0 1 18rem;
+    max-width: 22rem;
+    justify-content: flex-start;
+    gap: clamp(2rem, 4vh, 2.75rem);
+    align-items: stretch;
+  }
+
+  .about-tools {
+    flex: 0 0 auto;
+    align-content: start;
+    row-gap: clamp(2rem, 3.6vh, 2.75rem);
+  }
+
+  /* Größere Icons und Labels, damit die Tool-Zellen den Raum füllen. */
+  .about-tool-icon {
+    width: clamp(2.6rem, 3vw, 3.5rem);
+    height: clamp(2.6rem, 3vw, 3.5rem);
+  }
+
+  .about-tool-name {
+    font-size: 0.62rem;
+  }
+
+  /* Der Streifen trägt seinen Innenabstand selbst; das Panel füllt die Bühne. */
+  .about-content {
+    align-items: stretch;
+    padding-top: 0;
+    padding-bottom: 0;
   }
 }
 
@@ -401,18 +444,50 @@
     pointer-events: none;
   }
 
+  /* Zeichen und Blende in EINER Gruppe. Die Deckkraft der Anfahrt (0,32 → 1)
+     sitzt deshalb hier und nicht mehr am Zeichen allein: die geschlossene
+     Blende liegt exakt in der Tinte des Querbalkens, und zwei getrennt
+     deckende Ebenen addieren sich dort — schwarz auf halbdurchsichtigem
+     Schwarz ergibt einen dunkleren Fleck, der Balken stand als harter Strich
+     im sonst blassen Zeichen (rechnerisch: 0,32 über 0,32 deckt 0,54 statt
+     0,32; kein Wert außer 0 löst das). Als Gruppe wird die Vereinigung einmal
+     gerastert und dann als Ganzes verrechnet — die Blende ist im Balken
+     unsichtbar und dunkelt exakt mit ihm nach.
+     inset: 0 legt die Gruppe deckungsgleich auf die Bühne, damit die
+     Pixelkoordinaten aus About.tsx unverändert stimmen. */
+  .about-veil {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+  }
+
   .about-content {
     position: absolute;
     inset: 0;
     z-index: 4;
     display: flex;
     align-items: center;
-    /* Trägt die Blende: die Ebene ist deckend schwarz und wird per
-       clip-path aus der Mitte aufgezogen (kleiner Punkt im Monitor).
-       Ohne eigenen Grund wäre die wachsende Kugel unsichtbar.
-       GSAP setzt den geschlossenen Startzustand — bleibt JS aus, steht hier
-       der Inhalt sichtbar statt versteckt. */
+    /* Trägt die Blende: die Ebene ist durchweg deckend schwarz — ohne eigenen
+       Grund wäre die wachsende Fläche unsichtbar. */
     background-color: #000000;
+
+    /* Die Blende als Rechteck, das aus dem Querbalken zwischen den beiden A
+       herauswächst: erst seitlich über die Kante, dann nach oben und unten auf.
+       Hier steht bewusst clip-path und keine Maske mehr. Die frühere Radialmaske
+       gab es nur, weil ein clip-path-KREIS an der Rundung sichtbar rastert und
+       zwei knapp versetzte Farbstopps das sauberer treffen. Ein achsenparalleles
+       Rechteck hat keine Rundung — clip-path schneidet dort pixelgenau, ohne
+       Saum, ohne zweiten Radius, ohne -webkit-Dublette.
+       Die vier Werte sind Abstände zur jeweiligen Kante der Bühne. 0 heißt: kein
+       Schnitt. Bleibt JS aus oder scheitert die Messung, steht der Inhalt damit
+       sichtbar da statt weggeclippt — GSAP schreibt den geschlossenen Zustand. */
+    --wipe-top: 0px;
+    --wipe-right: 0px;
+    --wipe-bottom: 0px;
+    --wipe-left: 0px;
+    clip-path: inset(
+      var(--wipe-top) var(--wipe-right) var(--wipe-bottom) var(--wipe-left)
+    );
   }
 }
 
@@ -436,12 +511,9 @@
     flex-shrink: 0;
   }
 
-  .about-content {
-    /* Der Header ist längst ausgeblendet, wenn die Copy kommt — hier muss nur
-       noch die fixe Navigation freibleiben. */
-    padding-top: clamp(5rem, 10vh, 7rem);
-    padding-bottom: clamp(2rem, 6vh, 4rem);
-  }
+  /* Den Innenabstand trägt hier das .about-panel (siehe Layout-Block oben).
+     Der Header ist längst ausgeblendet, wenn die Copy kommt — freibleiben muss
+     nur die fixe Navigation, und die deckt das padding-top des Streifens ab. */
 }
 
 /* MUSS byte-identisch zur „mobile"-Query in About.tsx bleiben.
@@ -460,10 +532,12 @@
     padding-bottom: clamp(1.5rem, 4vh, 2.5rem);
   }
 
-  /* Gestapelt bindet die Breite, in der Blende die Höhe: Platte, Name, Auszüge
-     und Schriftfeld müssen zusammen in eine 100svh-Bühne passen. Ohne den
-     svh-Term schöbe die Platte auf flachen Fenstern das Schriftfeld heraus. */
+  /* Gestapelt bindet die Spaltenbreite, in der Blende die Höhe: Foto, Name,
+     Werdegang und Tools müssen zusammen in eine 100svh-Bühne passen. Ohne den
+     svh-Term schöbe das Foto auf flachen Fenstern die Reihen darunter heraus.
+     Bleibt es unter der Spaltenbreite, sitzt es links am schwarzen Rand. */
   .about-plate {
-    width: min(46vw, calc(22svh * 1.266));
+    width: min(100%, calc(26svh / (1206 / 953)));
+    justify-self: start;
   }
 }

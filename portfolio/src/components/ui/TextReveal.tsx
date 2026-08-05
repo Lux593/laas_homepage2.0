@@ -48,7 +48,9 @@ export default function TextReveal({
     container.innerHTML = elements
       .map((el) => {
         const content = variant === "words" ? `${el}&nbsp;` : el;
-        return `<span class="inline-block overflow-hidden"><span class="reveal-element inline-block" style="display:inline-block">${content}</span></span>`;
+        // pt/-mt: tight leading + overflow-hidden would otherwise clip
+        // diacritics (Ü, Ä, Ö) above the line box.
+        return `<span class="inline-block overflow-hidden pt-[0.22em] -mt-[0.22em]"><span class="reveal-element inline-block" style="display:inline-block">${content}</span></span>`;
       })
       .join("");
 
@@ -90,7 +92,7 @@ export default function TextReveal({
   return (
     <Tag
       ref={containerRef as React.Ref<never>}
-      className={cn("overflow-hidden", className)}
+      className={cn("overflow-hidden pt-[0.22em] -mt-[0.22em]", className)}
       style={{ perspective: "1000px" }}
     >
       {children}

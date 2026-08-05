@@ -30,37 +30,38 @@ export default function Navigation() {
         data-ui-theme={isMenuOpen ? "dark" : undefined}
         // Safe-Area: das Layout läuft mit viewportFit "cover", die feste Leiste
         // säße im Querformat sonst unter dem Notch. Ohne Notch sind die
-        // env()-Werte 0, dann bleibt es bei py-5 / --container-padding.
-        className="fixed top-0 left-0 right-0 z-[var(--z-nav)] pt-[max(1.25rem,env(safe-area-inset-top))] pb-5 pl-[max(var(--container-padding),env(safe-area-inset-left))] pr-[max(var(--container-padding),env(safe-area-inset-right))] opacity-0"
+        // env()-Werte 0 — Logo und Menü sitzen am Viewport-Rand, nicht im
+        // Content-Container.
+        className="fixed top-0 left-0 right-0 z-[var(--z-nav)] pt-[max(1.5rem,env(safe-area-inset-top))] pb-8 pl-[max(3rem,env(safe-area-inset-left))] pr-[max(3rem,env(safe-area-inset-right))] opacity-0"
       >
-        <div className="mx-auto max-w-[var(--container-max)] flex items-center justify-between">
+        <div className="flex w-full items-center justify-between">
           {/* Logo */}
-          <a href="#" className="relative">
+          <a href="#" className="relative shrink-0">
             <Image
-              src="/liftapp.png"
-              alt="LAAS - Luca Arnoldi App Studio"
-              width={120}
-              height={40}
-              className="nav-logo h-8 w-auto"
+              src="/laas-logo.svg"
+              alt="LAAS – Luca As A Service"
+              width={200}
+              height={54}
+              className="nav-logo h-5 w-auto md:h-6"
               priority
             />
           </a>
 
           {/* Menu Button */}
           <button
-            className="relative flex flex-col justify-center items-center gap-1.5 w-10 h-10"
+            className="relative flex shrink-0 flex-col justify-center items-center gap-2 w-12 h-12 md:w-14 md:h-14"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             aria-label="Navigationsmenü umschalten"
             aria-expanded={isMenuOpen}
           >
             <motion.span
-              className="w-6 h-[1.5px] block bg-[var(--ui-fg)] transition-colors duration-300"
-              animate={isMenuOpen ? { rotate: 45, y: 5 } : { rotate: 0, y: 0 }}
+              className="w-8 h-[2px] md:w-9 block bg-[var(--ui-fg)] transition-colors duration-300"
+              animate={isMenuOpen ? { rotate: 45, y: 6 } : { rotate: 0, y: 0 }}
               transition={{ duration: 0.3 }}
             />
             <motion.span
-              className="w-6 h-[1.5px] block bg-[var(--ui-fg)] transition-colors duration-300"
-              animate={isMenuOpen ? { rotate: -45, y: -5 } : { rotate: 0, y: 0 }}
+              className="w-8 h-[2px] md:w-9 block bg-[var(--ui-fg)] transition-colors duration-300"
+              animate={isMenuOpen ? { rotate: -45, y: -6 } : { rotate: 0, y: 0 }}
               transition={{ duration: 0.3 }}
             />
           </button>
@@ -72,9 +73,9 @@ export default function Navigation() {
         {isMenuOpen && (
           <motion.div
             className="fixed inset-0 z-[calc(var(--z-nav)-1)] bg-bg-primary/98 backdrop-blur-xl flex flex-col items-center justify-center gap-8 text-center"
-            initial={{ clipPath: "circle(0% at calc(100% - 2rem) 2rem)" }}
+            initial={{ clipPath: "circle(0% at calc(100% - 2.25rem) 2.75rem)" }}
             animate={{ clipPath: "circle(150% at 50% 50%)" }}
-            exit={{ clipPath: "circle(0% at calc(100% - 2rem) 2rem)" }}
+            exit={{ clipPath: "circle(0% at calc(100% - 2.25rem) 2.75rem)" }}
             transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}
           >
             {NAV_ITEMS.map((item, i) => (

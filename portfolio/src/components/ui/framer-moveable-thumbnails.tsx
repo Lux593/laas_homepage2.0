@@ -82,9 +82,34 @@ const FRAMES = {
 
 export type DeviceFrame = keyof typeof FRAMES;
 
+/**
+ * Override the frame's default object-fit.
+ * - `contain-top`: whole screenshot, smaller in the cutout, aligned to the top
+ * - `cover-top`: fills width and crops the bottom
+ */
+export type ScreenFit = "contain" | "contain-top" | "cover" | "cover-top";
+
+const SCREEN_FIT: Record<ScreenFit, string> = {
+  contain: "object-contain",
+  "contain-top": "object-contain object-top",
+  cover: "object-cover",
+  "cover-top": "object-cover object-top",
+};
+
 interface FramerMoveableThumbnailsProps {
   items: ProjectGalleryItem[];
   frame?: DeviceFrame;
+  /** Override the frame default (iPad contain / iPhone cover). */
+  fit?: ScreenFit;
+  /** Backdrop behind letterboxed screenshots. Defaults to near-black. */
+  screenColor?: string;
+  /**
+   * Inset the screenshot inside the cutout (0–0.4). Makes the image read
+   * smaller without changing the device bezel size.
+   */
+  screenInset?: number;
+  /** Skip the Next image optimizer (avoids stale resized crops while iterating assets). */
+  unoptimized?: boolean;
 }
 
 /** Positive-safe modulo — JS `%` keeps the sign of the dividend. */
@@ -95,6 +120,10 @@ function wrap(i: number, len: number) {
 export default function FramerMoveableThumbnails({
   items,
   frame = "ipad",
+  fit,
+  screenColor = "#0a0a0a",
+  screenInset = 0,
+  unoptimized = false,
 }: FramerMoveableThumbnailsProps) {
   // Unbounded on purpose: it counts steps taken, not which slide is showing.
   // Going left from the first slide gives -1, and the transform follows without
@@ -109,6 +138,8 @@ export default function FramerMoveableThumbnails({
   const x = useMotionValue(0);
   const prefersReducedMotion = useReducedMotion();
   const device = FRAMES[frame];
+  const imageFit = fit ? SCREEN_FIT[fit] : device.fit;
+  const insetPct = Math.min(Math.max(screenInset, 0), 0.4) * 100;
   const len = items.length;
 
   // With motion there is a settle to hide the re-base behind, so the index may
@@ -207,7 +238,7 @@ export default function FramerMoveableThumbnails({
             style={{
               ...device.screen,
               // Backdrop for whatever the screenshot's aspect leaves uncovered
-              backgroundColor: "#0a0a0a",
+              backgroundColor: screenColor,
               borderRadius: device.radius,
             }}
           >
@@ -250,16 +281,25 @@ export default function FramerMoveableThumbnails({
                   key={`${item.id}-${i}`}
                   className="relative h-full w-full shrink-0"
                   aria-hidden={isSpare || undefined}
+                  style={
+                    insetPct
+                      ? { padding: `${insetPct}%` }
+                      : undefined
+                  }
                 >
-                  <Image
-                    src={item.url}
-                    alt={isSpare ? "" : item.title}
-                    fill
-                    sizes="(max-width: 1024px) 92vw, 50vw"
-                    className={`${device.fit} select-none pointer-events-none`}
-                    draggable={false}
-                    priority={false}
-                  />
+                  <div className="relative h-full w-full">
+                    <Image
+                      src={item.url}
+                      alt={isSpare ? "" : item.title}
+                      fill
+                      sizes="(max-width: 1024px) 92vw, 50vw"
+                      className={`${imageFit} select-none pointer-events-none`}
+                      style={{ objectPosition: imageFit.includes("object-top") ? "top" : undefined }}
+                      draggable={false}
+                      priority={!isSpare && i === len}
+                      unoptimized={unoptimized}
+                    />
+                  </div>
                 </div>
                 );
               })}

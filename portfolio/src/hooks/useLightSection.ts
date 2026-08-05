@@ -16,7 +16,7 @@ function apply() {
 
 type LightSectionOptions = {
   /** ScrollTrigger `end` — defaults to `"bottom top+=40"`. Use to stop light
-   *  chrome before a dark overlay (e.g. About iris) covers the cream stage. */
+   *  chrome before a dark overlay (e.g. the About wipe) covers the cream stage. */
   end?: string | (() => string);
 };
 

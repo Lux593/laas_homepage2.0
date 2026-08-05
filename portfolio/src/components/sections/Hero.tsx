@@ -5,14 +5,16 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useMousePosition } from "@/hooks/useMousePosition";
 import { useIsMobile } from "@/hooks/useMediaQuery";
+import "./hero/hero.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const ROTATING_WORDS = [
   "Web-Apps",
-  "Native Apps",
-  "KI-Integration",
-  "Prozessautomation",
+  "mobile Apps",
+  "KI Integration",
+  "Prozessautomationen",
+  "Website Design",
 ];
 
 /**
@@ -32,6 +34,7 @@ export default function Hero() {
   const scrollIndicatorRef = useRef<HTMLDivElement>(null);
   const arrowRef = useRef<SVGSVGElement>(null);
   const illuRef = useRef<HTMLImageElement>(null);
+  const lampRef = useRef<HTMLImageElement>(null);
 
   // Parallax-Ebenen. Bewusst eigene Wrapper: die Entry-Timeline unten besitzt
   // line1Ref/line2Ref/scrollIndicatorRef und der Maus-Parallax besitzt den
@@ -40,6 +43,7 @@ export default function Hero() {
   const subLayerRef = useRef<HTMLDivElement>(null);
   const cueLayerRef = useRef<HTMLDivElement>(null);
   const illuLayerRef = useRef<HTMLDivElement>(null);
+  const lampLayerRef = useRef<HTMLDivElement>(null);
 
   const mouse = useMousePosition(0.08);
   const isMobile = useIsMobile();
@@ -54,10 +58,38 @@ export default function Hero() {
     // Kurzer Beat nach Paint — früher 2.2s für den Preloader, der aktuell aus ist.
     const tl = gsap.timeline({ delay: 0.4 });
 
-    // Die Zeichnung erzählt links Chaos → rechts aufgeräumter Tisch. Der Wipe
-    // legt sie in dieser Leserichtung frei, damit die Kabel sichtbar aus dem
-    // Haufen zum Schreibtisch wachsen. `--wipe` ist die rechte Kante der
-    // Maske in Prozent; -25 heißt komplett verdeckt, 120 komplett offen.
+    // Zuerst geht die Lampe an. Die Maske läuft von oben nach unten, also
+    // erst das Kabel herunter, dann das Glas, dann der Kegel. `--glow` ist
+    // ihre Unterkante in Prozent.
+    //
+    // -20 statt -8: bei -8 endet der weiche Rand der Maske erst bei 6%, die
+    // obersten Prozent der Grafik blieben also sichtbar und das Kabelende
+    // stand schon vor dem Start im Bild. Ab -20 liegt die Maske vollständig
+    // über der Grafik — die Lampe ist wirklich aus.
+    if (lampRef.current) {
+      const lamp = lampRef.current;
+
+      if (reduced) {
+        gsap.set(lamp, { "--glow": 130 });
+      } else {
+        // Bewusst ohne Zucken der Birne: das Glas ist zu dem Zeitpunkt schon
+        // sichtbar, ein Dip danach liest sich als Fehler statt als Einschalten.
+        tl.fromTo(
+          lamp,
+          { "--glow": -20 },
+          { "--glow": 130, duration: 1.2, ease: "power2.out" },
+          0
+        );
+      }
+    }
+
+    // Kurz nach der Lampe: bei 0.2 ist der Kegel schon sichtbar, die
+    // Zeichnung folgt knapp dahinter und wirkt von ihm freigelegt.
+    //
+    // Gleicher Top-down-Wipe wie die Lampe: die Maske läuft von oben nach
+    // unten, als würde der Lichtkegel die Zeichnung freilegen. `--wipe` ist
+    // die Unterkante der Maske in Prozent; -25 heißt komplett verdeckt,
+    // 120 komplett offen.
     if (illuRef.current) {
       if (reduced) {
         gsap.set(illuRef.current, { "--wipe": 120 });
@@ -66,7 +98,7 @@ export default function Hero() {
           illuRef.current,
           { "--wipe": -25 },
           { "--wipe": 120, duration: 1.4, ease: "power2.out" },
-          0
+          0.2
         );
       }
     }
@@ -218,6 +250,20 @@ export default function Hero() {
           .to(illu, { opacity: 0, duration: 1, ease: "power2.in" }, 0);
       }
 
+      // Die Lampe driftet wie die Zeichnung, wird aber NICHT skaliert: ihr
+      // Kabel hängt am oberen Bildrand, ein Zusammenziehen zur Mitte würde es
+      // sichtbar vom Rand lösen. Dieselbe Deckkraft-Kurve, damit Lampe und
+      // Zeichnung als eine Szene verschluckt werden.
+      if (lampLayerRef.current) {
+        const lamp = lampLayerRef.current;
+
+        tl.to(lamp, { y: () => -vh() * 0.1 * intensity, duration: 1 }, 0).to(
+          lamp,
+          { opacity: 0, duration: 1, ease: "power2.in" },
+          0
+        );
+      }
+
       // Die Creme-Kante gehört nicht mehr hierher: die Leistungen-Section
       // fährt selbst als schmaler Balken ein und breitet sich aus (siehe
       // Services.tsx). Ein vorauseilender Stummel im Hero war immer ein
@@ -353,9 +399,36 @@ export default function Hero() {
             style={{
               ["--wipe" as string]: -25,
               WebkitMaskImage:
-                "linear-gradient(90deg, #000 calc(var(--wipe) * 1%), transparent calc((var(--wipe) + 16) * 1%))",
+                "linear-gradient(180deg, #000 calc(var(--wipe) * 1%), transparent calc((var(--wipe) + 16) * 1%))",
               maskImage:
-                "linear-gradient(90deg, #000 calc(var(--wipe) * 1%), transparent calc((var(--wipe) + 16) * 1%))",
+                "linear-gradient(180deg, #000 calc(var(--wipe) * 1%), transparent calc((var(--wipe) + 16) * 1%))",
+            }}
+          />
+        </div>
+
+        {/* Hängelampe — Vektor 1:1 aus dem Canva-Blatt, Maße und Anschluss an
+            die Zeichnung stehen in hero.css. Eigene Ebene über der Zeichnung
+            (wie in Canva), aber unter der Copy (z-10): so läuft das Kabel
+            hinter der Headline durch statt über sie. */}
+        <div
+          ref={lampLayerRef}
+          className="hero-lamp z-0 will-change-[transform,opacity]"
+          aria-hidden
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            ref={lampRef}
+            src="/hero-lamp.svg"
+            alt=""
+            width={1587}
+            height={1755}
+            className="hero-lamp__art select-none"
+            style={{
+              ["--glow" as string]: -20,
+              WebkitMaskImage:
+                "linear-gradient(180deg, #000 calc(var(--glow) * 1%), transparent calc((var(--glow) + 14) * 1%))",
+              maskImage:
+                "linear-gradient(180deg, #000 calc(var(--glow) * 1%), transparent calc((var(--glow) + 14) * 1%))",
             }}
           />
         </div>

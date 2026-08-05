@@ -6,7 +6,7 @@ const ITEM_GAP = "gap-x-36 md:gap-x-48";
 
 /** Basis-Icon-Slot — gleiche Höhe für Logo und Platzhalter. */
 const ICON_SLOT =
-  "relative h-16 w-16 shrink-0 overflow-hidden rounded-md md:h-[4.5rem] md:w-[4.5rem]";
+  "relative h-14 w-14 shrink-0 overflow-hidden rounded-md md:h-16 md:w-16";
 
 function ClientMark({ client }: { client: ClientTickerItem }) {
   return (

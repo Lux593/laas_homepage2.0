@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { CustomEase } from "gsap/CustomEase";
 import TextReveal from "@/components/ui/TextReveal";
 import { useLightSection } from "@/hooks/useLightSection";
 import {
-  ABOUT_HOBBIES,
   ABOUT_INTRO,
   ABOUT_PORTRAIT,
   ABOUT_ROLES,
@@ -16,23 +14,84 @@ import {
 } from "@/lib/constants";
 import "./about/about.css";
 
-gsap.registerPlugin(ScrollTrigger, CustomEase);
+gsap.registerPlugin(ScrollTrigger);
 
-/** Exakt die Kurve, mit der sich das Sidebar-Overlay öffnet: --ease-in-out-quart
- *  bzw. cubic-bezier(0.76, 0, 0.24, 1). Als SVG-Pfad, weil CustomEase die
- *  Kontrollpunkte in dieser Form erwartet. */
-const IRIS_EASE = CustomEase.create("aboutIris", "M0,0 C0.76,0 0.24,1 1,1");
+/** Bewusst NICHT die ease-in-out-quart des Sidebar-Overlays, obwohl die Blende
+ *  sonst dieselbe Sprache spricht. Der Grund ist die Ansteuerung: das Overlay
+ *  läuft zeitbasiert auf Klick, wo der steile Mittelteil kraftvoll wirkt. Diese
+ *  Blende hängt am Scrollrad — dort koppelt derselbe Mittelteil einen riesigen
+ *  Flächenzuwachs an minimalen Scrollweg. Gemessen: quart schiebt 60 % der
+ *  gedeckten Fläche in 20 % der Strecke (Spitze = 3,0× Durchschnitt), power2
+ *  36 % (1,8×). Die Blende behält damit Anlauf und Ausklang, verliert aber den
+ *  Ruck in der Mitte. */
+const WIPE_EASE = gsap.parseEase("power2.inOut");
 
-/** Deckt garantiert jedes Seitenverhältnis ab: der Radius-Prozentwert bezieht
- *  sich auf √(b²+h²)/√2, die halbe Diagonale ist davon immer 70,71 % — 78 %
- *  lässt also überall dieselbe kleine Reserve. */
-const IRIS_OPEN = "circle(78% at 50% 50%)";
-const IRIS_CLOSED = "circle(0% at 50% 50%)";
+/** Anteil der Scrollstrecke, über den die Blende aufgeht. Großzügiger als die
+ *  früheren 0.2: ease-in-out-quart hat einen steilen Mittelteil, und je weniger
+ *  Scrollweg darunter liegt, desto mehr Fläche reißt pro gescrolltem Pixel auf.
+ *  Die Strecke ist der zweite Hebel neben der Kurve — sie kostet Lesezeit auf
+ *  dem fertigen Bildschirm, davon hat der Track hinten aber genug. */
+const WIPE_DURATION = 0.34;
 
-/** Startfarbe der Iris — dasselbe Hellgrau wie der gezoomte LAAS-Schriftzug
- *  auf dem Monitor (liftapp.png @ 0.32 auf heller Bildschirmfläche). Wird beim
- *  Ausbreiten zu #000, noch bevor die Kugel groß ist. */
-const IRIS_GREY = "#dddcd8";
+/** Aufteilung der Blendendauer: erst zieht der Balken seitlich hinaus, dann
+ *  öffnet das Band nach oben und unten. Zwei getrennte Züge, kein Überlappen —
+ *  der seitliche Zug ist die Pointe („der Balken zieht sich raus"), und er ist
+ *  nur lesbar, solange die Höhe noch steht.
+ *
+ *  Hochkant kürzer, weil sich die Verhältnisse drehen: quer legt jede Seitenkante
+ *  rund 880 px zurück und jede Waagerechte rund 530 px, hochkant sind es 180 px
+ *  gegen 400 px. Mit demselben Anteil bekäme der seitliche Zug dort zu viel
+ *  Scrollweg für zu wenig Bewegung. Gleiches Muster wie ZOOM_END. */
+const WIPE_SPLIT = { desktop: 0.38, mobile: 0.3 };
+
+/** Wie weit die Blende am Ende über die Bühnenkante hinausschießt, in Pixeln.
+ *  Genau 0 wäre rechnerisch bündig, ließe aber bei gebrochenen Gerätepixeln
+ *  einen hellen Haarstrich an der Kante stehen. */
+const WIPE_OVERSHOOT = 2;
+
+/** Der Knoten im LAAS-Zeichen, in Prozent von /laas-logo-full.svg (viewBox
+ *  1798,74 × 777,06) — am gerenderten Zeichen nachgemessen, nicht aus den
+ *  Werten des früheren /laas-icon.svg hochgerechnet.
+ *
+ *  Die A-Schenkel kreuzen sich nicht wirklich: sie laufen aufeinander zu
+ *  (Lücke 299 auf y = 200, noch 77 auf y = 450) und enden vorher — die
+ *  Wortmarke schließt auf y = 485,87, ihr rechnerischer Schnittpunkt läge
+ *  erst auf y = 537. Was man als Kreuz liest, ist der Querbalken
+ *  (y = 301…359,35). Der Zielpunkt ist deshalb dessen Mitte auf der
+ *  Symmetrieachse der beiden Schenkel — x = 885,4 fällt exakt mit dem
+ *  verlängerten Schnittpunkt zusammen (Balken auf y = 330: 571,6…1199,2;
+ *  innere Schenkelkanten auf y = 200: 735,5 und 1035,3).
+ *
+ *  `size` ist die Balkendicke und gibt der Messmarke im Elementinspektor die
+ *  Ausdehnung des Knotens. Gerechnet wird nur mit ihrem Mittelpunkt. */
+const LOGO_CROSS = { x: 49.22, y: 42.5, size: 3.24 };
+
+/** Der Querbalken selbst — das Startrechteck der Blende, in Prozent derselben
+ *  viewBox wie LOGO_CROSS. Ober- und Unterkante liegen exakt waagerecht
+ *  (y = 301 und y = 359,35), die beiden Enden dagegen SCHRÄG: sie folgen den
+ *  A-Schenkeln, der Balken läuft unten von 559,01 bis 1214,16, oben nur von
+ *  584,9 bis 1188,27.
+ *
+ *  Genommen wird die obere, schmalere Ausdehnung. Damit liegt das Rechteck auf
+ *  jeder Höhe vollständig innerhalb der Tinte und verschwindet im ersten Moment
+ *  restlos im Balken. Mit der unteren, breiteren stünden stattdessen zwei
+ *  schwarze Nasen über die Schrägen hinaus — sichtbar, bevor sich überhaupt
+ *  etwas bewegt. Der Unterschied ist nach ein paar gescrollten Pixeln ohnehin
+ *  überholt: da ist die Blende breiter als das Zeichen. */
+const LOGO_BAR = { left: 32.52, right: 66.06, top: 38.74, bottom: 46.24 };
+
+/** Seitenverhältnis von /laas-logo-full.svg. applyZoom schreibt der HUD-Kopie
+ *  nur die Breite, die Höhe folgt aus dem Bild — für die Balkenkanten braucht
+ *  es sie aber als Zahl, ohne dafür pro Frame das Layout zu lesen. */
+const LOGO_RATIO = 777.06 / 1798.74;
+
+/** Breite des Zeichens auf der Bildschirmfläche. Nicht dieselbe Zahl wie beim
+ *  getraceten /laas-icon.svg (24,6 %): das trug noch rund 4,4 % Rand je Seite,
+ *  die Vektordatei ist randlos beschnitten (Tinte füllt 100 % statt 91,2 % der
+ *  Bildbreite). Bei gleicher Kastenbreite stünde das Zeichen schlagartig
+ *  größer im Monitor — 22,4 % hält die sichtbare Breite bei denselben ~22,4 %
+ *  der Bildschirmfläche wie vorher. */
+const LOGO_WIDTH = 22.4;
 
 /**
  * Lage der Monitor-Bildschirmfläche innerhalb von
@@ -52,16 +111,39 @@ export default function About() {
   const stageRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
-  const artRef = useRef<HTMLDivElement>(null);
+  /** Nur die Skizze, nicht ihr Container: die Schärfeverlagerung darf das
+   *  LAAS-Zeichen nicht mitnehmen — es ist das Ziel der Kamera und muss beim
+   *  Eintauchen scharf stehen. */
+  const sketchRef = useRef<HTMLImageElement>(null);
   const targetRef = useRef<HTMLDivElement>(null);
+  /** Das Zeichen im Monitor. Trägt in der Kamerafahrt nur noch die Geometrie —
+   *  sichtbar ist die Kopie in `hudRef`, siehe applyZoom. */
+  const logoRef = useRef<HTMLDivElement>(null);
+  const hudRef = useRef<HTMLDivElement>(null);
+  const crossRef = useRef<HTMLSpanElement>(null);
+  /** Zeichen und Blende als eine Gruppe — sie teilen sich die Deckkraft der
+   *  Anfahrt, siehe .about-veil in about.css. */
+  const veilRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  /** Welche Rolle gerade angetippt/gehovert ist. Nur wirksam, wenn die Rolle in
-   *  den Konstanten ein eigenes Foto trägt — sonst bleibt die Platte stehen. */
-  const [activeRole, setActiveRole] = useState<number | null>(null);
-
-  // Cream only while the desk sketch is visible. Once the black iris opens
-  // (ZOOM_END of the scrub), nav flips back to dark chrome.
+  // Cream only while the desk sketch is visible. Der Umschlag darf nicht schon
+  // beim Öffnen der Blende fallen — da ist sie dann erst so breit wie der
+  // Querbalken und der Bildschirm ringsum noch hell. Erst wenn die Oberkante des
+  // Bandes die Navhöhe passiert hat, stimmt dunkles Chrome.
+  //
+  // Das liegt später als bei der früheren Kreisblende: ein Kreis deckt die
+  // Bildmitte und den oberen Rand fast gleichzeitig, das Band erreicht oben erst
+  // gegen Ende seines vertikalen Zuges. Deshalb hängt der Wert am Split statt an
+  // einer festen Zahl — dreht man oben an der Aufteilung, wandert der Umschlag
+  // mit. 0.78 ist der Punkt, an dem die Oberkante des Bandes bei power2.inOut
+  // die Navhöhe passiert (nachgemessen, nicht geschätzt).
+  //
+  // Gerechnet wird auf der SCROLLSTRECKE des Triggers, nicht auf der Trackhöhe:
+  // die Blende hängt an `trigger: track, start "top top", end "bottom bottom"`,
+  // und deren Fortschritt läuft über track.offsetHeight MINUS Viewporthöhe. Mit
+  // der reinen Trackhöhe war der Faktor hier ein anderes Maß als der Fortschritt
+  // dort — bei 340vh Track und 100vh Bühne um Faktor 1,42 daneben, der Umschlag
+  // fiel deshalb erst am Ende der klebenden Phase statt beim Deckenwerden.
   useLightSection(sectionRef, {
     end: () => {
       const track = trackRef.current;
@@ -70,7 +152,12 @@ export default function About() {
         window.matchMedia("(max-width: 767px)").matches &&
         window.matchMedia("(min-height: 660px)").matches;
       const zoomEnd = mobile ? ZOOM_END.mobile : ZOOM_END.desktop;
-      return `top+=${track.offsetHeight * zoomEnd} top+=40`;
+      const split = mobile ? WIPE_SPLIT.mobile : WIPE_SPLIT.desktop;
+      const flip = zoomEnd + WIPE_DURATION * (split + (1 - split) * 0.78);
+      const distance = Math.max(0, track.offsetHeight - window.innerHeight);
+      // +40 hebt den Versatz des Startpunkts wieder auf, sonst läge der
+      // Umschlag um die Navhöhe zu früh.
+      return `top+=${distance * flip + 40} top+=40`;
     },
   });
 
@@ -89,22 +176,38 @@ export default function About() {
       (context) => {
         const isMobile = Boolean(context.conditions?.mobile);
         const zoomEnd = isMobile ? ZOOM_END.mobile : ZOOM_END.desktop;
+        const split = isMobile ? WIPE_SPLIT.mobile : WIPE_SPLIT.desktop;
 
         const track = trackRef.current;
         const stage = stageRef.current;
         const header = headerRef.current;
         const scene = sceneRef.current;
-        const art = artRef.current;
+        const sketch = sketchRef.current;
         const target = targetRef.current;
+        const logo = logoRef.current;
+        const hud = hudRef.current;
+        const cross = crossRef.current;
+        const veil = veilRef.current;
         const content = contentRef.current;
-        if (!track || !stage || !header || !scene || !art || !target || !content) return;
+        if (!track || !stage || !header || !scene || !sketch) return;
+        if (!target || !logo || !hud || !cross || !veil || !content) return;
 
         const groups = gsap.utils.toArray<HTMLElement>(".about-in", content);
         gsap.set(groups, { opacity: 0, y: 32 });
-        gsap.set(content, {
-          clipPath: IRIS_CLOSED,
-          backgroundColor: IRIS_GREY,
-        });
+
+        // Ab hier zeigt die Kopie das Zeichen, das Original im Monitor liefert
+        // nur noch Maße. Der Tausch passiert erst in diesem Kontext: ohne
+        // Kamerafahrt (reduzierte Bewegung, kurze Fenster) läuft applyZoom nie,
+        // und dann muss das Original sichtbar bleiben.
+        logo.style.visibility = "hidden";
+        hud.style.visibility = "visible";
+
+        // Startdeckkraft der Gruppe aus Zeichen und Blende. Steht hier und nicht
+        // im Markup, aus demselben Grund wie der Tausch darüber: ohne
+        // Kamerafahrt gibt es keine Anfahrt, die sie wieder hochzieht, und das
+        // Panel läge blass da. Vor `zoomEnd - 0.3` hat die Timeline den Wert
+        // noch nicht angefasst — bis dahin gilt genau dieser.
+        veil.style.opacity = "0.32";
 
         // Wird bei jedem Refresh neu hergeleitet: die Skizze ist in vw/svh
         // dimensioniert, also wandern Zielgröße UND Außermittigkeit mit dem
@@ -113,10 +216,36 @@ export default function About() {
         let offsetX = 0;
         let offsetY = 0;
 
+        // Bühnenmaß und die Lage des Zeichens darin, beides bei Maßstab 1.
+        // Daraus rechnet applyZoom die mitlaufende Kopie (siehe dort).
+        let stageW = 0;
+        let stageH = 0;
+        let logoX = 0;
+        let logoY = 0;
+        let logoW = 0;
+
+        // Lage und Breite der HUD-Kopie im aktuellen Frame, wie applyZoom sie
+        // gerade geschrieben hat. applyWipe braucht daraus die Balkenkanten und
+        // liest sie hier ab, statt die Kopie zu vermessen: ein
+        // getBoundingClientRect im Scroll-Handler wäre ein Layout-Read direkt
+        // hinter dem Schreiben derselben Stile. applyZoom läuft in onUpdate wie
+        // in onRefresh vor applyWipe, die Werte sind also nie eine Frame alt.
+        let hudX = 0;
+        let hudY = 0;
+        let hudW = 0;
+
         const measure = () => {
           gsap.set(scene, { x: 0, y: 0, scale: 1 });
           const s = target.getBoundingClientRect();
           const v = stage.getBoundingClientRect();
+          const c = cross.getBoundingClientRect();
+          const l = logo.getBoundingClientRect();
+
+          stageW = v.width;
+          stageH = v.height;
+          logoX = l.left - v.left;
+          logoY = l.top - v.top;
+          logoW = l.width;
 
           // Fehlt die Bilddatei noch oder ist sie nicht dekodiert, schrumpft die
           // Bildbox auf ein paar Pixel — daraus berechnete Faktoren wären absurd.
@@ -140,8 +269,14 @@ export default function About() {
             (isMobile
               ? v.width / s.width
               : Math.max(v.width / s.width, v.height / s.height)) * 1.04;
-          offsetX = s.left + s.width / 2 - (v.left + v.width / 2);
-          offsetY = s.top + s.height / 2 - (v.top + v.height / 2);
+
+          // Die Kamera zielt auf das A-Kreuz, nicht auf die Mitte der
+          // Bildschirmfläche: aus diesem Punkt öffnet die Blende, und ein paar
+          // Pixel Versatz sind nach dem ~3,5-fachen Zoom sichtbar. Das Kreuz
+          // liegt fast mittig im Zeichen, der Monitor deckt die Bühne also
+          // weiterhin — die 1.04 oben tragen den Rest.
+          offsetX = c.left + c.width / 2 - (v.left + v.width / 2);
+          offsetY = c.top + c.height / 2 - (v.top + v.height / 2);
         };
 
         const push = gsap.parseEase("power2.in");
@@ -157,12 +292,90 @@ export default function About() {
           // x = offset·((1-t) - scale) leistet genau das. Die frühere Formel
           // `-offset·scale·t` ließ den Restfehler mit dem Scale mitwachsen;
           // deshalb saß die Iris in der Viewport-Mitte, das Icon aber daneben.
-          gsap.set(scene, {
-            x: offsetX * (1 - t - scale),
-            y: offsetY * (1 - t - scale),
-            scale,
-            force3D: true,
-          });
+          const x = offsetX * (1 - t - scale);
+          const y = offsetY * (1 - t - scale);
+          gsap.set(scene, { x, y, scale, force3D: true });
+
+          // Das Zeichen läuft NICHT in der Szene mit, sondern als Kopie darüber
+          // (siehe .about-logo-hud): Breite und Lage stehen hier in Pixeln,
+          // also ist seine Layoutgröße immer seine Bildschirmgröße und Chrome
+          // rastert es bei jedem Maßstab frisch aus dem Vektor.
+          //
+          // In der Szene ging das nicht: die trägt `will-change: transform`
+          // (about.css) und wird deshalb EINMAL gerastert und danach als Textur
+          // aufgezogen — beim ~3,5-fachen Zoom kam das Zeichen als
+          // Bitmap-Upscale an (gemessen 3,6 px breite Kanten statt 1,4 px). Den
+          // Hinweis situativ fallen zu lassen half nicht: entweder flippte er
+          // mitten in der Fahrt und ruckelte, oder man sah das Nachrastern als
+          // Schärfesprung. Der Schreibtisch darunter bleibt gepinnt — er ist an
+          // dieser Stelle ohnehin weichgezeichnet, seine Auflösung sieht
+          // niemand. Eine eigene Compositing-Ebene nur fürs Zeichen wäre
+          // übrigens keine Lösung gewesen: der Teilbaum erbt die
+          // festgehaltene Rasterskala (gemessen 2,75 px).
+          //
+          // Die Formel ist dieselbe wie oben, nur für einen Punkt statt für die
+          // Ebene: um die Bühnenmitte skalieren, dann den Kameraversatz drauf.
+          hudW = logoW * scale;
+          hudX = stageW / 2 + (logoX - stageW / 2) * scale + x;
+          hudY = stageH / 2 + (logoY - stageH / 2) * scale + y;
+          hud.style.width = `${hudW}px`;
+          hud.style.transform = `translate3d(${hudX}px, ${hudY}px, 0)`;
+        };
+
+        // Die Blende: ein Rechteck, das exakt im Querbalken zwischen den beiden
+        // A steht und in zwei Zügen aufmacht — erst seitlich über die Kante
+        // hinaus, dann nach oben und unten auf. Der Balken zieht sich also
+        // heraus, statt dass eine fremde Form über das Zeichen läuft.
+        //
+        // Sie hängt am Scroll-Fortschritt statt an der Timeline, aus demselben
+        // Grund wie der Zoom darüber: bei jedem refresh() rendert ScrollTrigger
+        // die Timeline einmal mit unterdrückten Callbacks neu, ein von dort aus
+        // gesetzter Stil bliebe auf dem alten Wert stehen (siehe die
+        // ausführliche Notiz in Services.tsx). onRefresh schreibt beides neu.
+        //
+        // Vor zoomEnd ist die Blende geschlossen und deckt sich mit dem Balken.
+        // Sichtbar ist davon nichts: sie ist schwarz, der Balken ist es auch,
+        // und sie liegt exakt in seiner Tinte (siehe LOGO_BAR). Die Kanten
+        // laufen mit dem Zoom mit, weil sie aus der HUD-Geometrie kommen.
+        const applyWipe = (progress: number) => {
+          const p = gsap.utils.clamp(
+            0,
+            1,
+            (progress - zoomEnd) / WIPE_DURATION
+          );
+          const tx = WIPE_EASE(gsap.utils.clamp(0, 1, p / split));
+          const ty = WIPE_EASE(
+            gsap.utils.clamp(0, 1, (p - split) / (1 - split))
+          );
+
+          // Der Balken in Bühnenpixeln. Die Höhe der Kopie steht nirgends —
+          // applyZoom schreibt ihr nur die Breite, den Rest macht das Bild —
+          // also aus dem Seitenverhältnis der Datei.
+          const hudH = hudW * LOGO_RATIO;
+          const barL = hudX + hudW * (LOGO_BAR.left / 100);
+          const barR = hudX + hudW * (LOGO_BAR.right / 100);
+          const barT = hudY + hudH * (LOGO_BAR.top / 100);
+          const barB = hudY + hudH * (LOGO_BAR.bottom / 100);
+
+          // Keine Wurzel wie bei der früheren Kreisblende: dort wuchs die
+          // gedeckte Fläche mit dem Quadrat des Radius, die Kurve musste erst
+          // über die Fläche zurückgerechnet werden. Hier fällt das weg, weil im
+          // vertikalen Zug die volle Breite bereits offen ist — die Fläche ist
+          // dann exakt proportional zur Bandhöhe, die Kurve liegt also direkt
+          // auf der Geometrie und trotzdem auf der Fläche. Der seitliche Zug
+          // trägt rund ein Prozent der Gesamtfläche und ist ohnehin unkritisch.
+          const set = (name: string, value: number) =>
+            content.style.setProperty(name, `${value}px`);
+          set("--wipe-left", gsap.utils.interpolate(barL, -WIPE_OVERSHOOT, tx));
+          set(
+            "--wipe-right",
+            gsap.utils.interpolate(stageW - barR, -WIPE_OVERSHOOT, tx)
+          );
+          set("--wipe-top", gsap.utils.interpolate(barT, -WIPE_OVERSHOOT, ty));
+          set(
+            "--wipe-bottom",
+            gsap.utils.interpolate(stageH - barB, -WIPE_OVERSHOOT, ty)
+          );
         };
 
         const spine = { p: 0 };
@@ -172,11 +385,17 @@ export default function About() {
             start: "top top",
             end: "bottom bottom",
             scrub: true,
+            // applyZoom zuerst: applyWipe liest die HUD-Geometrie ab, die dort
+            // geschrieben wird.
             onRefresh: (self) => {
               measure();
               applyZoom(self.progress);
+              applyWipe(self.progress);
             },
-            onUpdate: (self) => applyZoom(self.progress),
+            onUpdate: (self) => {
+              applyZoom(self.progress);
+              applyWipe(self.progress);
+            },
           },
         });
 
@@ -191,8 +410,10 @@ export default function About() {
           // Rasterbilds eine gewollte Kamerabewegung statt sichtbarer Pixel.
           // Bewusst flach gehalten, damit sie der Blende nicht die Schau stiehlt.
           // Hochkant einen Tick stärker: dort steht am Ende ein gröberer Upscale.
+          // Zielt auf die Skizze, nicht auf .about-art — das LAAS-Zeichen liegt
+          // im selben Container und muss scharf bleiben, es ist das Ziel.
           .fromTo(
-            art,
+            sketch,
             { filter: "blur(0px)" },
             {
               filter: `blur(${isMobile ? 4 : 3}px)`,
@@ -201,30 +422,62 @@ export default function About() {
             },
             zoomEnd - 0.2
           )
-          // Die Blende: erst wenn der Zoom das Icon in die Mitte gelegt hat
-          // (zoomEnd), wächst die Kugel aus genau diesem Punkt — sonst öffnet
-          // die nächste Seite zentriert, während das Icon noch versetzt sitzt.
-          // Farbe läuft über die ersten 40 % der Clip-Dauer: startet im
-          // LAAS-Grau, ist bei 40 % Ausbreitung schwarz — danach wächst nur
-          // noch die schwarze Fläche.
+          // Gegenbewegung zur weich werdenden Skizze: das Zeichen zieht an,
+          // während alles andere zurücktritt. Am Ende steht der Querbalken als
+          // dunkelster, schärfster Strich im Bild — und genau er zieht sich
+          // gleich heraus. Es ist der Übergang, nicht bloß der Ort davor.
+          //
+          // Sitzt auf der Gruppe, nicht auf dem Zeichen allein: die geschlossene
+          // Blende liegt in der Tinte des Balkens und muss dieselbe Deckkraft
+          // tragen, sonst steht sie als harter Strich im blassen Zeichen
+          // (Rechnung in about.css bei .about-veil). Zielwert voll deckend, nicht
+          // knapp darunter — die Blende ist reines Schwarz, und bei 0,94 bliebe
+          // die Bühne am Ende ein Grauton neben dem schwarzen Panel darunter.
           .fromTo(
-            content,
-            { clipPath: IRIS_CLOSED, backgroundColor: IRIS_GREY },
-            { clipPath: IRIS_OPEN, ease: IRIS_EASE, duration: 0.2 },
-            zoomEnd
+            veil,
+            { opacity: 0.32 },
+            { opacity: 1, ease: "power2.in", duration: 0.26 },
+            zoomEnd - 0.3
           )
-          .to(
-            content,
-            { backgroundColor: "#000000", ease: "power2.in", duration: 0.08 },
-            zoomEnd
-          )
+          // Die Blende selbst läuft neben der Timeline (applyWipe): erst wenn
+          // der Zoom den Querbalken in die Mitte gelegt hat, zieht er sich
+          // heraus. Sie ist durchweg schwarz — der frühere Lauf von Hellgrau
+          // nach Schwarz passierte auf bereits großer Fläche und war als
+          // Farbwechsel lesbar.
+          //
           // Läuft wie im Sidebar-Overlay leicht versetzt in der offenen Blende mit,
-          // statt danach als zweite, eigene Bewegung.
+          // statt danach als zweite, eigene Bewegung. Der Versatz sitzt im
+          // VERTIKALEN Zug, nicht in der Blendendauer insgesamt: solange der
+          // Balken nur seitlich hinausfährt, ist das Band ein paar Pixel hoch,
+          // und die Copy ist sein Kind — der clip-path schnitte die Staffelung
+          // schlicht weg, man sähe sie nie. Der Bezug auf split statt auf eine
+          // feste Zahl hält das Verhältnis, wenn oben an der Aufteilung gedreht
+          // wird.
           .to(
             groups,
             { opacity: 1, y: 0, ease: "power3.out", duration: 0.14, stagger: 0.05 },
-            zoomEnd + 0.04
+            zoomEnd + WIPE_DURATION * (split + (1 - split) * 0.3)
           );
+
+        // Der Tausch oben ist ein Inline-Stil und überlebt das Aufräumen von
+        // GSAP — beim Wechsel der Query (Drehen, Fenstergröße, reduzierte
+        // Bewegung) bliebe das Zeichen im Monitor sonst unsichtbar, während die
+        // Kopie ohne applyZoom auf ihrer letzten Breite stehen bleibt.
+        // Dasselbe gilt für die vier Blendenwerte: sie stehen als rohe Custom
+        // Properties am Element und überleben mm.revert() ebenfalls. Im Fallback
+        // sind sie wirkungslos, weil der clip-path selbst in der Motion-Query
+        // steht — aber sie hier stehen zu lassen hieße, sich auf genau das zu
+        // verlassen.
+        return () => {
+          logo.style.visibility = "";
+          hud.style.visibility = "";
+          hud.style.width = "";
+          hud.style.transform = "";
+          veil.style.opacity = "";
+          for (const side of ["top", "right", "bottom", "left"]) {
+            content.style.removeProperty(`--wipe-${side}`);
+          }
+        };
       }
     );
 
@@ -249,26 +502,30 @@ export default function About() {
               weiter innen als die Header darüber. */}
           <header ref={headerRef} className="about-header work-container w-full">
             <span className="mb-3 block font-mono text-caption uppercase tracking-[0.2em] text-[#5f574e]">
-              04 - Wer das hier baut
+              Wer dich unterstützt
             </span>
             <TextReveal
               as="h2"
               variant="words"
               start="top 95%"
-              className="font-display text-[clamp(1.9rem,4vw,3.5rem)] font-bold uppercase leading-[0.95] tracking-tighter text-[#0a0a0a]"
-            >
+              className="font-display text-[clamp(1.9rem,4vw,3.5rem)] font-bold uppercase leading-[1.05] tracking-tighter text-[#0a0a0a]"
+              >
               ÜBER MICH
             </TextReveal>
           </header>
 
           <div ref={sceneRef} className="about-scene">
-            <div ref={artRef} className="about-art">
+            <div className="about-art">
               {/* Bewusst kein next/image: die Datei liefert der Nutzer, ihre
                   Maße stehen nicht fest, und ein falsches width/height-Paar
                   würde das Seitenverhältnis der Bühne verfälschen.
-                  Lampenlicht ist bereits im Bild — kein CSS-Licht-Overlay. */}
+                  Lampenlicht ist bereits im Bild — kein CSS-Licht-Overlay.
+                  Die Schärfeverlagerung sitzt auf diesem Bild und nicht auf
+                  .about-art: der Container trägt auch das LAAS-Zeichen, und das
+                  muss beim Eintauchen scharf bleiben. */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
+                ref={sketchRef}
                 src="/vorschaubilder/office_new.webp"
                 alt=""
                 aria-hidden
@@ -291,129 +548,137 @@ export default function About() {
                   height: `${SCREEN.height}%`,
                 }}
               >
-                {/* Die Breite gehört auf den Wrapper, nicht auf das Bild:
-                    next/image schreibt aus width/height eigene Maße und
-                    überstimmt eine Utility-Klasse am Bild-Element.
-                    Der Prozentwert ist nicht die Sehfläche — liftapp.png trägt
-                    rund 19 % transparenten Rand je Seite, sichtbar bleiben von
-                    36 % also nur ~22 % der Bildschirmbreite. */}
-                <div className="absolute left-1/2 top-1/2 w-[36%] -translate-x-1/2 -translate-y-1/2 opacity-[0.32]">
-                  <Image
-                    src="/liftapp.png"
+                {/* Die Breite gehört auf den Wrapper, nicht auf das Bild —
+                    siehe LOGO_WIDTH für den Prozentwert. */}
+                <div
+                  ref={logoRef}
+                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 opacity-[0.32]"
+                  style={{ width: `${LOGO_WIDTH}%` }}
+                >
+                  {/* Bewusst kein next/image: das Zeichen ist eine Vektordatei,
+                      und next/image optimiert SVG nicht — es reichte srcset und
+                      sizes durch, die hier beide sinnlos sind. Genau das ist der
+                      Grund für das SVG: der Zoom vergrößert das Zeichen um das
+                      Mehrfache, und als Vektor bleibt es dabei scharf, statt wie
+                      das alte Raster-PNG an einer Auflösungsstufe zu hängen.
+                      width/height stehen dran, damit die Box schon vor dem Laden
+                      ihr Verhältnis kennt — sonst misst die Zoom-Mathematik beim
+                      ersten Refresh auf einer 0-hohen Marke. */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/laas-logo-full.svg"
                     alt=""
-                    width={2188}
-                    height={1352}
-                    sizes="(max-width: 768px) 20vw, 40vw"
-                    className="h-auto w-full"
+                    aria-hidden
+                    width={1799}
+                    height={777}
+                    className="block h-auto w-full"
+                  />
+                  {/* Zielpunkt der Kamera: der Knoten der beiden A. Führt kein
+                      Eigenleben — es wird nur gemessen, Lage und Größe stehen in
+                      LOGO_CROSS. Die Blende startet nicht hier, sondern im
+                      Querbalken ringsum (LOGO_BAR); dessen Mitte ist genau
+                      dieser Punkt. */}
+                  <span
+                    ref={crossRef}
+                    aria-hidden
+                    className="pointer-events-none absolute block -translate-x-1/2 -translate-y-1/2"
+                    style={{
+                      left: `${LOGO_CROSS.x}%`,
+                      top: `${LOGO_CROSS.y}%`,
+                      width: `${LOGO_CROSS.size}%`,
+                      aspectRatio: "1",
+                    }}
                   />
                 </div>
               </div>
             </div>
           </div>
 
-          <div ref={contentRef} className="about-content text-[#f2ede4]">
-            <div className="work-container flex w-full flex-col">
-              {/* Annotiertes Porträt: die Platte in der Mitte ist der Anker,
-                  links steht wer das ist, rechts hängen die Rollen als
-                  beschriftete Auszüge daran. Dieselbe Zeichnungssprache wie die
-                  Bauzeichnung in „Leistungen" — Hairline, Punkt, Beschriftung. */}
-              <div className="about-plan">
-                {/* Auf schmalen Fenstern lösen sich diese drei per
-                    `display: contents` aus dem Wrapper und ordnen sich einzeln
-                    im Raster ein — nur so steht das Porträt dort neben dem
-                    Namen statt darunter, und alles passt in eine Blende. */}
-                <div className="about-left">
-                  <div className="about-in about-identity">
-                    <p className="font-mono text-[0.7rem] uppercase tracking-[0.24em] text-[#f2ede4]/50">
+          {/* Zeichen und Blende liegen in einer Gruppe, weil sie sich die
+              Deckkraft der Anfahrt teilen: die geschlossene Blende steht in der
+              Tinte des Querbalkens, und getrennt gedeckt addierten sich beide
+              dort zu einem dunkleren Fleck. Ausführlich in about.css bei
+              .about-veil. Die Deckkraft setzt About.tsx im Bewegungskontext,
+              nicht hier — im statischen Fallback läge sonst das ganze Panel
+              blass da. */}
+          <div ref={veilRef} className="about-veil">
+            {/* Die sichtbare Ausgabe des Zeichens, bewusst außerhalb von
+                .about-scene: dort läge sie in der gepinnten, hochskalierten
+                Textur (Begründung in applyZoom). Hier setzt applyZoom Breite und
+                Lage in Pixeln, deckungsgleich mit dem Original im Monitor.
+                Startet unsichtbar — ohne Kamerafahrt übernimmt sie nichts. */}
+            <div
+              ref={hudRef}
+              aria-hidden
+              className="about-logo-hud"
+              style={{ visibility: "hidden" }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/laas-logo-full.svg"
+                alt=""
+                aria-hidden
+                width={1799}
+                height={777}
+                className="block h-auto w-full"
+              />
+            </div>
+
+            <div ref={contentRef} className="about-content text-[#f2ede4]">
+              {/* Drei Blöcke über die Breite: links Porträt+Intro, mittig
+                  Werdegang, rechts Tools — gleiche Höhe, Inhalt verteilt. */}
+              <div className="about-panel">
+                <div className="about-in about-lead">
+                  <figure
+                    className="about-plate"
+                    aria-label={ABOUT_PORTRAIT.alt}
+                  >
+                    <Image
+                      src={ABOUT_PORTRAIT.src}
+                      alt={ABOUT_PORTRAIT.alt}
+                      width={ABOUT_PORTRAIT.width}
+                      height={ABOUT_PORTRAIT.height}
+                      sizes="(max-width: 767px) 40vw, 14vw"
+                      className="about-plate-img"
+                    />
+                  </figure>
+
+                  <div className="about-identity">
+                    <p className="font-mono text-[0.85rem] uppercase tracking-[0.24em] text-[#f2ede4]/50">
                       {ABOUT_INTRO.greeting}
                     </p>
-                    {/* Zwei Zeilen statt einer: der Name trägt den Grad, den
-                        die Section vorher gar nicht ausgespielt hat. */}
-                    <h3 className="about-name mt-[clamp(0.5rem,1.4vh,0.9rem)] font-display text-[clamp(2.15rem,5.4vw,4.75rem)] font-bold uppercase leading-[0.86] tracking-[-0.04em]">
+                    <h3 className="about-name font-display text-[clamp(2.55rem,5.1vw,4.5rem)] font-bold uppercase leading-[0.86] tracking-[-0.04em]">
                       {ABOUT_INTRO.name.split(" ").map((part) => (
                         <span key={part} className="block">
                           {part}
                         </span>
                       ))}
                     </h3>
-                  </div>
-
-                  <p className="about-in about-statement max-w-[34ch] font-body text-body-md leading-relaxed text-[#f2ede4]/70">
-                    {ABOUT_INTRO.subtitle}
-                  </p>
-
-                  {/* Reine Wortreihe, keine Aufzählungszeichen — der Abstand
-                      trennt. */}
-                  <div className="about-in about-hobbies">
-                    <p className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-[#f2ede4]/50">
-                      Hobbys
-                    </p>
-                    <ul className="about-hobby-list mt-[clamp(0.7rem,1.8vh,1.1rem)] font-body text-body-sm text-[#f2ede4]/70">
-                      {ABOUT_HOBBIES.map((hobby) => (
-                        <li key={hobby}>{hobby}</li>
+                    <p className="about-statement font-body text-[clamp(1.1rem,1.35vw,1.4rem)] leading-relaxed text-[#f2ede4]/70">
+                      {ABOUT_INTRO.subtitle.map((line) => (
+                        <span key={line} className="block whitespace-nowrap">
+                          {line}
+                        </span>
                       ))}
-                    </ul>
+                    </p>
+                    <p className="about-location mt-[clamp(0.85rem,2vh,1.25rem)] font-mono text-[0.8rem] uppercase tracking-[0.2em] text-[#f2ede4]/50">
+                      {ABOUT_INTRO.location}
+                    </p>
                   </div>
                 </div>
 
-                <figure className="about-in about-plate">
-                  <Image
-                    src={ABOUT_PORTRAIT.src}
-                    alt={ABOUT_PORTRAIT.alt}
-                    width={ABOUT_PORTRAIT.width}
-                    height={ABOUT_PORTRAIT.height}
-                    sizes="(max-width: 767px) 62vw, (max-width: 1023px) 42vw, 36vw"
-                    className="about-plate-img"
-                    priority={false}
-                  />
-                  {/* Sobald eine Rolle in den Konstanten ein eigenes Foto trägt,
-                      liegt es hier vorbereitet auf der Platte und wird beim
-                      Hovern der Annotation aufgeblendet — kein Nachladeruckeln.
-                      Ohne solche Fotos rendert diese Schleife nichts. */}
-                  {ABOUT_ROLES.map((role, index) =>
-                    role.image ? (
-                      <Image
-                        key={role.company}
-                        src={role.image}
-                        alt={role.imageAlt ?? ""}
-                        width={ABOUT_PORTRAIT.width}
-                        height={ABOUT_PORTRAIT.height}
-                        sizes="(max-width: 767px) 62vw, (max-width: 1023px) 42vw, 36vw"
-                        className="about-plate-img about-plate-alt"
-                        data-shown={activeRole === index ? "" : undefined}
-                        aria-hidden={activeRole !== index}
-                      />
-                    ) : null
-                  )}
-                </figure>
-
                 <div className="about-in about-annotations">
-                  <p className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-[#f2ede4]/50">
+                  <p className="font-mono text-[0.85rem] uppercase tracking-[0.2em] text-[#f2ede4]/50">
                     Was ich gerade beruflich mache
                   </p>
-                  <ul className="about-roles mt-[clamp(0.85rem,2vh,1.35rem)]">
-                    {ABOUT_ROLES.map((role, index) => (
-                      <li
-                        key={role.company}
-                        className="about-role"
-                        data-active={activeRole === index ? "" : undefined}
-                        // Nur Rollen mit eigenem Foto reagieren. Ohne Bild gäbe
-                        // es einen Hover-Zustand, der nichts tut.
-                        onMouseEnter={() => role.image && setActiveRole(index)}
-                        onMouseLeave={() =>
-                          setActiveRole((current) => (current === index ? null : current))
-                        }
-                        onFocus={() => role.image && setActiveRole(index)}
-                        onBlur={() =>
-                          setActiveRole((current) => (current === index ? null : current))
-                        }
-                        tabIndex={role.image ? 0 : undefined}
-                      >
+                  <ul className="about-roles mt-[clamp(1rem,2.4vh,1.6rem)]">
+                    {ABOUT_ROLES.map((role) => (
+                      <li key={role.company} className="about-role">
                         <div className="about-role-body min-w-0">
-                          <p className="font-display text-body-sm font-semibold leading-tight text-[#f2ede4] md:text-body-md">
+                          <p className="font-display text-body-md font-semibold leading-tight text-[#f2ede4] md:text-[clamp(1.28rem,1.6vw,1.65rem)]">
                             {role.company}
                           </p>
-                          <p className="mt-1.5 font-body text-caption leading-relaxed text-[#f2ede4]/60">
+                          <p className="mt-2 font-body text-[clamp(0.95rem,1.05vw,1.15rem)] leading-relaxed text-[#f2ede4]/60">
                             {role.position}
                           </p>
                         </div>
@@ -421,43 +686,37 @@ export default function About() {
                     ))}
                   </ul>
                 </div>
-              </div>
 
-              {/* Schriftfeld: in einer technischen Zeichnung steht unten am Rand,
-                  womit gezeichnet wurde. Hier eben mit diesen Werkzeugen. */}
-              <div className="about-in about-titleblock">
-                <p className="font-mono text-[0.7rem] uppercase tracking-[0.2em] text-[#f2ede4]/50">
-                  Tools die ich mag
-                </p>
-                <ul className="about-tools">
-                  {ABOUT_TOOLS.map((tool) => (
-                    <li key={tool.name}>
-                      <a
-                        href={tool.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="about-tool"
-                        data-cursor-hover
-                      >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={tool.icon}
-                          alt=""
-                          width={28}
-                          height={28}
-                          className="about-tool-icon"
-                        />
-                        {/* Auf dem Handy stünden sieben beschriftete Einträge
-                            in drei Zeilen — die Blende hat die Höhe nicht. Die
-                            Marken sind erkennbar, der Name bleibt für
-                            Screenreader da und kommt ab sm zurück. */}
-                        <span className="about-tool-name sr-only font-mono text-[0.65rem] uppercase tracking-[0.14em] sm:not-sr-only">
-                          {tool.name}
-                        </span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+                <div className="about-in about-titleblock">
+                  <p className="about-titleblock-label font-mono text-[0.85rem] uppercase tracking-[0.2em] text-[#f2ede4]/50">
+                    Tools die ich mag
+                  </p>
+                  <ul className="about-tools">
+                    {ABOUT_TOOLS.map((tool) => (
+                      <li key={tool.name}>
+                        <a
+                          href={tool.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="about-tool"
+                          data-cursor-hover
+                        >
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={tool.icon}
+                            alt=""
+                            width={32}
+                            height={32}
+                            className="about-tool-icon"
+                          />
+                          <span className="about-tool-name font-mono text-[0.58rem] uppercase tracking-[0.12em]">
+                            {tool.name}
+                          </span>
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
             </div>
           </div>

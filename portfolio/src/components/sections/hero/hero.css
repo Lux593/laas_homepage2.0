@@ -1,0 +1,112 @@
+/* Hängelampe über der Schreibtisch-Zeichnung.
+
+   /hero-lamp.svg ist der Vektor-Export aus dem Canva-Blatt "Workspace Hero":
+   PDF-Export, daraus das eingebettete Schreibtisch-Bild und der schwarze
+   Seitengrund entfernt, dazu der große runde Hof, der zweite tiefer
+   ansetzende Kegel und die Scheibe hinter der Birne. Kabel, Glas,
+   Strahlenkranz und Lichtkegel sind die Canva-Pfade — nichts nachgebaut.
+
+   Auf dem Blatt ist die Zeichnung ein 1271×490-Kasten bei (144, 879) in einer
+   1587×1755-Fläche, das Glas sitzt auf (793.7, 474.1). Die Regeln unten
+   rechnen nach, wo das <img> der Zeichnung im Hero landet, und hängen die
+   Lampe maßstabsgetreu darüber. */
+
+.hero-lamp {
+  /* Kasten des <img>: w-[min(960px,91vw)] in Hero.tsx */
+  --desk-box: min(960px, 91vw);
+
+  /* Sobald max-h greift, skaliert object-contain die 1270×490 herunter und
+     zentriert sie in ihrem Kasten — die Zeichnung ist dann schmaler als er.
+     1270/490 = 2.5918, also 32svh × 2.5918 = 82.94svh. */
+  --desk-w: min(var(--desk-box), 82.94svh);
+  --desk-h: calc(var(--desk-w) / 2.5918);
+
+  /* Oberkante der Zeichnung, gemessen von der Unterkante der Section: das
+     <img> steht per items-end mit mb-[11svh] über der Balkenkante. */
+  --desk-top: calc(11svh + var(--desk-h));
+
+  /* Gesamtgröße der Lampe. 1 wäre der Maßstab des Canva-Blatts, bezogen auf
+     die Breite der Zeichnung. Kleiner heißt: zierlichere Birne UND schmalerer
+     Kegel, weil der Öffnungswinkel derselbe bleibt. Auf dem Handy bleibt sie
+     größer — die Zeichnung ist dort ohnehin schmal, und bei 0.76 wäre das
+     Glas nur noch gut 15px breit und läse sich als Fussel. */
+  --lamp-scale: 0.95;
+
+  /* Höhe des Glases über der Oberkante der Zeichnung.
+
+     Im Canva-Blatt sind das 31.857% der Zeichnungsbreite. Das Blatt ist aber
+     hochkant, der Hero quer: bei üblichen Laptop-Breiten (~1300–1600px) ist
+     die Headline relativ zur Viewport-Breite am größten und die Birne läge
+     mitten im Wort "Luca". Deshalb hier ein Maß in svh — es wächst mit dem
+     freien Raum statt mit der Zeichnung und bleibt so überall unter der Copy. */
+  --lamp-hang: 9svh;
+
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+
+  /* Der Kegel läuft nach unten aus, statt unter der Zeichnung weiterzulaufen.
+     Er endet damit etwa auf Tischhöhe — im Canva-Blatt hört er auf 63% der
+     Zeichnungshöhe auf, dort war er nur vom zweiten Kegel verdeckt, den es
+     hier nicht mehr gibt.
+
+     Die Maske sitzt auf dieser Ebene, weil sie deckungsgleich mit der Section
+     ist: die Werte sind direkt Höhen im Bild, von unten gemessen. Das obere
+     Ende des Kabels blendet die Grafik selbst aus (Verlauf im SVG) — das
+     bleibt so unabhängig davon, wo die Lampe im Layout landet.
+
+     Beide Marken hängen an der Zeichnung, nicht an der Viewport-Höhe: sonst
+     wäre der Kegel auf dem Handy, wo die Zeichnung klein ist, schon zu Ende,
+     bevor er sie überhaupt erreicht. Gemessen wird von der Unterkante der
+     Section, die Zeichnung steht dort mit mb-[11svh]. */
+  --lamp-dim: calc(11svh + 0.75 * var(--desk-h)); /* 25% in die Zeichnung */
+  --lamp-end: calc(11svh + 0.32 * var(--desk-h)); /* 68% — hier ist er weg */
+
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    #000 calc(100% - var(--lamp-dim)),
+    transparent calc(100% - var(--lamp-end))
+  );
+  mask-image: linear-gradient(
+    180deg,
+    #000 calc(100% - var(--lamp-dim)),
+    transparent calc(100% - var(--lamp-end))
+  );
+}
+
+@media (min-width: 768px) {
+  .hero-lamp {
+    /* md:max-h-[37svh] → 37svh × 2.5918 = 95.9svh */
+    --desk-w: min(var(--desk-box), 95.9svh);
+    --lamp-scale: 0.76;
+  }
+}
+
+.hero-lamp__art {
+  position: absolute;
+
+  /* Rechte Kante des Zeichnungs-Kastens (paddingRight: 8%), plus dessen halbe
+     Breite = Mitte der Zeichnung. object-contain zentriert das Bild im Kasten,
+     Kastenmitte ist also Bildmitte — unabhängig davon, ob max-h greift. */
+  right: calc(8% + var(--desk-box) / 2);
+
+  /* Grundlage ist die Oberkante der Zeichnung, plus --lamp-hang. Davon
+     abgezogen wird, wie weit das Glas in der Grafik über deren Unterkante
+     sitzt (31.857% der Zeichnungsbreite, mitskaliert) — damit landet das Glas
+     genau auf der gewünschten Höhe, egal wie groß die Lampe ist. */
+  bottom: calc(
+    var(--desk-top) + var(--lamp-hang) - 0.31857 * var(--desk-w) *
+      var(--lamp-scale)
+  );
+
+  /* 1587/1271 = 1.24863: so viel breiter als die Zeichnung ist die Grafik. */
+  width: calc(var(--desk-w) * 1.24863 * var(--lamp-scale));
+  height: auto;
+  max-width: none;
+
+  /* In der Grafik liegt die Mitte der Zeichnung bei 49.118% der Breite und
+     ihre Oberkante bei 50.0855% der Höhe. Verschoben wird um den Rest —
+     100% − 49.118% waagerecht, 100% − 50.0855% senkrecht —, damit genau
+     diese beiden Linien auf right/bottom von oben zu liegen kommen. */
+  translate: 50.882% 49.9145%;
+}

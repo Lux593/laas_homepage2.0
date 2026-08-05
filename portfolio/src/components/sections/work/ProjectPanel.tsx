@@ -54,7 +54,7 @@ export default function ProjectPanel({
               </div>
 
               <header data-reveal="copy">
-                <h3 className="font-display text-[clamp(1.9rem,3.1vw,3.1rem)] font-bold leading-[0.98] tracking-tighter text-[#0a0a0a] uppercase">
+                <h3 className="whitespace-pre-line font-display text-[clamp(1.9rem,3.1vw,3.1rem)] font-bold leading-[0.98] tracking-tighter text-[#0a0a0a] uppercase">
                   {project.title}
                 </h3>
 
@@ -70,7 +70,7 @@ export default function ProjectPanel({
                     data-reveal="copy"
                     className="grid grid-cols-[2.25rem_1fr] items-baseline gap-x-3 border-b border-[#0a0a0a]/12 py-2.5"
                   >
-                    <span className="font-mono text-caption tabular-nums text-[#6a6a6a]">
+                    <span className="font-display text-caption font-bold tracking-tighter tabular-nums text-[#6a6a6a]">
                       {String(i + 1).padStart(2, "0")}
                     </span>
                     <div className="min-w-0">
@@ -99,6 +99,10 @@ export default function ProjectPanel({
               <FramerMoveableThumbnails
                 items={project.gallery}
                 frame={project.device}
+                fit={project.fit}
+                screenColor={project.screenColor}
+                screenInset={project.screenInset}
+                unoptimized={project.unoptimized}
               />
             </div>
           </div>

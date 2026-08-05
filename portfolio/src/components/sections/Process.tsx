@@ -22,7 +22,7 @@ function ProcessHeader({
       <div className="flex items-end justify-between gap-8">
         <div className="min-w-0">
           <span className="mb-3 block font-mono text-caption uppercase tracking-[0.2em] text-[#f2ede4]/60">
-            02 - So arbeiten wir zusammen
+            So arbeiten wir zusammen
           </span>
           <TextReveal
             as="h2"
@@ -47,7 +47,7 @@ function ProcessHeader({
                 01
               </span>
             </span>
-            <span className="font-mono text-caption tracking-[0.2em] text-[#f2ede4]/60">
+            <span className="font-display text-caption font-bold tracking-tighter tabular-nums text-[#f2ede4]/60">
               / {TOTAL}
             </span>
           </div>

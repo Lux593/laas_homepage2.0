@@ -1,11 +1,11 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import TextReveal from "@/components/ui/TextReveal";
 import MagneticButton from "@/components/ui/MagneticButton";
+import { useLightSection } from "@/hooks/useLightSection";
 import { SITE_CONFIG } from "@/lib/constants";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -13,6 +13,9 @@ gsap.registerPlugin(ScrollTrigger);
 export default function GiganticCTA() {
   const sectionRef = useRef<HTMLElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+
+  // Cream contact card needs dark chrome (logo + menu) while it owns the top.
+  useLightSection(sectionRef);
 
   useEffect(() => {
     if (!cardRef.current || !sectionRef.current) return;
@@ -33,8 +36,12 @@ export default function GiganticCTA() {
             scrollTrigger: {
               trigger: sectionRef.current,
               start: "top bottom",
-              end: "top 50%",
-              scrub: 1,
+              // 30vh statt 50vh Strecke, aus demselben Grund wie quer (siehe
+              // unten): die Blende räumt von unten auf, ihre sichtbare Kante
+              // erscheint aber erst kurz vor Schluss über der Fensterkante.
+              // Über 50vh stand dazwischen ein Drittel Bildhöhe leer.
+              end: "top 70%",
+              scrub: 0.5,
             },
           }
         );
@@ -43,12 +50,31 @@ export default function GiganticCTA() {
         const tl = gsap.timeline({
           scrollTrigger: {
             trigger: sectionRef.current,
-            start: "top 80%",
-            end: "top 0%",
-            scrub: 1,
+            // „top bottom" statt „top 80%": der About-Track endet exakt dann,
+            // wenn diese Section die Unterkante erreicht — die Karte setzt also
+            // ohne Pause an, wo die Blende darüber aufhört. Die früheren 80 %
+            // ließen davor 20vh reines Schwarz stehen, ununterscheidbar vom
+            // Seitengrund.
+            start: "top bottom",
+            // Ende bei 30 % statt ganz oben: die Karte steht damit auf voller
+            // Größe, BEVOR die Section die Oberkante erreicht. Danach schiebt
+            // sie sich nur noch normal hoch, statt bis zuletzt zu wachsen.
+            end: "top 30%",
+            // 1 war zusammen mit Lenis (duration 1.2) eine zweite
+            // Verzögerungsstufe: bei zügigem Scrollen lief die Karte rund zwei
+            // Sekunden hinter dem Rad her und tauchte sichtbar zu spät auf.
+            scrub: 0.5,
           },
         });
 
+        // 0.32 statt 0.5 der Strecke für die Blende. Sie läuft von der
+        // Unterkante der Karte hoch, und die Karte steht dabei auf 0.7 — ihre
+        // Oberkante liegt also 15vh unter dem Kartenkasten, der selbst erst am
+        // Fensterrand beginnt. Die aufziehende Kante ist deshalb die längste
+        // Zeit unterhalb der Fensterkante und für den Betrachter unsichtbar.
+        // Gerechnet: mit 40vh Blendenstrecke tauchte der erste Cremestreifen
+        // erst nach 31vh Scrollweg auf, mit 22vh nach 20vh — und der schwarze
+        // Streifen dazwischen schrumpft von 44vh auf gut 20vh.
         tl.fromTo(
           cardRef.current,
           {
@@ -60,16 +86,20 @@ export default function GiganticCTA() {
             clipPath: "inset(0% 0 0 0 round 2rem)",
             scale: 0.7,
             borderRadius: "2rem",
-            duration: 0.5,
+            duration: 0.32,
             ease: "none",
           }
         );
 
+        // Der Rest der Strecke gehört dem Wachsen. Die Oberkante der Karte
+        // wandert dabei auf die Sectionkante zu und trifft sie am Ende genau —
+        // die Lücke zum About-Panel darüber schließt sich also von selbst,
+        // ohne dass hier eine zweite Bewegung dagegenhalten müsste.
         tl.to(cardRef.current, {
           scale: 1,
           borderRadius: "2rem",
           clipPath: "inset(0% 0 0 0 round 2rem)",
-          duration: 0.5,
+          duration: 0.68,
           ease: "none",
         });
       }
@@ -101,7 +131,7 @@ export default function GiganticCTA() {
           <TextReveal
             as="h2"
             variant="words"
-            className="text-[clamp(2rem,5vw,3rem)] md:text-display-md font-display font-bold tracking-tighter mb-8 max-w-5xl text-[#0a0a0a]"
+            className="text-[clamp(2rem,5vw,3rem)] md:text-display-md font-display font-bold tracking-tighter mb-12 max-w-5xl text-[#0a0a0a] md:mb-14"
             stagger={0.05}
           >
             Lust auf ein Projekt ?
@@ -112,7 +142,7 @@ export default function GiganticCTA() {
           <TextReveal
             as="p"
             variant="words"
-            className="text-[clamp(1.2rem,2.2vw,2rem)] font-body mb-12 text-[#3a3a3a] md:whitespace-nowrap"
+            className="text-[clamp(1.2rem,2.2vw,2rem)] font-body mb-16 text-[#3a3a3a] md:mb-20 md:whitespace-nowrap"
             start="top 90%"
           >
             schreib mir - dann starten wir.
@@ -121,15 +151,42 @@ export default function GiganticCTA() {
           {/* relative + absolute cow: Button bleibt optisch zentriert,
               die Kuh hängt als Easter Egg links daneben ohne Layout-Shift. */}
           <div className="relative inline-flex items-center justify-center">
-            <Image
-              src="/cow-easter-egg.png"
-              alt=""
-              width={670}
-              height={650}
+            {/* Die Kuh bringt ihre Bewegung selbst mit: ein 2.7-Sekunden-Loop
+                als animiertes WebP (mit Higgsfield aus dem Original-PNG
+                erzeugt, Vor- und Rücklauf aneinandergehängt, damit der Loop
+                keinen Sprung hat). 65 ms pro Bild, an den beiden Umkehrpunkten
+                110 ms — die kurze Pause nimmt dem Richtungswechsel das
+                Mechanische. Die 384er-Bühne ist breiter als die Kuh —
+                der freie Rand ist auf das Cremeweiß der Karte abgestimmt und
+                nach außen weich ausgeblendet, damit kein Rechteck sichtbar
+                wird. Deshalb sind die Breiten hier größer und die Abstände
+                kleiner als beim randlosen PNG vorher.
+                next/image scheidet aus: der Optimizer würde die Animation
+                plattmachen, und das picture-Element braucht ein natives
+                Bild-Tag. */}
+            <span
               aria-hidden
-              draggable={false}
-              className="pointer-events-none absolute right-[calc(100%+1.25rem)] top-1/2 w-[5rem] -translate-y-[48%] select-none sm:right-[calc(100%+1.75rem)] sm:w-[6.25rem] md:right-[calc(100%+2.25rem)] md:w-[7.5rem]"
-            />
+              className="pointer-events-none absolute right-[calc(100%+0.55rem)] top-1/2 w-[6.4rem] -translate-y-[48%] select-none sm:right-[calc(100%+0.9rem)] sm:w-[8rem] md:right-[calc(100%+1.2rem)] md:w-[9.6rem]"
+            >
+              <picture>
+                {/* Reduzierte Bewegung bekommt das Standbild — ohne JS, und
+                    auf derselben Bühne, damit die Kuh nicht verspringt. */}
+                <source
+                  media="(prefers-reduced-motion: reduce)"
+                  srcSet="/cow-easter-egg-still.webp"
+                />
+                <img
+                  src="/cow-easter-egg-anim.webp"
+                  alt=""
+                  width={384}
+                  height={384}
+                  loading="lazy"
+                  decoding="async"
+                  draggable={false}
+                  className="h-auto w-full"
+                />
+              </picture>
+            </span>
             <MagneticButton>
               <a
                 href={`mailto:${SITE_CONFIG.email}`}
@@ -153,7 +210,7 @@ export default function GiganticCTA() {
               pointer-coarse:min-h-11 macht aus den 18px hohen Zeilen ein
               44px-Tippziel — an der Eingabeart festgemacht, nicht an der
               Breite, sonst hätte das Handy im Querformat wieder Mausmaße. */}
-          <div className="mt-24 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 md:mt-28 md:gap-x-8">
+          <div className="mt-32 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 md:mt-40 md:gap-x-8">
             {Object.entries(SITE_CONFIG.socials).map(([platform, url]) => (
               <a
                 key={platform}

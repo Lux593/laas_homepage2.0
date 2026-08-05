@@ -1,6 +1,42 @@
 /* Leistungen — Lookbook-Theater (Desktop Pin) / gestapeltes Lesen (Mobile).
    Pin-Switch byte-identisch zu gsap.matchMedia in Services.tsx. */
 
+/* ── Einfahrt der zweiten Seite ─────────────────────────────────────── */
+
+/* Die Section fährt als schmaler Balken herein und klappt auf; die beiden
+   Zahlen dafür tweent Services.tsx als Custom Properties, den String setzt
+   diese Regel zusammen.
+
+   Warum nicht direkt aus einem onUpdate heraus geschrieben: ScrollTrigger
+   rendert die Timeline bei jedem refresh() einmal mit unterdrückten Callbacks
+   neu (revert → invalidate → zurück auf den alten Fortschritt). Ein per
+   Callback gesetzter clip-path bliebe dann auf dem Balken-Wert stehen, während
+   die Animation sich längst für „offen" hält — und weil sich der Fortschritt
+   dabei nicht ändert, zeichnet ihn auch keine spätere Aktualisierung nach.
+   CSS-Variablen schreibt GSAP dagegen als echte Property, also bei jedem
+   Render.
+
+   Die Werte hier sind der Ruhezustand: bleibt das Skript aus, steht die Fläche
+   offen statt als Balken.
+   MUSS byte-identisch zur gsap.matchMedia()-Query in Services.tsx bleiben */
+@media (prefers-reduced-motion: no-preference) {
+  .services-section {
+    --enter-inset: 0%;
+    --enter-radius: var(--radius-panel);
+    clip-path: inset(
+      0% var(--enter-inset) 0% var(--enter-inset) round var(--enter-radius)
+        var(--enter-radius) 0px 0px
+    );
+  }
+
+  /* Spiegelt motion-reduce:md:rounded-t-panel-lg am Section-Element. */
+  @media (min-width: 768px) {
+    .services-section {
+      --enter-radius: var(--radius-panel-lg);
+    }
+  }
+}
+
 /* ── Desktop Stage ──────────────────────────────────────────────────── */
 
 .services-stage {
@@ -27,7 +63,16 @@
 .services-landscape {
   flex-shrink: 0;
   border-radius: 0;
-  background: #f2ede4;
+  background: var(--color-panel, #f2ede4);
+  /* Der Slot ist pointer-events: none — die Figur holt es sich für die
+     Ziehkante zurück. Die Copy-Spalte liegt per z-index darüber und bleibt
+     bedienbar, auch wo die skalierte Figur unter sie läuft. */
+  pointer-events: auto;
+  cursor: ew-resize;
+  /* Waagerecht ziehen wir, senkrecht scrollt weiterhin die Seite. */
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .services-landscape-slot {
@@ -60,9 +105,18 @@
   height: min(100%, 52rem);
   width: auto;
   max-width: 100%;
-  aspect-ratio: 1200 / 1697;
-  transform: scale(1.55);
+  aspect-ratio: 1600 / 2143;
+  /* Zoom passt zur Zeichnung: die Tusche sitzt zwischen 7,5 % und 88 % der
+     Bildhöhe, die Bodenlinie und die Maßpfeile darunter dürfen nicht aus dem
+     Viewport laufen. Gemessen bleiben bei 1.45 unten 44 px und oben 26 px
+     Luft; ab 1.6 läuft die Zeichnung hinter die Kopfzeile. */
+  transform: scale(1.45);
   transform-origin: center center;
+  /* KEIN will-change hier. Getestet und verworfen: eine eigene
+     Compositing-Ebene für diese Figur lässt die ganze Seite ruckeln, nicht
+     nur diese Sektion. Die Ebene müsste bildschirmfüllend groß gerastert
+     werden und trägt Kinder mit mix-blend-mode — der Blendmodus braucht
+     seinen Hintergrund, das lässt sich nicht einmalig wegrastern. */
   /* Nur noch Kanten-Auslauf: die Ordnung rechts soll sichtbar bleiben */
   -webkit-mask-image:
     linear-gradient(
@@ -110,17 +164,99 @@
   mask-repeat: no-repeat;
 }
 
-/* multiply: Das Weiß der Zeichnung geht im Creme auf, nur die Linien bleiben. */
+/* multiply: Das Weiß der Zeichnung geht im Creme auf, nur die Linien bleiben.
+   Trägt die Figur selbst — die Maske oben macht schon einen Stacking-Context
+   auf, das multiply findet das Creme deshalb nur, weil es im .services-landscape
+   direkt darunter liegt. */
 .services-landscape > img {
   object-fit: contain;
   object-position: center center;
   mix-blend-mode: multiply;
+  /* Der Pointerdown landet auf dem Bild (die Naht ist pointer-events: none).
+     Ohne das hier startet WebKit seinen eigenen Bild-Drag und bricht unsere
+     Pointer-Sequenz per pointercancel ab — die Kante bliebe stehen. In
+     Chrome/Firefox erledigt das draggable={false} am <Image>. */
+  -webkit-user-drag: none;
+}
+
+/* ── Ziehbare Schnittkante ──────────────────────────────────────────── */
+
+/* Beide Blätter werden komplementär beschnitten, sie teilen sich das Feld an
+   der Ziehkante. Das obere einfach über das untere zu legen reicht nicht:
+   multiply deckt nicht ab, es multipliziert — die Tusche des unteren Blatts
+   schiene sonst überall durch und beide Zeichnungen stünden übereinander.
+
+   Der Beschnitt sitzt am Bild, nicht an einem Wrapper: ein Wrapper mit
+   clip-path würde einen zweiten Stacking-Context aufmachen und das multiply
+   vom Creme der Figur abschneiden. */
+.services-landscape__before {
+  clip-path: inset(0 calc(100% - var(--services-wipe, 50%)) 0 0);
+}
+
+.services-landscape__after {
+  clip-path: inset(0 0 0 var(--services-wipe, 50%));
+}
+
+.services-landscape__seam {
+  position: absolute;
+  top: 50%;
+  bottom: auto;
+  left: var(--services-wipe, 50%);
+  height: 95%;
+  width: 1px;
+  background: #0a0a0a;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+/* Anschlagstriche oben und unten — die Kante liest sich als Maßlinie
+   der Zeichnung, nicht als Bedienelement einer Bildergalerie. */
+.services-landscape__seam::before,
+.services-landscape__seam::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  width: 9px;
+  height: 1px;
+  background: #0a0a0a;
+  transform: translateX(-50%);
+}
+
+.services-landscape__seam::before {
+  top: 0;
+}
+
+.services-landscape__seam::after {
+  bottom: 0;
+}
+
+.services-landscape__grip {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 11px;
+  height: 30px;
+  transform: translate(-50%, -50%);
+  border: 1px solid #0a0a0a;
+  background: var(--color-panel, #f2ede4);
+}
+
+/* Der Fokusring gehört an den Griff: ein outline auf der Figur würde von
+   deren Kantenmaske weggeschnitten. */
+.services-landscape:focus-visible {
+  outline: none;
+}
+
+.services-landscape:focus-visible .services-landscape__grip {
+  box-shadow: 0 0 0 3px rgba(10, 10, 10, 0.28);
 }
 
 .services-landscape--stack {
-  height: min(88vw, 24rem);
+  /* Gleicher Zuwachs wie beim Desktop-Zoom. Bei 112vw Höhe ist die Zeichnung
+     84vw breit — mit dem linken Einzug bleibt sie im Blatt. */
+  height: min(112vw, 30rem);
   width: auto;
-  aspect-ratio: 1200 / 1697;
+  aspect-ratio: 1600 / 2143;
   margin-left: max(var(--container-padding), env(safe-area-inset-left));
   -webkit-mask-image: linear-gradient(
     to right,
@@ -166,6 +302,48 @@
   min-width: 0;
 }
 
+/* Warum der Kapitelwechsel in Services.tsx steht und nicht als transition
+   hier: Die Zeichnung ist auf 1,45 skaliert, läuft unter diese Spalte und ist
+   mit mix-blend-mode: multiply plus zwei Masken aufgebaut. Alles, was sich im
+   normalen Zeichenlauf darüber bewegt, zwingt den Browser, den überlappenden
+   Ausschnitt Frame für Frame neu zu zeichnen, Blendmodus und Masken
+   inklusive. Das kostet Frames, und ein verlorener Frame ruckelt die ganze
+   Bühne mit: Kopfzeile, Rail, Kapitelliste.
+
+   Der Ausweg ist NICHT eine eigene Compositing-Ebene für den Text. Das ist
+   zweimal probiert worden, dauerhaft und nur für die Dauer des Wechsels, und
+   beide Male war die Ebene selbst das Problem: der Text landet für ihre Dauer
+   auf einem eigenen Geräte-Pixel-Raster und wabert, und alles, was sie
+   überlappt, muss Chrome mitpromoten — das trifft als Erstes die
+   1-px-Fortschrittslinie in der Rail, die genau davon flimmert (siehe die
+   Notiz an .services-rail__fill weiter unten, sie beschreibt denselben
+   Effekt).
+
+   Der Wechsel läuft deshalb im normalen Zeichenlauf und hält sich klein:
+   opacity auf der Ebene, ein Versatz in ganzen Pixeln (roundProps) auf Titel
+   und Subtext, force3D: false, damit GSAP nicht von sich aus ein translate3d()
+   unterschiebt. Die Bewegung sitzt bewusst auf den beiden Textkästen und
+   nicht auf der randlosen Ebene: deren Kasten füllt die ganze Spalte, und ein
+   Versatz schöbe ihre Zeichenfläche in die Rail darunter. Details in
+   Services.tsx.
+
+   Was hier ursprünglich geruckelt hat, war ein Übergang über vier Properties
+   gleichzeitig, filter: blur(6px) und clip-path darunter — gebaut, als unter
+   dieser Spalte noch ein schlichtes Bild lag, und beim Umbau auf die
+   multiply-Zeichnung unverändert mitgeschleppt. Durchprobiert und verworfen:
+   - filter: blur() + clip-path → größte Neuzeichnungsfläche, stärkstes Flimmern
+   - will-change fest gesetzt   → Text dauerhaft auf eigener Ebene und damit
+                                  auf gebrochener Pixelposition, waberte
+   - will-change nur währenddes → dasselbe Wabern, dazu flimmerte die
+     Wechsels                      Fortschrittslinie mit
+   - Zeichnung auf eigene Ebene → bildschirmfüllende Rasterung mit Blendmodus,
+     (will-change)                 die ganze Seite ruckelte
+
+   Also: hier keine transition eintragen, will-change weder fest noch temporär
+   setzen und niemals filter, clip-path, mask oder box-shadow animieren. Die
+   Deckkraft unten ist der Ruhezustand für Skript-aus; auf der Desktop-Bühne
+   führt GSAP sie inline, und die Klasse bleibt für pointer-events, aria und
+   die Stapelreihenfolge zuständig. */
 .services-featured__layer {
   position: absolute;
   inset: 0;
@@ -173,23 +351,15 @@
   flex-direction: column;
   justify-content: center;
   opacity: 0;
-  transform: translateY(1.25rem);
-  filter: blur(6px);
-  clip-path: inset(12% 0 0 0);
   pointer-events: none;
-  transition:
-    opacity 0.55s var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1)),
-    transform 0.55s var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1)),
-    filter 0.55s var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1)),
-    clip-path 0.55s var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
 }
 
 .services-featured__layer.is-active {
   opacity: 1;
-  transform: translateY(0);
-  filter: blur(0);
-  clip-path: inset(0 0 0 0);
   pointer-events: auto;
+  /* Während der Überlappung stehen kurz zwei Ebenen übereinander — die
+     ankommende gehört nach oben, unabhängig von der Reihenfolge im Markup. */
+  z-index: 1;
 }
 
 .services-featured__title {
@@ -232,13 +402,16 @@
   inset: 0;
   background: #0a0a0a;
   transform-origin: left center;
-  will-change: transform;
+  /* Kein will-change: eine dauerhaft eigene Ebene liegt bei 1 px Höhe auf
+     einem eigenen Geräte-Pixel-Raster und wird bei jedem Scroll-Frame neu
+     zusammengesetzt — die Linie flimmert dann durchgehend. Ein scaleX auf
+     einer Haarlinie ist billig genug, um im normalen Zeichenlauf zu bleiben. */
 }
 
 .services-chapters {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: clamp(0.75rem, 1.5vw, 1.5rem);
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(0.5rem, 1.2vw, 1.25rem);
 }
 
 .services-chapter {
@@ -247,7 +420,9 @@
   gap: 0.35rem;
   min-width: 0;
   opacity: 0.28;
-  transition: opacity 0.4s var(--ease-out-expo, cubic-bezier(0.19, 1, 0.22, 1));
+  /* Harter Schnitt, anders als beim Kapiteltext darüber: hier wechseln vier
+     Elemente gleichzeitig, und genau das lief beim gescheiterten Übergang mit.
+     Die Rail liest sich als Instrument der Zeichnung, nicht als Animation. */
 }
 
 .services-chapter.is-active {
@@ -265,12 +440,16 @@
 }
 
 .services-chapter__label {
-  font-size: clamp(0.7rem, 0.85vw, 0.82rem);
-  line-height: 1.2;
+  font-size: clamp(0.62rem, 0.78vw, 0.76rem);
+  line-height: 1.25;
   color: #0a0a0a;
+  white-space: normal;
+  overflow-wrap: break-word;
+  /* Zwei Zeilen: z. B. „Individuelle Software“, „Prozess Automationen“ */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* ── Mobile stack ───────────────────────────────────────────────────── */
@@ -324,9 +503,8 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .services-featured__layer,
-  .services-chapter {
-    transition: none;
-  }
-}
+/* Kein prefers-reduced-motion-Block für Kapiteltext und Kapitelliste: die
+   Liste schneidet hart, und der Kapitelwechsel hängt an der matchMedia-Query
+   oben — bei reduced motion greift ohnehin der gestapelte Aufbau, dort gibt
+   es weder Bühne noch Wechsel. Eine transition, die abzuschalten wäre, steht
+   in dieser Datei nicht. */

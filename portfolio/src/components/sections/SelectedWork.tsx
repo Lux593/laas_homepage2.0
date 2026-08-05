@@ -29,7 +29,7 @@ export default function SelectedWork() {
     <section
       id="work"
       ref={sectionRef}
-      className="relative z-10 overflow-x-clip rounded-t-[1.5rem] bg-[#f2ede4] shadow-[0_-40px_80px_-24px_rgba(0,0,0,0.8)] md:rounded-t-[2rem]"
+      className="relative z-10 overflow-x-clip bg-[#f2ede4] shadow-[0_-40px_80px_-24px_rgba(0,0,0,0.8)]"
     >
       <div ref={pinRef} className="work-pin overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {/* w-full is load-bearing: container-custom's auto margins would otherwise
@@ -38,7 +38,7 @@ export default function SelectedWork() {
           <div className="flex items-end justify-between gap-8">
             <div className="min-w-0">
               <span className="mb-3 block font-mono text-caption uppercase tracking-[0.2em] text-[#6a6a6a]">
-                03 - Was ich bisher gemacht habe
+                Was ich bisher gemacht habe
               </span>
               {/* start well before the pin engages — inside the pinned range a
                   play-once trigger would never fire and the headline would stay hidden */}
@@ -64,7 +64,7 @@ export default function SelectedWork() {
                   01
                 </span>
               </span>
-              <span className="font-mono text-caption tracking-[0.2em] text-[#6a6a6a]">
+              <span className="font-display text-caption font-bold tracking-tighter tabular-nums text-[#6a6a6a]">
                 / {TOTAL}
               </span>
             </div>
