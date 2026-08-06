@@ -320,11 +320,11 @@
    Effekt).
 
    Der Wechsel läuft deshalb im normalen Zeichenlauf und hält sich klein:
-   opacity auf der Ebene, ein Versatz in ganzen Pixeln (roundProps) auf Titel
-   und Subtext, force3D: false, damit GSAP nicht von sich aus ein translate3d()
-   unterschiebt. Die Bewegung sitzt bewusst auf den beiden Textkästen und
-   nicht auf der randlosen Ebene: deren Kasten füllt die ganze Spalte, und ein
-   Versatz schöbe ihre Zeichenfläche in die Rail darunter. Details in
+   opacity auf der Ebene, ein horizontaler Versatz in ganzen Pixeln (roundProps)
+   auf Titel und Subtext, force3D: false, damit GSAP nicht von sich aus ein
+   translate3d() unterschiebt. Die Bewegung sitzt bewusst auf den beiden
+   Textkästen und nicht auf der randlosen Ebene: deren Kasten füllt die ganze
+   Spalte und würde bei einem Versatz seitlich über sie hinausragen. Details in
    Services.tsx.
 
    Was hier ursprünglich geruckelt hat, war ein Übergang über vier Properties

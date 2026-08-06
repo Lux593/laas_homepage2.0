@@ -240,7 +240,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "powershop-madness",
-    title: "POWER SHOP MADNESS",
+    title: "POWER SHOP\nMADNESS",
     subtitle: "Arcade Mobile Game",
     category: "Mobile / Game",
     year: "2025",
@@ -329,15 +329,15 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "wedding-app",
-    title: "WEDDING APP",
-    subtitle: "Gäste-App für eine Destination Wedding",
+    title: "WEDDING\nORGANIZER APP",
+    subtitle: "RSVP, Guides & Infos für Hochzeitsgäste",
     category: "Mobile / Web-App",
     year: "2025 – 2026",
     tech: ["React", "Next.js", "Supabase", "TypeScript"],
     description:
-      "Eine elegante Gäste-App für eine Destination Wedding in Udaipur – von der Rückmeldung über Outfit-Guides bis zu lokalen Tipps, alles an einem Ort.",
+      "Eine elegante Gäste-App für Hochzeiten – von RSVP über Outfit-Guides bis zu lokalen Tipps und FAQ, alles an einem Ort.",
     details:
-      "Die Wedding App bündelt alle Informationen für die Gäste einer mehrtägigen Hochzeit: RSVP, Ablauf, Outfits, Anreise und FAQ – mehrsprachig und mobil optimiert.",
+      "Die Wedding Organizer App bündelt alle Informationen für die Gäste einer mehrtägigen Hochzeit: RSVP, Ablauf, Outfits, Anreise und FAQ – mehrsprachig und mobil optimiert.",
     features: [
       {
         title: "RSVP & Gäste-Rückmeldung",
@@ -347,12 +347,12 @@ export const PROJECTS: Project[] = [
       {
         title: "Outfit-Guide pro Event",
         description:
-          "Stilvorschläge für jeden Anlass – von der Ceremony bis zum Sangeet, inkl. Shopping-Tipps.",
+          "Stilvorschläge für jeden Anlass im Hochzeitsprogramm – inkl. Shopping-Tipps und Dresscode-Hinweisen.",
       },
       {
         title: "Anreise & Local Tips",
         description:
-          "Empfehlungen zu Restaurants, Cafés und Shopping in Udaipur – direkt mit Maps-Links.",
+          "Empfehlungen zu Restaurants, Cafés und Shopping vor Ort – direkt mit Maps-Links.",
       },
       {
         title: "FAQ & Infos auf einen Blick",
@@ -361,14 +361,15 @@ export const PROJECTS: Project[] = [
       },
     ],
     gallery: [
-      { id: 1, url: "/vorschaubilder/wedding1.webp", title: "RSVP Screen" },
-      { id: 2, url: "/vorschaubilder/wedding2.webp", title: "Navigation Menu" },
-      { id: 3, url: "/vorschaubilder/wedding3.webp", title: "Outfits Guide" },
-      { id: 4, url: "/vorschaubilder/wedding4.webp", title: "Local Tips" },
-      { id: 5, url: "/vorschaubilder/wedding5.webp", title: "FAQ Screen" },
+      { id: 1, url: "/vorschaubilder/wedding1.webp", title: "Countdown" },
+      { id: 2, url: "/vorschaubilder/wedding2.webp", title: "RSVP Screen" },
+      { id: 3, url: "/vorschaubilder/wedding3.webp", title: "Local Tips" },
+      { id: 4, url: "/vorschaubilder/wedding4.webp", title: "Outfits Guide" },
+      { id: 5, url: "/vorschaubilder/wedding5.webp", title: "Location" },
     ],
     color: "#B8897A",
     device: "iphone",
+    unoptimized: true,
   },
 ];
 

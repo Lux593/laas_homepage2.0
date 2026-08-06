@@ -133,6 +133,11 @@ export default function FramerMoveableThumbnails({
   const [isDragging, setIsDragging] = useState(false);
   const screenRef = useRef<HTMLDivElement | null>(null);
   const didInit = useRef(false);
+  // Bounds the drag to the one spare reel copy loaded on each side (see `reel`
+  // below). Without this, dragElastic has nothing to resist against — the strip
+  // drags freely for any distance, but release only ever steps by one slide, so
+  // a swipe longer than one slide-width sprang back hard instead of settling.
+  const [screenWidth, setScreenWidth] = useState(0);
   // Read by the resize observer, which must not re-subscribe on every step.
   const indexRef = useRef(0);
   const x = useMotionValue(0);
@@ -168,7 +173,9 @@ export default function FramerMoveableThumbnails({
     if (isDragging || !screenRef.current) return;
 
     const el = screenRef.current;
-    const targetX = slotX(index, el.offsetWidth || 1);
+    const width = el.offsetWidth || 1;
+    setScreenWidth(width);
+    const targetX = slotX(index, width);
 
     // First paint has to land on the middle copy without animating there from
     // x=0, which would look like the reel scrolling in on load.
@@ -207,7 +214,9 @@ export default function FramerMoveableThumbnails({
     if (!el || typeof ResizeObserver === "undefined") return;
 
     const ro = new ResizeObserver(() => {
-      x.set(slotX(indexRef.current, el.offsetWidth || 1));
+      const width = el.offsetWidth || 1;
+      setScreenWidth(width);
+      x.set(slotX(indexRef.current, width));
     });
     ro.observe(el);
     return () => ro.disconnect();
@@ -245,6 +254,7 @@ export default function FramerMoveableThumbnails({
             <motion.div
               className="flex h-full"
               drag="x"
+              dragConstraints={{ left: -screenWidth, right: screenWidth }}
               dragElastic={0.2}
               dragMomentum={false}
               onDragStart={() => setIsDragging(true)}
@@ -269,7 +279,15 @@ export default function FramerMoveableThumbnails({
               // a margin: this box is width:auto, so a negative margin-left would
               // widen it by the same amount instead of just moving it — and the
               // w-full slides would inherit that inflated width.
-              style={{ x }}
+              //
+              // will-change stays on permanently rather than only while Framer's
+              // animate() is running: the wrap re-base (below) does its own instant
+              // x.set() right as onComplete fires, which is exactly when Framer
+              // would drop the GPU layer promotion. Without it that instant jump
+              // lands on a freshly-demoted layer and Chromium has to synchronously
+              // rasterize the newly-exposed strip — a dropped frame that reads as a
+              // black flash across the whole slide.
+              style={{ x, willChange: "transform" }}
             >
               {reel.map((item, i) => {
                 // Only the middle copy is described. The outer two are the same

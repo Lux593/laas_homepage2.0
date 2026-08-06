@@ -109,4 +109,16 @@
      100% − 49.118% waagerecht, 100% − 50.0855% senkrecht —, damit genau
      diese beiden Linien auf right/bottom von oben zu liegen kommen. */
   translate: 50.882% 49.9145%;
+
+  /* Drehpunkt fürs Pendeln (SVG-Kabel ~49.9% / y=0). Die Bewegung selbst
+     steuert GSAP in Hero.tsx — sinusförmig, damit sie wie ein echtes
+     Hängependel wirkt statt wie eine CSS-Ping-Pong-Animation. */
+  transform-origin: 49.9% 0;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-lamp__art {
+    will-change: auto;
+  }
 }

@@ -77,10 +77,7 @@ export default function ProjectPanel({
                       <p className="font-display text-body-sm font-semibold text-[#0a0a0a]">
                         {feature.title}
                       </p>
-                      {/* The feature list is the vertical budget valve: in the pinned
-                          layout the panel must fit inside 100svh, so descriptions only
-                          appear when the viewport is both wide and tall enough. */}
-                      <p className="mt-1 line-clamp-2 max-xl:hidden [@media(max-height:900px)]:hidden font-body text-caption leading-relaxed text-[#6a6a6a]">
+                      <p className="mt-1 font-body text-caption leading-relaxed text-[#6a6a6a]">
                         {feature.description}
                       </p>
                     </div>

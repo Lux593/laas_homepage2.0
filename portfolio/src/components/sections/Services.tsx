@@ -29,10 +29,10 @@ const SWAP_ENTER = 0.45;
 /** Der Auftritt setzt nach 60 % des Abgangs ein — kurz genug, dass nie zwei
     Texte lesbar übereinander stehen. */
 const SWAP_HANDOVER = 0.13;
-/** Pixel, die der Abgang sich gegen die Scrollrichtung hebt. */
-const SWAP_LEAVE_SHIFT = 10;
-/** Pixel, aus denen der Auftritt aus der Scrollrichtung nachrückt. */
-const SWAP_ENTER_SHIFT = 18;
+/** Pixel, die der Abgang sich horizontal gegen die Scrollrichtung verschiebt. */
+const SWAP_LEAVE_SHIFT = 14;
+/** Pixel, aus denen der Auftritt horizontal aus der Scrollrichtung nachrückt. */
+const SWAP_ENTER_SHIFT = 22;
 
 function titleLines(title: string) {
   const parts = title.trim().split(/\s+/);
@@ -180,17 +180,20 @@ export default function Services() {
      * die Ebene überlappt, muss Chrome mitpromoten — das trifft als Erstes
      * die 1-px-Fortschrittslinie darunter, die genau davon flimmert.
      *
-     * Also: keine Promotion. Drei Vorkehrungen halten den Wechsel trotzdem
+     * Also: keine Promotion. Zwei Vorkehrungen halten den Wechsel trotzdem
      * billig und ruhig:
      *   - force3D: false — sonst schiebt GSAP von sich aus ein translate3d()
      *     unter den Tween und promotet die Ebene doch.
-     *   - roundProps: "y" — der Versatz läuft in ganzen Pixeln. Damit bleibt
-     *     das Subpixel-Antialiasing erhalten und der Text zittert nicht auf
-     *     gebrochenen Positionen.
      *   - Versetzt werden nur Titel und Subtext, nicht die randlose Ebene:
-     *     deren Kasten füllt die ganze Spalte, und 18 px Versatz schöben ihre
-     *     Zeichenfläche in die Rail darunter.
-     * Und weiterhin: niemals filter, clip-path, mask oder box-shadow.
+     *     deren Kasten füllt die ganze Spalte, ein horizontaler Versatz auf
+     *     der Ebene selbst würde also seitlich über die Spalte hinausragen.
+     * KEIN roundProps: bei power2.out wird die Bewegung zum Ende hin
+     * langsamer als 1px/Frame — auf ganze Pixel gerundet hieße das, die
+     * letzten Frames stehen auf demselben Pixel und springen dann, statt
+     * auszuklingen. Genau das war das ruckelige Ende der Einblendung.
+     * Und weiterhin: niemals filter, clip-path, mask oder box-shadow — das
+     * sind exakt die Eigenschaften, die eine eigene Compositing-Ebene
+     * erzwingen und damit das Ruckeln wieder hereinholen würden.
      */
     const swapChapter = (activeIndex: number, direction: 1 | -1) => {
       const enter = featured[activeIndex];
@@ -234,11 +237,10 @@ export default function Services() {
           .to(
             leaveCopy,
             {
-              y: -SWAP_LEAVE_SHIFT * direction,
+              x: -SWAP_LEAVE_SHIFT * direction,
               duration: SWAP_LEAVE,
               ease: "power1.in",
               force3D: false,
-              roundProps: "y",
             },
             0
           );
@@ -253,13 +255,12 @@ export default function Services() {
         )
         .fromTo(
           enterCopy,
-          { y: SWAP_ENTER_SHIFT * direction },
+          { x: SWAP_ENTER_SHIFT * direction },
           {
-            y: 0,
+            x: 0,
             duration: SWAP_ENTER,
             ease: "power2.out",
             force3D: false,
-            roundProps: "y",
           },
           SWAP_HANDOVER
         );

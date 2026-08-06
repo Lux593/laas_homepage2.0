@@ -153,9 +153,40 @@ export default function Hero() {
       });
     }
 
+    // Hängelampe: echte Sinuskurve statt CSS alternate. Amplitude baut sich
+    // nach dem Einschalten auf — so wirkt das Pendeln wie Luftzug, nicht wie
+    // ein Loop von Anfang an auf Vollausschlag.
+    const lamp = lampRef.current;
+    const sway = { phase: 0 };
+    const amp = { value: 0 };
+    if (lamp && !reduced) {
+      gsap.set(lamp, { transformOrigin: "49.9% 0%" });
+
+      gsap.to(amp, {
+        value: 2,
+        duration: 2.8,
+        ease: "power2.out",
+        delay: 1.2,
+      });
+
+      gsap.to(sway, {
+        phase: Math.PI * 2,
+        duration: 8,
+        ease: "none",
+        repeat: -1,
+        delay: 1.2,
+        onUpdate: () => {
+          gsap.set(lamp, { rotation: Math.sin(sway.phase) * amp.value });
+        },
+      });
+    }
+
     return () => {
       tl.kill();
       if (arrow) gsap.killTweensOf(arrow);
+      if (lamp) gsap.killTweensOf(lamp);
+      gsap.killTweensOf(sway);
+      gsap.killTweensOf(amp);
     };
   }, []);
 
