@@ -43,6 +43,15 @@
 
   position: absolute;
   inset: 0;
+
+  /* Dieselbe Bühne wie die Zeichnungs-Ebene in Hero.tsx: gedeckelt und
+     mittig. Muss deckungsgleich bleiben — das right: 8% unten ist 8% DIESER
+     Box und muss auf dasselbe Maß kommen wie deren padding-right. Bei
+     left/right: 0 plus fester Breite teilt margin-inline: auto den Rest
+     gleichmäßig auf, die Box steht also zentriert. */
+  width: min(100%, var(--stage-max));
+  margin-inline: auto;
+
   pointer-events: none;
 
   /* Der Kegel läuft nach unten aus, statt unter der Zeichnung weiterzulaufen.

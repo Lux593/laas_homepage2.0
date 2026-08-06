@@ -131,6 +131,26 @@
   --container-max: 1440px;
   --container-padding: clamp(1.5rem, 4vw, 4rem);
 
+  /* Deckel für die beiden Bühnen-Sections (Hero, Über mich). Beide haben
+     keine Textspalte, die sie von innen begrenzt — sie verteilen ihre Teile
+     über die Bühne. Ohne Deckel wandern Headline und Zeichnung bzw. die drei
+     Blöcke auf großen Schirmen an die Ränder und die Mitte klafft leer.
+     1920 ist dieselbe Obergrenze wie in .work-container: darüber steht die
+     ganze Seite auf einer Spine. Unter diesem Wert ändert sich nichts — alle
+     vw-Maße darin (Porträtbreite, Innenabstand, Spalten-Gaps) sind bei
+     ~1870px ohnehin schon an ihrem clamp-Maximum. */
+  --stage-max: 1920px;
+
+  /* „Über mich" braucht mehr als der Hero und hat deshalb einen eigenen Wert:
+     dort stehen drei Spalten nebeneinander, die zusammen schon ~1500px breit
+     sind. Alles darüber wird per space-between zu den zwei Abständen — bei
+     1920 blieben davon nur 80px pro Lücke und der Streifen wirkte gequetscht,
+     ungedeckelt (2400er Schirm) waren es 320px und die Blöcke klebten an den
+     Rändern. 2080 ist die Mitte: ~160px Luft, die ab hier stehen bleibt.
+     Das ist die Stellschraube, wenn der Streifen enger oder weiter soll —
+     jede 160px am Deckel sind 80px pro Lücke. */
+  --about-max: 2080px;
+
   --duration-fast: 300ms;
   --duration-medium: 600ms;
   --duration-slow: 1000ms;

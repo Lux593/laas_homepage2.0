@@ -140,12 +140,21 @@
    ───────────────────────────────────────────────────────────────────────── */
 
 /* width statt auto-Breite: .about-content ist in der Blende ein Flex-Container,
-   ohne die Angabe schrumpfte das Panel auf seinen Inhalt. */
+   ohne die Angabe schrumpfte das Panel auf seinen Inhalt.
+   Der Deckel darin ist das Gegenstück zum Hero: quer verteilt space-between
+   den ganzen Rest zwischen die drei Blöcke, auf einem 2400er Schirm standen
+   sie damit ~320px auseinander und die Mitte klaffte. Unter dem Deckel
+   ändert sich nichts, oberhalb steht der Streifen zentriert still.
+   Bewusst --about-max und nicht --stage-max wie im Hero: dort stehen zwei
+   Objekte auf der Bühne, hier drei Spalten mit ~1500px Eigenbreite. Mit dem
+   Hero-Wert bliebe pro Lücke zu wenig übrig. Beide Werte stehen in
+   globals.css nebeneinander. */
 .about-panel {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  width: 100%;
+  width: min(100%, var(--about-max));
+  margin-inline: auto;
   gap: clamp(1.5rem, 4vh, 2.75rem);
   padding-left: max(var(--container-padding), env(safe-area-inset-left));
   padding-right: max(var(--container-padding), env(safe-area-inset-right));

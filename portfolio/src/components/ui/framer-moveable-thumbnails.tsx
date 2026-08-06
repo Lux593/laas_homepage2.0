@@ -133,10 +133,11 @@ export default function FramerMoveableThumbnails({
   const [isDragging, setIsDragging] = useState(false);
   const screenRef = useRef<HTMLDivElement | null>(null);
   const didInit = useRef(false);
-  // Bounds the drag to the one spare reel copy loaded on each side (see `reel`
-  // below). Without this, dragElastic has nothing to resist against — the strip
-  // drags freely for any distance, but release only ever steps by one slide, so
-  // a swipe longer than one slide-width sprang back hard instead of settling.
+  // Slide width in px, mirrored into state because dragConstraints needs it
+  // during render. Without constraints dragElastic has nothing to resist
+  // against — the strip drags freely for any distance, but release only ever
+  // steps by one slide, so a swipe longer than one slide-width sprang back hard
+  // instead of settling.
   const [screenWidth, setScreenWidth] = useState(0);
   // Read by the resize observer, which must not re-subscribe on every step.
   const indexRef = useRef(0);
@@ -181,7 +182,7 @@ export default function FramerMoveableThumbnails({
     // x=0, which would look like the reel scrolling in on load.
     if (!didInit.current || prefersReducedMotion) {
       didInit.current = true;
-      x.set(targetX);
+      x.jump(targetX);
       return;
     }
 
@@ -195,9 +196,17 @@ export default function FramerMoveableThumbnails({
         // render blank. Folding it back into the middle copy while shifting `x`
         // by exactly the same number of widths keeps the pixels identical — the
         // jump is in the numbers only, so the loop never runs out of reel.
+        //
+        // jump(), never set(): the re-base moves x by len screen-widths in a
+        // single tick, and set() leaves that as the value's velocity. setIndex
+        // below re-runs this effect, and every animate() on a MotionValue seeds
+        // its spring with getVelocity() — so the no-op animation to the position
+        // x already sits at inherited a five-figure px/s launch and flung the
+        // reel clean off the strip before crawling back. That crawl was the
+        // "carousel rewinds to the start" bug. jump() resets velocity to 0.
         const folded = wrap(index, len);
         if (folded !== index) {
-          x.set(slotX(folded, el.offsetWidth || 1));
+          x.jump(slotX(folded, el.offsetWidth || 1));
           setIndex(folded);
         }
       },
@@ -216,13 +225,26 @@ export default function FramerMoveableThumbnails({
     const ro = new ResizeObserver(() => {
       const width = el.offsetWidth || 1;
       setScreenWidth(width);
-      x.set(slotX(indexRef.current, width));
+      // jump() for the same two reasons as the fold above: it leaves no phantom
+      // velocity for the next spring to inherit, and it stops any animation that
+      // is still flying toward a target measured at the old width — a resize on
+      // a phone (the URL bar collapsing counts) used to land the reel between
+      // two slides because that stale animation overwrote this correction.
+      x.jump(slotX(indexRef.current, width));
     });
     ro.observe(el);
     return () => ro.disconnect();
   }, [x, slotX]);
 
   if (len === 0) return null;
+
+  // Where the reel is parked right now. dragConstraints are absolute in the
+  // element's own transform space — not relative to where the finger went down —
+  // so they have to follow the resting slot. Pinned to ±one screen width around
+  // x=0 they described a place the reel is never at (it sits len widths to the
+  // left), and grabbing the strip yanked it three slides sideways before the
+  // finger had moved.
+  const restX = screenWidth ? slotX(index, screenWidth) : 0;
 
   // Render the set three times and sit on the middle copy. The strip is only
   // ever translated by whole screen-widths, so a neighbour is already mounted
@@ -254,7 +276,15 @@ export default function FramerMoveableThumbnails({
             <motion.div
               className="flex h-full"
               drag="x"
-              dragConstraints={{ left: -screenWidth, right: screenWidth }}
+              // One slide width either side of the resting slot: exactly what a
+              // release can consume, since it steps by one. Anything longer meets
+              // dragElastic instead. `false` until measured, or a 0-width box
+              // would clamp the reel to x=0 on a drag before the first layout.
+              dragConstraints={
+                screenWidth
+                  ? { left: restX - screenWidth, right: restX + screenWidth }
+                  : false
+              }
               dragElastic={0.2}
               dragMomentum={false}
               onDragStart={() => setIsDragging(true)}

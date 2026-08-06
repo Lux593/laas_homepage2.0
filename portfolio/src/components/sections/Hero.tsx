@@ -23,8 +23,18 @@ const ROTATING_WORDS = [
  */
 const PEEK = 12;
 
-/** Horizontaler Einzug der Hero-Copy. */
-const CONTENT_INSET = "9%";
+/**
+ * Horizontaler Einzug der Hero-Copy — 9% der Bühne.
+ *
+ * Prozent-Padding rechnet immer gegen den Elternblock, also gegen das ganze
+ * Fenster, und nicht gegen die gedeckelte Bühne, in der die Copy steht. Ein
+ * blankes "9%" ließe die Headline auf großen Schirmen also weiter nach rechts
+ * wandern, während die Zeichnung gegenläufig nach links rückt — genau das
+ * Auseinanderdriften, das der Deckel verhindern soll, nur andersherum.
+ * min(100%, --stage-max) friert den Bezug oberhalb des Deckels ein; darunter
+ * löst es zu 100% auf und ist damit exakt das alte 9%.
+ */
+const CONTENT_INSET = "calc(0.09 * min(100%, var(--stage-max)))";
 
 export default function Hero() {
   const runwayRef = useRef<HTMLDivElement>(null);
@@ -414,11 +424,16 @@ export default function Hero() {
         {/* Illustration — hinterste Ebene, bewegt sich am wenigsten */}
         {/* opacity/blend bewusst als Klassen, nicht als Inline-Style: GSAP schreibt
             opacity inline, und React würde ein gleichnamiges style-Prop bei jedem
-            Re-Render (rotierendes Wort alle 3 s) zurückschreiben wollen. */}
+            Re-Render (rotierendes Wort alle 3 s) zurückschreiben wollen.
+
+            Das padding-right sind 8% der Bühne, nicht des Fensters — dieselbe
+            Rechnung wie bei CONTENT_INSET oben. Es muss auf denselben Wert
+            kommen wie das right: 8% der Lampe in hero.css, sonst hängt sie
+            nicht mehr mittig über der Zeichnung. */}
         <div
           ref={illuLayerRef}
-          className="absolute inset-0 z-0 flex items-end justify-end opacity-80 mix-blend-screen pointer-events-none will-change-[transform,opacity]"
-          style={{ paddingRight: "8%" }}
+          className="absolute inset-0 z-0 mx-auto w-[min(100%,var(--stage-max))] flex items-end justify-end opacity-80 mix-blend-screen pointer-events-none will-change-[transform,opacity]"
+          style={{ paddingRight: "calc(0.08 * min(100%, var(--stage-max)))" }}
         >
           {/* Weiße Strichzeichnung auf reinem Schwarz. mix-blend-screen auf der
               Ebene darüber löscht das Schwarz gegen den #050505-Grund aus —
@@ -480,9 +495,15 @@ export default function Hero() {
           />
         </div>
 
-        {/* Main Content — linker Einzug bündig zur einfahrenden Panel-Kante */}
+        {/* Main Content — linker Einzug bündig zur einfahrenden Panel-Kante.
+            max-w deckelt die Bühne wie bei der Zeichnungs-Ebene: der Einzug
+            ist danach 9% des Deckels, nicht mehr des Fensters. Ohne ihn
+            liefen Headline und Zeichnung auf großen Schirmen auseinander und
+            die Mitte bliebe leer. Zentriert wird über items-center der
+            Section — auto-Margins würden hier als Flex-Item das w-full
+            aushebeln. */}
         <div
-          className="relative z-10 w-full pointer-events-none"
+          className="relative z-10 w-full max-w-[var(--stage-max)] pointer-events-none"
           style={{ paddingLeft: CONTENT_INSET }}
         >
           <div

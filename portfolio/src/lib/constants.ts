@@ -197,6 +197,57 @@ export interface Project {
 
 export const PROJECTS: Project[] = [
   {
+    id: "wintersport-verleih",
+    title: "WINTERSPORT\nVERLEIH SYSTEM",
+    subtitle: "Verleihsystem für Intersport Gemo",
+    category: "Fullstack / Web-App",
+    year: "2025 – heute",
+    tech: ["React", "Next.js", "TypeScript", "Supabase"],
+    description:
+      "End-to-End-Verleihsystem für Skiausrüstung: von der Online-Anmeldung über Ausrüstungserfassung und Kasse bis zur Administration.",
+    details:
+      "Für Intersport Gemo habe ich ein digitales Wintersport-Verleihsystem gebaut, das Kundenanmeldung, Shop-Workflow und Backoffice in einer Oberfläche verbindet — für Tages- und Saisonverleih.",
+    features: [
+      {
+        title: "Digitale Kundenanmeldung",
+        description:
+          "Tagesverleih-Formular mit Kontaktdaten und Ausweis-Upload — Gäste melden sich selbst an, bevor sie in den Shop kommen.",
+      },
+      {
+        title: "Neue Anmeldungen im Shop",
+        description:
+          "Inbox für unbearbeitete Anmeldungen: Team sieht Kontaktdaten, Verleihart und startet direkt die Ausrüstungserfassung.",
+      },
+      {
+        title: "Kasse & Zahlungsstatus",
+        description:
+          "Unbezahlte und abgeschlossene Leihen im Blick — klar getrennt, damit nichts an der Kasse untergeht.",
+      },
+      {
+        title: "Administration & Stammdaten",
+        description:
+          "Produkte, Kategorien, User-Rollen und Umsatz-Statistiken zentral steuern — ohne Extra-Tools daneben.",
+      },
+    ],
+    gallery: [
+      { id: 1, url: "/vorschaubilder/gemo-app1.webp", title: "Verleihtyp wählen" },
+      { id: 2, url: "/vorschaubilder/gemo-app2.webp", title: "Kundendaten erfassen" },
+      { id: 3, url: "/vorschaubilder/gemo-app3.webp", title: "Neue Anmeldungen" },
+      { id: 4, url: "/vorschaubilder/gemo-app4.webp", title: "Ausrüstung & Mietdauer" },
+      { id: 5, url: "/vorschaubilder/gemo-app5.webp", title: "Verleih-Management" },
+      { id: 6, url: "/vorschaubilder/gemo-app6.webp", title: "Statistiken & Umsatz" },
+    ],
+    color: "#7A8FA0",
+    device: "iphone",
+    // Hochformat-Captures (1206x2622 ≈ 2.174) im iPhone-Ausschnitt (2.139):
+    // cover schneidet nur ~1.6% Höhe weg. Von oben decken, damit die iOS-
+    // Statusleiste und der blaue Header stehen bleiben und unten der leere
+    // Rest wegfällt.
+    fit: "cover-top",
+    screenColor: "#F2F6FC",
+    unoptimized: true,
+  },
+  {
     id: "powershop-service",
     title: "POWER SHOP\nSERVICE APP",
     subtitle: "Operations & Management Web-App",
@@ -230,11 +281,17 @@ export const PROJECTS: Project[] = [
       },
     ],
     gallery: [
-      { id: 1, url: "/vorschaubilder/powershop1.webp", title: "Dashboard Overview" },
-      { id: 2, url: "/vorschaubilder/powershop2.webp", title: "Scheduling View" },
-      { id: 3, url: "/vorschaubilder/powershop3.webp", title: "Operations Detail" },
-      { id: 4, url: "/vorschaubilder/powershop4.webp", title: "Workflow Screen" },
-      { id: 5, url: "/vorschaubilder/powershop5.webp", title: "Analytics View" },
+      // Dateinamen bewusst neu vergeben (vorher powershop1-5.webp). Der
+      // Image-Optimizer cached nach (URL, Breite, Qualitaet) mit 4h TTL und
+      // prueft die Quelldatei in der Zeit nicht nach — ein In-Place-Austausch
+      // unter gleichem Namen hat alte Renditionen weiterleben lassen. Neue URL
+      // = neuer Cache-Key in Next, im hcdn und im Browser.
+      { id: 1, url: "/vorschaubilder/powershop-app1.webp", title: "Mitarbeiter-Anmeldung" },
+      { id: 2, url: "/vorschaubilder/powershop-app2.webp", title: "Dashboard" },
+      { id: 3, url: "/vorschaubilder/powershop-app3.webp", title: "Service Center" },
+      { id: 4, url: "/vorschaubilder/powershop-app4.webp", title: "Probefahrt erfassen" },
+      { id: 5, url: "/vorschaubilder/powershop-app5.webp", title: "Urlaubs- & Abwesenheitsplanung" },
+      { id: 6, url: "/vorschaubilder/powershop-app6.webp", title: "Workflow-Automatisierungen" },
     ],
     color: "#C49F7B",
   },
@@ -272,60 +329,59 @@ export const PROJECTS: Project[] = [
       },
     ],
     gallery: [
-      { id: 1, url: "/vorschaubilder/game1.webp", title: "Game Screen 01" },
-      { id: 2, url: "/vorschaubilder/game2.webp", title: "Game Screen 02" },
-      { id: 3, url: "/vorschaubilder/game3.webp", title: "Game Screen 03" },
-      { id: 4, url: "/vorschaubilder/game4.webp", title: "Game Screen 04" },
-      { id: 5, url: "/vorschaubilder/game5.webp", title: "Game Screen 05" },
+      { id: 1, url: "/vorschaubilder/mobilegame1.webp", title: "Game Screen 01" },
+      { id: 2, url: "/vorschaubilder/mobilegame2.webp", title: "Game Screen 02" },
+      { id: 3, url: "/vorschaubilder/mobilegame3.webp", title: "Game Screen 03" },
+      { id: 4, url: "/vorschaubilder/mobilegame4.webp", title: "Game Screen 04" },
+      { id: 5, url: "/vorschaubilder/mobilegame5.webp", title: "Game Screen 05" },
     ],
     color: "#DFBE9F",
     device: "iphone",
   },
   {
-    id: "wintersport-verleih",
-    title: "WINTERSPORT\nVERLEIH SYSTEM",
-    subtitle: "Verleihsystem für Intersport Gemo",
+    id: "motools-service",
+    title: "moTools\nSERVICE APP",
+    subtitle: "Interne Tool-Plattform für Logistik & Telematik",
     category: "Fullstack / Web-App",
     year: "2025 – heute",
-    tech: ["React", "Next.js", "TypeScript", "Supabase"],
+    tech: ["Next.js", "React", "TypeScript", "Supabase", "OpenAI"],
     description:
-      "End-to-End-Verleihsystem für Skiausrüstung: von der Online-Anmeldung über Ausrüstungserfassung und Kasse bis zur Administration.",
+      "Interne Plattform, die Telematik-Support, Stammdaten und Teamabstimmung an einer Stelle bündelt.",
     details:
-      "Für Intersport Gemo habe ich ein digitales Wintersport-Verleihsystem gebaut, das Kundenanmeldung, Shop-Workflow und Backoffice in einer Oberfläche verbindet — für Tages- und Saisonverleih.",
+      "Für mobileObjects habe ich eine interne Tool-Plattform gebaut, die den Support rund um die GPS-Telematik, die Verwaltung von Portalusern und Fahrern sowie die Abstimmung im Team in einer Oberfläche zusammenführt.",
+    // Beschreibungen auf zwei Zeilen getrimmt (84–90 Zeichen), damit die
+    // Feature-Liste dieselbe Höhe hat wie bei den übrigen Projekten.
     features: [
       {
-        title: "Digitale Kundenanmeldung",
+        title: "Telematik-Werkzeuge",
         description:
-          "Tagesverleih-Formular mit Kontaktdaten und Ausweis-Upload — Gäste melden sich selbst an, bevor sie in den Shop kommen.",
+          "Vorgänge rund um Fahrzeuge und GPS-Boxen per VIN finden, bearbeiten und abschließen.",
       },
       {
-        title: "Neue Anmeldungen im Shop",
+        title: "Benutzer- & Rollenverwaltung",
         description:
-          "Inbox für unbearbeitete Anmeldungen: Team sieht Kontaktdaten, Verleihart und startet direkt die Ausrüstungserfassung.",
+          "Portaluser nach Rolle oder Kunde verwalten – vom Super-Administrator bis zum Fahrer.",
       },
       {
-        title: "Kasse & Zahlungsstatus",
+        title: "Fahrer- & Stammdatenpflege",
         description:
-          "Unbezahlte und abgeschlossene Leihen im Blick — klar getrennt, damit nichts an der Kasse untergeht.",
+          "Geführte Formulare legen Fahrer samt Kundenzuordnung und Zugangsdaten in einem Schritt an.",
       },
       {
-        title: "Administration & Stammdaten",
+        title: "Team-Board & Ideenabstimmung",
         description:
-          "Produkte, Kategorien, User-Rollen und Umsatz-Statistiken zentral steuern — ohne Extra-Tools daneben.",
+          "Notizen, Schnellzugriffe und Merch-Vorschläge, über die das Team direkt abstimmen kann.",
       },
     ],
     gallery: [
-      { id: 1, url: "/vorschaubilder/gemo-full-1.webp", title: "Tagesverleih Anmeldung" },
-      { id: 2, url: "/vorschaubilder/gemo-full-2.webp", title: "Neue Anmeldungen" },
-      { id: 3, url: "/vorschaubilder/gemo-full-3.webp", title: "Kasse" },
-      { id: 4, url: "/vorschaubilder/gemo-full-4.webp", title: "Administration" },
+      { id: 1, url: "/vorschaubilder/motools-app1.webp", title: "Anmeldung" },
+      { id: 2, url: "/vorschaubilder/motools-app2.webp", title: "Startseite mit Schnellzugriffen" },
+      { id: 3, url: "/vorschaubilder/motools-app3.webp", title: "Fehler-Tracking der GPS-Boxen" },
+      { id: 4, url: "/vorschaubilder/motools-app4.webp", title: "Benutzerverwaltung nach Rolle" },
+      { id: 5, url: "/vorschaubilder/motools-app5.webp", title: "Fahrer anlegen" },
+      { id: 6, url: "/vorschaubilder/motools-app6.webp", title: "Ideen-Management" },
     ],
-    color: "#7A8FA0",
-    // Full captures (logo at top). Cover from the top so only the empty
-    // bottom of the screenshot is clipped — never the header.
-    fit: "cover-top",
-    screenColor: "#F2F6FC",
-    unoptimized: true,
+    color: "#8A9A8B",
   },
   {
     id: "wedding-app",

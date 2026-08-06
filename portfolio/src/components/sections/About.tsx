@@ -378,6 +378,12 @@ export default function About() {
           );
         };
 
+        // Der Fortschritt des zuletzt gezeichneten Frames. Der Beobachter unter
+        // der Timeline braucht ihn, um nach einem Layoutwechsel dieselbe
+        // Kameraposition neu rechnen zu können, ohne den Trigger zu befragen —
+        // dessen Start und Ende sind in genau diesem Moment noch die alten.
+        let progress = 0;
+
         const spine = { p: 0 };
         const tl = gsap.timeline({
           scrollTrigger: {
@@ -388,13 +394,15 @@ export default function About() {
             // applyZoom zuerst: applyWipe liest die HUD-Geometrie ab, die dort
             // geschrieben wird.
             onRefresh: (self) => {
+              progress = self.progress;
               measure();
-              applyZoom(self.progress);
-              applyWipe(self.progress);
+              applyZoom(progress);
+              applyWipe(progress);
             },
             onUpdate: (self) => {
-              applyZoom(self.progress);
-              applyWipe(self.progress);
+              progress = self.progress;
+              applyZoom(progress);
+              applyWipe(progress);
             },
           },
         });
@@ -459,6 +467,35 @@ export default function About() {
             zoomEnd + WIPE_DURATION * (split + (1 - split) * 0.3)
           );
 
+        // Browser-Zoom (Strg/Cmd +) ist ein Layoutwechsel ohne Scrollbewegung:
+        // die Bühne misst in svh/vw und fließt sofort neu, das Zeichen steht
+        // aber als Kopie in absoluten Pixeln (siehe applyZoom) und wird nur aus
+        // onUpdate und onRefresh geschrieben. ScrollTrigger hängt seinen Refresh
+        // hinter ein Debounce von 0,2 s (`gsap.delayedCall(0.2, _refreshAll)` in
+        // ScrollTrigger.js), das jedes weitere resize-Event neu startet. So lange
+        // klebt das Zeichen auf den Pixeln von vor dem Zoom, während der Monitor
+        // darunter längst woanders steht — bei einem Schritt von 100 % auf 110 %
+        // gemessene 72 px seitlich, 31 px hoch und 10 px Breite auf einem 108 px
+        // breiten Zeichen. Genau das ist das Ruckeln: das Zeichen löst sich vom
+        // Bildschirm und schnappt beim Refresh zurück.
+        //
+        // Der Beobachter nimmt dem Debounce nur diesen einen Nachzügler ab. Er
+        // läuft im selben Frame wie der Reflow, noch vor dem Paint, und schreibt
+        // exakt das, was onRefresh gleich darauf noch einmal schreibt. Ohne
+        // Layoutwechsel feuert er nie — am ruhenden Bild ändert sich nichts.
+        //
+        // Beobachtet wird die Bühne, weil alle Messwerte an ihr hängen: die
+        // Skizze ist `max(100%, 100svh · ratio)` breit, und Monitorfläche,
+        // Zeichen und Kreuz sind Prozentwerte darin. Rückkopplungsfrei, weil
+        // Szene, Schleier und Streifen absolut in der Bühne liegen — was
+        // applyZoom und applyWipe schreiben, kann ihre Box nicht verändern.
+        const ro = new ResizeObserver(() => {
+          measure();
+          applyZoom(progress);
+          applyWipe(progress);
+        });
+        ro.observe(stage);
+
         // Der Tausch oben ist ein Inline-Stil und überlebt das Aufräumen von
         // GSAP — beim Wechsel der Query (Drehen, Fenstergröße, reduzierte
         // Bewegung) bliebe das Zeichen im Monitor sonst unsichtbar, während die
@@ -469,6 +506,7 @@ export default function About() {
         // steht — aber sie hier stehen zu lassen hieße, sich auf genau das zu
         // verlassen.
         return () => {
+          ro.disconnect();
           logo.style.visibility = "";
           hud.style.visibility = "";
           hud.style.width = "";
