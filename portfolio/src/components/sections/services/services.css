@@ -251,6 +251,14 @@
   box-shadow: 0 0 0 3px rgba(10, 10, 10, 0.28);
 }
 
+/* Der Rahmen der gestapelten Zeichnung. Trägt im Ruhezustand nur die Masse,
+   die vorher als Utility-Klassen am Wrapper standen — das Kleben kommt weiter
+   unten im Stapel-Block dazu. */
+.services-landscape-stage {
+  width: 100%;
+  margin-top: clamp(1.25rem, 3vh, 2.5rem);
+}
+
 .services-landscape--stack {
   /* Gleicher Zuwachs wie beim Desktop-Zoom. Bei 112vw Höhe ist die Zeichnung
      84vw breit — mit dem linken Einzug bleibt sie im Blatt. */
@@ -484,6 +492,79 @@
 
 .services-track > .services-panel + .services-panel {
   border-top: 1px solid rgba(10, 10, 10, 0.12);
+}
+
+/* ── Die Zeichnung hält, die Kapitel ziehen an ihr vorbei ───────────────────
+ *
+ * Vorher war sie tot: über 41 Stichproben (iPhone 16, scrollY 509→3544)
+ * durchgehend `transform: none` und `opacity: 1`, ihr `top` folgte dem
+ * `scrollY` exakt 1:1. Über rund 2350px Sektionshöhe liefen vier Kapitel an
+ * einem Hauptmotiv vorbei, das sich kein einziges Mal rührte.
+ *
+ * Die Antwort ist dieselbe wie bei `.process-panel__media`: der Rahmen klebt,
+ * die Copy zieht darüber. `top` ist byte-identisch zu process.css — die Nav
+ * ist fix und rund 6rem hoch, darunter beginnt die Klebezone.
+ *
+ * Bewusst OHNE prefers-reduced-motion: `position: sticky` ist Layout, keine
+ * Animation. Die Eigenbewegung der Figur steht in Services.tsx und hat ihre
+ * eigene Bedingung. Die Breitenbedingung hier spiegelt STACK_QUERY aus
+ * lib/breakpoints.ts — inklusive iPad hochkant.
+ *
+ * Die Klebestrecke reicht bis ans Ende von `.services-stack`, weil das der
+ * Enthalter des Rahmens ist. Gemessen bleibt `getBoundingClientRect().top` der
+ * Zeichnung dabei konstant: 102.23px über 1691px Scrollweg (iPhone 16,
+ * 393x852), 128.00px über 2117px (iPad 820x1180).
+ *
+ * Der `clip-path` der Einfahrt am Section-Element bricht das NICHT — geprüft:
+ * `clip-path` macht einen Stacking-Context auf, aber keinen Scrollport, und
+ * nur der begrenzt ein sticky. Der `overflow-x: clip` der Section wäre der
+ * gefährlichere Kandidat, bleibt aber ungefährlich, solange `overflow-y`
+ * daneben `visible` ist (gemessen `clip / visible`): erst diese Kombination
+ * verzichtet auf einen Scroll-Container.
+ *
+ * --services-sink ist Spalt UND Verlaufshöhe in einem: der Verlauf sitzt per
+ * `bottom: 100%` genau in dem Abstand, den `margin-bottom` aufmacht. Solange
+ * die Zeichnung noch nicht klebt, liegt er vollständig darin und rührt sie
+ * nicht an; erst wenn sie hält, schrumpft der Spalt und der Verlauf frisst das
+ * Blatt von unten weg. Zwei getrennte Zahlen könnten driften, eine kann es
+ * nicht. */
+@media (max-width: 1023.98px),
+  (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
+  .services-stack {
+    --services-sink: 2.5rem;
+  }
+
+  .services-landscape-stage {
+    position: sticky;
+    top: clamp(5rem, 12svh, 8rem);
+    z-index: 0;
+    margin-bottom: var(--services-sink);
+  }
+
+  /* Der Grund der Kapitelspalte ist exakt der Sectionsgrund (--color-panel,
+     wie bg-panel an <section id="services">). Ausserhalb der Überdeckung ist
+     er deshalb nicht zu sehen, und in der Überdeckung liest er sich nicht als
+     vorgeschobene Karte, sondern als das Blatt, das in der Cremefläche
+     versinkt.
+     Warum eine Fläche und keine Ausblend-Choreografie: das Kleben hat keine
+     prefers-reduced-motion-Bedingung (siehe oben), GSAP läuft dort aber nicht.
+     Ein scrollgebundenes Wegblenden liesse die Überdeckung genau bei den
+     Nutzern stehen, die sie am wenigsten gebrauchen können. */
+  .services-track {
+    position: relative;
+    z-index: 1;
+    background-color: var(--color-panel);
+  }
+
+  .services-track::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 100%;
+    height: var(--services-sink);
+    background-image: linear-gradient(to top, var(--color-panel), transparent);
+    pointer-events: none;
+  }
 }
 
 /* MUSS byte-identisch zur gsap.matchMedia()-Query in Services.tsx bleiben */

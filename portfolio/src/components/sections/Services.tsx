@@ -5,7 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import TextReveal from "@/components/ui/TextReveal";
 import { useLightSection } from "@/hooks/useLightSection";
-import { PIN_QUERY } from "@/lib/breakpoints";
+import { PIN_QUERY, STACK_QUERY } from "@/lib/breakpoints";
 import { useStackReveal } from "@/hooks/useStackReveal";
 import { SERVICES, SERVICES_INTRO, type Service } from "@/lib/constants";
 import ServicesLandscape from "@/components/sections/services/ServicesLandscape";
@@ -464,6 +464,76 @@ export default function Services() {
       };
     });
 
+    // ── Die klebende Zeichnung tritt zurück ───────────────────────────────
+    //
+    // Das Kleben selbst steht in services.css und ist Layout. Hier kommt nur
+    // die Eigenbewegung dazu, die aus dem blossen Stillstand ein Zurücktreten
+    // macht: während die Cremefläche der Kapitel von unten über das Blatt
+    // steigt, schrumpft es auf seine eigene Oberkante zu und verliert Licht.
+    // Das ist die Kamera, die zurückfährt, während sich das zweite Material
+    // davorschiebt — ein Moment, nicht zwei nebeneinander.
+    //
+    // transformOrigin auf die Oberkante ist keine Geschmacksfrage, sondern die
+    // Bedingung dafür, dass beides gleichzeitig gilt: die Figur bewegt sich
+    // messbar, und ihre Oberkante bleibt trotzdem exakt dort stehen, wo das
+    // sticky sie hält. Ein Versatz in y würde die Klebekante wieder wandern
+    // lassen und das Kleben damit unsichtbar machen.
+    //
+    // force3D: false aus demselben Grund wie beim Kapitelwechsel weiter oben:
+    // sonst schiebt GSAP ein translate3d() unter den Tween und promotet die
+    // Figur auf eine eigene Compositing-Ebene. Die trägt Kinder mit
+    // mix-blend-mode und müsste bildschirmfüllend gerastert werden — genau der
+    // in services.css dokumentierte Fall, bei dem die ganze Seite ruckelt.
+    //
+    // Der Scrub hängt am Kapitelstapel und nicht an der Figur: ScrollTrigger
+    // misst seine Marken an der Dokumentposition des Triggers, und die eines
+    // klebenden Elements ist nicht die, an der es steht.
+    //
+    // Die Marken sind die Strecke, über die die Cremefläche das Blatt zudeckt:
+    // von „Oberkante des Stapels erscheint unten im Bild" bis „Oberkante des
+    // Stapels steht auf 12 % der Fensterhöhe" — und das ist exakt die Höhe, auf
+    // der das sticky die Zeichnung hält (12svh aus der clamp in services.css,
+    // gemessen 102.2px auf 393x852). Ab da liegt sie vollständig unter der
+    // Cremefläche; jede weitere Bewegung liefe im Verborgenen.
+    //
+    // scrub 0.6 wie überall sonst im Projekt: die Bewegung hängt am Scrollbalken,
+    // klebt aber nicht am Rad — die Trägheit ist das Gefühl.
+    mm.add(STACK_QUERY, () => {
+      const stack = stackRef.current;
+      const figure = stack?.querySelector<HTMLElement>(
+        ".services-landscape--stack",
+      );
+      const panels = stack?.querySelector<HTMLElement>(".services-track");
+      if (!figure || !panels) return;
+
+      const recede = gsap.fromTo(
+        figure,
+        { scale: 1, opacity: 1 },
+        {
+          scale: 0.93,
+          opacity: 0.8,
+          ease: "none",
+          force3D: false,
+          transformOrigin: "50% 0%",
+          scrollTrigger: {
+            trigger: panels,
+            start: "top bottom",
+            end: "top 12%",
+            scrub: 0.6,
+            invalidateOnRefresh: true,
+          },
+        },
+      );
+
+      return () => {
+        recede.scrollTrigger?.kill();
+        recede.kill();
+        // Zurück unter CSS-Kontrolle: sonst bliebe beim Wechsel auf den
+        // Desktop-Pfad eine geschrumpfte, halbdurchsichtige Figur stehen.
+        gsap.set(figure, { clearProps: "transform,opacity,transformOrigin" });
+      };
+    });
+
     return () => mm.revert();
   }, []);
 
@@ -565,7 +635,9 @@ export default function Services() {
       <div ref={stackRef} className="services-stack">
         <ServicesHeader />
 
-        <div className="mt-[clamp(1.25rem,3vh,2.5rem)] w-full">
+        {/* Eigene Klasse statt Utilities: services.css klebt diesen Rahmen im
+            Stapel fest, und die Klasse ist der einzige Griff dafür. */}
+        <div className="services-landscape-stage">
           <ServicesLandscape className="services-landscape--stack" />
         </div>
 
