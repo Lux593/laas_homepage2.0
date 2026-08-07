@@ -487,7 +487,8 @@
 }
 
 /* MUSS byte-identisch zur gsap.matchMedia()-Query in Services.tsx bleiben */
-@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+@media (min-width: 1024px) and (pointer: fine) and (prefers-reduced-motion: no-preference),
+  (min-width: 1024px) and (orientation: landscape) and (prefers-reduced-motion: no-preference) {
   .services-pin--desktop {
     display: flex;
   }

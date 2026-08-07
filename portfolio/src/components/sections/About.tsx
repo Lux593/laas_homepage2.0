@@ -519,6 +519,70 @@ export default function About() {
       }
     );
 
+    // ── Kurzes Fenster: hochkant unter 660px Höhe ────────────────────────────
+    //
+    // Dort läuft die Kamerafahrt bewusst NICHT: sie braucht eine 100svh-Bühne
+    // plus Scrollweg, und darunter fielen Szene und Copy übereinander. Diese
+    // Entscheidung bleibt. Was fehlte, war ein Ersatz — die Section stand als
+    // einzige der Seite vollständig still.
+    //
+    // Also die Idee der Fahrt ohne ihre Mechanik: die Szene atmet über die
+    // Durchfahrt leicht auf, statt in den Monitor zu fahren, und die
+    // Copy-Gruppen steigen gestaffelt ein. Im Scope trifft das nur 320×568.
+    mm.add(
+      "(max-width: 767.98px) and (max-height: 659.98px) and (prefers-reduced-motion: no-preference)",
+      () => {
+        const scene = sceneRef.current;
+        const content = contentRef.current;
+        const section = sectionRef.current;
+        if (!scene || !content || !section) return;
+
+        const groups = gsap.utils.toArray<HTMLElement>(".about-in", content);
+
+        const drift = gsap.fromTo(
+          scene,
+          { scale: 1 },
+          {
+            scale: 1.06,
+            ease: "none",
+            scrollTrigger: {
+              trigger: section,
+              start: "top bottom",
+              end: "bottom top",
+              // Gedämpft wie jeder andere Scrub im Projekt — der Nutzer fährt
+              // die Bewegung, sie klebt nicht am Finger.
+              scrub: 0.6,
+            },
+          },
+        );
+
+        // Startzustand aus GSAP, nicht aus CSS: bleibt das Skript aus, steht
+        // die Copy sichtbar da statt auf opacity: 0 hängenzubleiben. Dasselbe
+        // Muster wie in useStackReveal.
+        const rise = gsap.fromTo(
+          groups,
+          { y: 24, autoAlpha: 0 },
+          {
+            y: 0,
+            autoAlpha: 1,
+            duration: 0.7,
+            stagger: 0.08,
+            ease: "power3.out",
+            scrollTrigger: { trigger: content, start: "top 85%", once: true },
+          },
+        );
+
+        return () => {
+          drift.scrollTrigger?.kill();
+          drift.kill();
+          rise.scrollTrigger?.kill();
+          rise.kill();
+          gsap.set(scene, { clearProps: "transform" });
+          gsap.set(groups, { clearProps: "opacity,visibility,transform" });
+        };
+      },
+    );
+
     return () => mm.revert();
   }, []);
 

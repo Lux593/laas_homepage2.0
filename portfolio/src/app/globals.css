@@ -399,7 +399,8 @@
 
   /* Below lg the iPad arrows sit on the screen itself (left-5 / right-5), so the
      well needs no clearance there and the device gets the full column. */
-  @media (max-width: 1023px) {
+  @media (max-width: 1023.98px),
+    (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
     .device-well--ipad {
       --frame-pad: 0rem;
     }
@@ -412,7 +413,8 @@
   /* MUST stay byte-identical to the gsap.matchMedia() query in
      src/hooks/useHorizontalPin.ts — if the two drift apart you get either
      a permanently off-screen panel or a 200vw horizontal overflow. */
-  @media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  @media (min-width: 1024px) and (pointer: fine) and (prefers-reduced-motion: no-preference),
+    (min-width: 1024px) and (orientation: landscape) and (prefers-reduced-motion: no-preference) {
     .work-pin {
       height: 100vh;
       height: 100svh;

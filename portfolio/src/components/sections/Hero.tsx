@@ -63,8 +63,14 @@ export default function Hero() {
   // Entry animation
   useEffect(() => {
     const reduced = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
+      "(prefers-reduced-motion: reduce)",
     ).matches;
+    // Einmal beim Mount gelesen, bewusst ohne matchMedia-Kontext: das hier ist
+    // die Auftrittstimeline, sie läuft 1.4s ab Paint und danach nie wieder.
+    // Ein Dreh während dieser 1.4s ist kein realer Fall — im Gegensatz zum
+    // Scroll-Parallax weiter unten, der die ganze Seitenlaufzeit lebt und
+    // deshalb gsap.matchMedia braucht.
+    const narrow = window.matchMedia("(max-width: 767.98px)").matches;
     // Kurzer Beat nach Paint — früher 2.2s für den Preloader, der aktuell aus ist.
     const tl = gsap.timeline({ delay: 0.4 });
 
@@ -93,7 +99,7 @@ export default function Hero() {
           lamp,
           { "--glow": -20 },
           { "--glow": 130, duration: 1.2, ease: "power2.out" },
-          0
+          0,
         );
       }
     }
@@ -114,7 +120,7 @@ export default function Hero() {
           illuRef.current,
           { "--wipe": -25 },
           { "--wipe": 120, duration: 1.4, ease: "power2.out" },
-          0.2
+          0.2,
         );
       }
     }
@@ -122,21 +128,36 @@ export default function Hero() {
     // Absolute Positionen statt "-=": der Wipe oben ist länger als die
     // Textzeilen und würde die relative Kette sonst nach hinten schieben.
     // 0 / 0.4 / 0.8 sind exakt die Zeitpunkte der vorherigen "-="-Kette.
+    // Unter 768px fällt der Blur weg. `filter` ist die teuerste animierbare
+    // Eigenschaft überhaupt: der komplette Textkasten wird 60×/s neu gerastert
+    // und weichgezeichnet — und zwar genau im LCP-Fenster, parallel zu
+    // Hydration, Font-Swap und den beiden Masken-Wipes darüber. Auf 375px
+    // liegen dort sonst gleichzeitig zwei animierte `filter`, zwei animierte
+    // `mask-image` und der Nav-Einflug auf einem Main Thread.
+    //
+    // Damit der Auftritt nicht schwächer wird, statt dessen mehr Weg und ein
+    // Versatz: zwei gestaffelte Zeilen lesen sich auf einem schmalen Screen als
+    // mehr Choreografie als ein gemeinsamer Blur — und kosten nur Compositing.
+    const soften = (px: number) => (narrow ? {} : { filter: `blur(${px}px)` });
+    const sharp = narrow ? {} : { filter: "blur(0px)" };
+
     if (line1Ref.current) {
       tl.fromTo(
         line1Ref.current,
-        { y: 40, opacity: 0, filter: "blur(8px)" },
-        { y: 0, opacity: 1, filter: "blur(0px)", duration: 1, ease: "expo.out" },
-        0
+        { y: narrow ? 56 : 40, opacity: 0, ...soften(8) },
+        { y: 0, opacity: 1, ...sharp, duration: 1, ease: "expo.out" },
+        0,
       );
     }
 
     if (line2Ref.current) {
       tl.fromTo(
         line2Ref.current,
-        { y: 30, opacity: 0, filter: "blur(8px)" },
-        { y: 0, opacity: 1, filter: "blur(0px)", duration: 0.8, ease: "expo.out" },
-        0.4
+        { y: narrow ? 42 : 30, opacity: 0, ...soften(8) },
+        { y: 0, opacity: 1, ...sharp, duration: 0.8, ease: "expo.out" },
+        // 0.52 statt 0.4: der Versatz zwischen den Zeilen ersetzt hochkant die
+        // Schärfeverlagerung. Quer bleibt es bei 0.4 — dort trägt der Blur.
+        narrow ? 0.52 : 0.4,
       );
     }
 
@@ -145,7 +166,7 @@ export default function Hero() {
         scrollIndicatorRef.current,
         { opacity: 0, y: 20 },
         { opacity: 1, y: 0, duration: 0.8, ease: "expo.out" },
-        0.8
+        0.8,
       );
     }
 
@@ -213,120 +234,120 @@ export default function Hero() {
     const build =
       ({ blur, intensity }: Tuning) =>
       () => {
-      const runway = runwayRef.current;
-      if (!runway) return;
+        const runway = runwayRef.current;
+        if (!runway) return;
 
-      const vh = () => window.innerHeight;
+        const vh = () => window.innerHeight;
 
-      const tl = gsap.timeline({
-        defaults: { ease: "none" },
-        scrollTrigger: {
-          // Die Runway ist statisch positioniert — die sticky Section als Trigger
-          // würde ScrollTrigger unzuverlässig vermessen. Ihre Oberkante sitzt
-          // genau eine Hero-Höhe tief, "top bottom" ist also Scroll 0; ihre
-          // Unterkante ist der Punkt, an dem die Creme voll deckt.
-          trigger: runway,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: 0.8,
-          invalidateOnRefresh: true,
-          refreshPriority: 2,
-          onLeave: () => setHeroActive(false),
-          onEnterBack: () => setHeroActive(true),
-          // Deckt Scroll-Restore und Anchor-Sprünge ab: dort wechselt der Trigger
-          // nie den Zustand, onLeave würde also nie feuern.
-          onRefresh: (self) => setHeroActive(self.progress < 1),
-        },
-      });
-
-      // Leer-Tween hält die Timeline-Länge auf exakt 1, damit die Positions- und
-      // Dauer-Angaben unten 1:1 dem Scroll-Fortschritt entsprechen. Ohne ihn würde
-      // ScrollTrigger die kürzere Timeline über die volle Strecke strecken.
-      tl.to({}, { duration: 1 }, 0);
-
-      // Der Hinweis liegt jetzt in der Creme, nicht mehr über schwarzem Grund —
-      // ein weiter Hub würde ihn aus dem Balken heraustragen. Also nur ein
-      // kurzes Wegblenden.
-      if (cueLayerRef.current) {
-        tl.to(cueLayerRef.current, { y: -14, opacity: 0, duration: 0.1 }, 0);
-      }
-
-      if (headLayerRef.current) {
-        tl.fromTo(
-          headLayerRef.current,
-          { filter: "blur(0px)" },
-          {
-            y: () => -vh() * 0.18 * intensity,
-            scale: 0.82,
-            opacity: 0,
-            ...(blur ? { filter: "blur(10px)" } : {}),
-            duration: 0.4,
+        const tl = gsap.timeline({
+          defaults: { ease: "none" },
+          scrollTrigger: {
+            // Die Runway ist statisch positioniert — die sticky Section als Trigger
+            // würde ScrollTrigger unzuverlässig vermessen. Ihre Oberkante sitzt
+            // genau eine Hero-Höhe tief, "top bottom" ist also Scroll 0; ihre
+            // Unterkante ist der Punkt, an dem die Creme voll deckt.
+            trigger: runway,
+            start: "top bottom",
+            end: "bottom top",
+            scrub: 0.8,
+            invalidateOnRefresh: true,
+            refreshPriority: 2,
+            onLeave: () => setHeroActive(false),
+            onEnterBack: () => setHeroActive(true),
+            // Deckt Scroll-Restore und Anchor-Sprünge ab: dort wechselt der Trigger
+            // nie den Zustand, onLeave würde also nie feuern.
+            onRefresh: (self) => setHeroActive(self.progress < 1),
           },
-          0
-        );
-      }
+        });
 
-      if (subLayerRef.current) {
-        tl.fromTo(
-          subLayerRef.current,
-          { filter: "blur(0px)" },
-          {
-            y: () => -vh() * 0.14 * intensity,
-            scale: 0.85,
-            opacity: 0,
-            ...(blur ? { filter: "blur(8px)" } : {}),
-            duration: 0.41,
-          },
-          0.03
-        );
-      }
+        // Leer-Tween hält die Timeline-Länge auf exakt 1, damit die Positions- und
+        // Dauer-Angaben unten 1:1 dem Scroll-Fortschritt entsprechen. Ohne ihn würde
+        // ScrollTrigger die kürzere Timeline über die volle Strecke strecken.
+        tl.to({}, { duration: 1 }, 0);
 
-      if (illuLayerRef.current) {
-        const illu = illuLayerRef.current;
+        // Der Hinweis liegt jetzt in der Creme, nicht mehr über schwarzem Grund —
+        // ein weiter Hub würde ihn aus dem Balken heraustragen. Also nur ein
+        // kurzes Wegblenden.
+        if (cueLayerRef.current) {
+          tl.to(cueLayerRef.current, { y: -14, opacity: 0, duration: 0.1 }, 0);
+        }
 
-        // Hinterste Ebene: driftet am wenigsten und bleibt am längsten stehen.
-        tl.to(
-          illu,
-          { y: () => -vh() * 0.1 * intensity, scale: 0.8, duration: 1 },
-          0
-        )
-          // power2.in hält die Deckkraft lange oben. Die Zeichnung sitzt tief
-          // im Bild, die Panel-Kante erreicht sie erst spät — bis dahin soll
-          // sie sichtbar bleiben und verschluckt werden, statt vorher
-          // wegzublenden.
-          .to(illu, { opacity: 0, duration: 1, ease: "power2.in" }, 0);
-      }
+        if (headLayerRef.current) {
+          tl.fromTo(
+            headLayerRef.current,
+            { filter: "blur(0px)" },
+            {
+              y: () => -vh() * 0.18 * intensity,
+              scale: 0.82,
+              opacity: 0,
+              ...(blur ? { filter: "blur(10px)" } : {}),
+              duration: 0.4,
+            },
+            0,
+          );
+        }
 
-      // Die Lampe driftet wie die Zeichnung, wird aber NICHT skaliert: ihr
-      // Kabel hängt am oberen Bildrand, ein Zusammenziehen zur Mitte würde es
-      // sichtbar vom Rand lösen. Dieselbe Deckkraft-Kurve, damit Lampe und
-      // Zeichnung als eine Szene verschluckt werden.
-      if (lampLayerRef.current) {
-        const lamp = lampLayerRef.current;
+        if (subLayerRef.current) {
+          tl.fromTo(
+            subLayerRef.current,
+            { filter: "blur(0px)" },
+            {
+              y: () => -vh() * 0.14 * intensity,
+              scale: 0.85,
+              opacity: 0,
+              ...(blur ? { filter: "blur(8px)" } : {}),
+              duration: 0.41,
+            },
+            0.03,
+          );
+        }
 
-        tl.to(lamp, { y: () => -vh() * 0.1 * intensity, duration: 1 }, 0).to(
-          lamp,
-          { opacity: 0, duration: 1, ease: "power2.in" },
-          0
-        );
-      }
+        if (illuLayerRef.current) {
+          const illu = illuLayerRef.current;
 
-      // Die Creme-Kante gehört nicht mehr hierher: die Leistungen-Section
-      // fährt selbst als schmaler Balken ein und breitet sich aus (siehe
-      // Services.tsx). Ein vorauseilender Stummel im Hero war immer ein
-      // zweites Objekt und hat als solches gelesen.
-    };
+          // Hinterste Ebene: driftet am wenigsten und bleibt am längsten stehen.
+          tl.to(
+            illu,
+            { y: () => -vh() * 0.1 * intensity, scale: 0.8, duration: 1 },
+            0,
+          )
+            // power2.in hält die Deckkraft lange oben. Die Zeichnung sitzt tief
+            // im Bild, die Panel-Kante erreicht sie erst spät — bis dahin soll
+            // sie sichtbar bleiben und verschluckt werden, statt vorher
+            // wegzublenden.
+            .to(illu, { opacity: 0, duration: 1, ease: "power2.in" }, 0);
+        }
+
+        // Die Lampe driftet wie die Zeichnung, wird aber NICHT skaliert: ihr
+        // Kabel hängt am oberen Bildrand, ein Zusammenziehen zur Mitte würde es
+        // sichtbar vom Rand lösen. Dieselbe Deckkraft-Kurve, damit Lampe und
+        // Zeichnung als eine Szene verschluckt werden.
+        if (lampLayerRef.current) {
+          const lamp = lampLayerRef.current;
+
+          tl.to(lamp, { y: () => -vh() * 0.1 * intensity, duration: 1 }, 0).to(
+            lamp,
+            { opacity: 0, duration: 1, ease: "power2.in" },
+            0,
+          );
+        }
+
+        // Die Creme-Kante gehört nicht mehr hierher: die Leistungen-Section
+        // fährt selbst als schmaler Balken ein und breitet sich aus (siehe
+        // Services.tsx). Ein vorauseilender Stummel im Hero war immer ein
+        // zweites Objekt und hat als solches gelesen.
+      };
 
     // prefers-reduced-motion: kein Context → kein Parallax. Runway und sticky
     // sind dort per motion-safe/motion-reduce ebenfalls abgeschaltet.
     mm.add(
       "(min-width: 768px) and (prefers-reduced-motion: no-preference)",
-      build({ blur: true, intensity: 1 })
+      build({ blur: true, intensity: 1 }),
     );
     // Ohne Blur: teuerste Operation beim Scrubben, und Lenis ist <=768px ohnehin aus.
     mm.add(
       "(max-width: 767px) and (prefers-reduced-motion: no-preference)",
-      build({ blur: false, intensity: 0.7 })
+      build({ blur: false, intensity: 0.7 }),
     );
 
     return () => {
@@ -352,7 +373,7 @@ export default function Hero() {
               gsap.fromTo(
                 rotatingRef.current,
                 { y: 20, opacity: 0 },
-                { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" }
+                { y: 0, opacity: 1, duration: 0.4, ease: "power2.out" },
               );
             }
           },

@@ -16,3 +16,9 @@ next-env.d.ts
 
 # env files
 .env*
+
+# Screenshot-Ordner des Gerätematrix-Runners (scripts/mobile-matrix.mjs)
+portfolio/.baseline/
+portfolio/.after/
+portfolio/.noise/
+portfolio/.shots/

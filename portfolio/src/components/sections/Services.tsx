@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import TextReveal from "@/components/ui/TextReveal";
 import { useLightSection } from "@/hooks/useLightSection";
+import { PIN_QUERY } from "@/lib/breakpoints";
 import { useStackReveal } from "@/hooks/useStackReveal";
 import { SERVICES, SERVICES_INTRO, type Service } from "@/lib/constants";
 import ServicesLandscape from "@/components/sections/services/ServicesLandscape";
@@ -111,7 +112,8 @@ function ServicePanel({
             </span>
             <span data-reveal="rule" className="h-px flex-1 bg-[#0a0a0a]/15" />
             <span className="shrink-0 font-mono text-caption tabular-nums tracking-[0.2em] text-[#0a0a0a]/45">
-              {String(index + 1).padStart(2, "0")} / {String(total).padStart(2, "0")}
+              {String(index + 1).padStart(2, "0")} /{" "}
+              {String(total).padStart(2, "0")}
             </span>
           </div>
 
@@ -163,7 +165,7 @@ export default function Services() {
     const featured = gsap.utils.toArray<HTMLElement>("[data-featured]", stage);
     /** Titel und Subtext je Ebene — nur sie werden versetzt. */
     const featuredCopy = featured.map((layer) =>
-      gsap.utils.toArray<HTMLElement>("[data-featured-copy]", layer)
+      gsap.utils.toArray<HTMLElement>("[data-featured-copy]", layer),
     );
     const chapters = stage.querySelectorAll<HTMLElement>("[data-chapter]");
     let lastIndex = -1;
@@ -211,7 +213,7 @@ export default function Services() {
         .filter(
           (index) =>
             index !== activeIndex &&
-            Number(gsap.getProperty(featured[index]!, "opacity")) > 0
+            Number(gsap.getProperty(featured[index]!, "opacity")) > 0,
         );
       const leave = leaving.map((index) => featured[index]!);
       const leaveCopy = leaving.flatMap((index) => featuredCopy[index]!);
@@ -232,7 +234,7 @@ export default function Services() {
           .to(
             leave,
             { autoAlpha: 0, duration: SWAP_LEAVE, ease: "power1.in" },
-            0
+            0,
           )
           .to(
             leaveCopy,
@@ -242,7 +244,7 @@ export default function Services() {
               ease: "power1.in",
               force3D: false,
             },
-            0
+            0,
           );
       }
 
@@ -251,7 +253,7 @@ export default function Services() {
           enter,
           { autoAlpha: 0 },
           { autoAlpha: 1, duration: SWAP_ENTER, ease: "power2.out" },
-          SWAP_HANDOVER
+          SWAP_HANDOVER,
         )
         .fromTo(
           enterCopy,
@@ -262,7 +264,7 @@ export default function Services() {
             ease: "power2.out",
             force3D: false,
           },
-          SWAP_HANDOVER
+          SWAP_HANDOVER,
         );
     };
 
@@ -280,7 +282,7 @@ export default function Services() {
       if (counterRef.current) {
         counterRef.current.textContent = String(activeIndex + 1).padStart(
           2,
-          "0"
+          "0",
         );
       }
     };
@@ -288,7 +290,7 @@ export default function Services() {
     const applyScrub = (progress: number) => {
       const activeIndex = Math.min(
         SERVICES.length - 1,
-        Math.floor(progress / CHAPTER)
+        Math.floor(progress / CHAPTER),
       );
 
       // Kontinuierlicher Progress — pro Frame, nur Transform.
@@ -324,13 +326,16 @@ export default function Services() {
       if (!section) return;
 
       const token = (name: string, fallback: string) =>
-        getComputedStyle(document.documentElement).getPropertyValue(name).trim() ||
-        fallback;
+        getComputedStyle(document.documentElement)
+          .getPropertyValue(name)
+          .trim() || fallback;
 
       const wide = window.matchMedia("(min-width: 768px)").matches;
       const openRadius = wide ? 3 : 2.5;
       const restRadius = parseFloat(
-        wide ? token("--radius-panel-lg", "2rem") : token("--radius-panel", "1.5rem")
+        wide
+          ? token("--radius-panel-lg", "2rem")
+          : token("--radius-panel", "1.5rem"),
       );
 
       // clip-path als Ganzes tweenen geht nicht: Chrome meldet den eingezogenen
@@ -381,21 +386,21 @@ export default function Services() {
           ease: "power2.out",
           immediateRender: true,
         },
-        0.45
+        0.45,
       );
 
       // Der Balken fährt leer herein. Sonst steht die Kopfzeile schon in dem
       // schmalen Streifen und wird von der Clip-Kante mitten im Wort
       // abgeschnitten — der Inhalt kommt erst, wenn die Fläche fast offen ist.
       const content = [track, stackRef.current].filter(
-        (el): el is HTMLDivElement => el !== null
+        (el): el is HTMLDivElement => el !== null,
       );
       if (content.length) {
         tl.fromTo(
           content,
           { opacity: 0 },
           { opacity: 0, duration: 0.55, ease: "none" },
-          0
+          0,
         ).to(content, { opacity: 1, duration: 0.4, ease: "power1.out" }, 0.55);
       }
 
@@ -408,59 +413,56 @@ export default function Services() {
     });
 
     // MUSS byte-identisch zur @media-Query für .services-pin--desktop bleiben
-    mm.add(
-      "(min-width: 1024px) and (prefers-reduced-motion: no-preference)",
-      () => {
-        // Ab hier führt GSAP die Deckkraft der Ebenen inline; die Klasse
-        // .is-active bleibt für pointer-events, aria und die
-        // Stapelreihenfolge zuständig. Die opacity-Regeln in services.css
-        // sind damit nur noch der Ruhezustand für Skript-aus.
-        featured.forEach((layer, index) =>
-          gsap.set(layer, { autoAlpha: index === 0 ? 1 : 0 })
-        );
+    mm.add(PIN_QUERY, () => {
+      // Ab hier führt GSAP die Deckkraft der Ebenen inline; die Klasse
+      // .is-active bleibt für pointer-events, aria und die
+      // Stapelreihenfolge zuständig. Die opacity-Regeln in services.css
+      // sind damit nur noch der Ruhezustand für Skript-aus.
+      featured.forEach((layer, index) =>
+        gsap.set(layer, { autoAlpha: index === 0 ? 1 : 0 }),
+      );
 
-        const st = ScrollTrigger.create({
-          trigger: track,
-          start: "top top",
-          end: "bottom bottom",
-          scrub: 0.45,
-          onUpdate: (self) => applyScrub(self.progress),
-          // Ein Refresh setzt den Stand nur nach, er animiert nicht: der
-          // AnimationProvider stößt nach document.fonts.ready einen an, und
-          // sonst liefe kurz nach dem Laden ein Kapitelwechsel los, den
-          // niemand ausgelöst hat.
-          // Den vorigen Stand wiederherstellen statt blind scharf zu
-          // schalten: dieses onRefresh feuert schon während create(), und
-          // dort darf noch nichts animieren.
-          onRefresh: (self) => {
-            const wasArmed = armed;
-            armed = false;
-            applyScrub(self.progress);
-            armed = wasArmed;
-          },
-          invalidateOnRefresh: true,
-          refreshPriority: 1,
-        });
-
-        // Erststand aus der tatsächlichen Scrollposition, bevor scharf
-        // geschaltet wird: beim Reload mitten in der Sektion steht sofort das
-        // richtige Kapitel da, ohne Einblendung.
-        applyScrub(st.progress);
-        armed = true;
-
-        return () => {
-          st.kill();
-          swap?.kill();
-          swap = null;
+      const st = ScrollTrigger.create({
+        trigger: track,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 0.45,
+        onUpdate: (self) => applyScrub(self.progress),
+        // Ein Refresh setzt den Stand nur nach, er animiert nicht: der
+        // AnimationProvider stößt nach document.fonts.ready einen an, und
+        // sonst liefe kurz nach dem Laden ein Kapitelwechsel los, den
+        // niemand ausgelöst hat.
+        // Den vorigen Stand wiederherstellen statt blind scharf zu
+        // schalten: dieses onRefresh feuert schon während create(), und
+        // dort darf noch nichts animieren.
+        onRefresh: (self) => {
+          const wasArmed = armed;
           armed = false;
-          lastIndex = -1;
-          // Zurück unter CSS-Kontrolle — sonst bliebe beim Wechsel unter
-          // 1024 px eine Ebene auf visibility: hidden stehen.
-          gsap.set(featured, { clearProps: "opacity,visibility" });
-          gsap.set(featuredCopy.flat(), { clearProps: "transform" });
-        };
-      }
-    );
+          applyScrub(self.progress);
+          armed = wasArmed;
+        },
+        invalidateOnRefresh: true,
+        refreshPriority: 1,
+      });
+
+      // Erststand aus der tatsächlichen Scrollposition, bevor scharf
+      // geschaltet wird: beim Reload mitten in der Sektion steht sofort das
+      // richtige Kapitel da, ohne Einblendung.
+      applyScrub(st.progress);
+      armed = true;
+
+      return () => {
+        st.kill();
+        swap?.kill();
+        swap = null;
+        armed = false;
+        lastIndex = -1;
+        // Zurück unter CSS-Kontrolle — sonst bliebe beim Wechsel unter
+        // 1024 px eine Ebene auf visibility: hidden stehen.
+        gsap.set(featured, { clearProps: "opacity,visibility" });
+        gsap.set(featuredCopy.flat(), { clearProps: "transform" });
+      };
+    });
 
     return () => mm.revert();
   }, []);

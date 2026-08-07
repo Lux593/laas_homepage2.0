@@ -1,31 +1,44 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useSyncExternalStore } from "react";
 
+/**
+ * Projektweite Regel für die beiden Kanten: **768 und 1024 gehören immer der
+ * grösseren Seite.** Vorher widersprachen sich JS und CSS an genau den zwei
+ * Punkten, die die Zielgeräte treffen — bei exakt 768px sagten `hero.css` und
+ * die GSAP-Query „Desktop", während `useIsMobile` und Lenis „Mobile" sagten.
+ *
+ * `useSyncExternalStore` statt `useState` + Effekt: der Client-Snapshot ist
+ * schon im ERSTEN Render korrekt. Mit der alten Fassung rendert ein 375px-Handy
+ * einen Frame lang den Desktopzweig, bevor der Effekt nachzieht.
+ */
 export function useMediaQuery(query: string): boolean {
-  const [matches, setMatches] = useState(false);
-
-  useEffect(() => {
+  const subscribe = (onChange: () => void) => {
     const media = window.matchMedia(query);
-    setMatches(media.matches);
-    const listener = (e: MediaQueryListEvent) => setMatches(e.matches);
-    media.addEventListener("change", listener);
-    return () => media.removeEventListener("change", listener);
-  }, [query]);
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  };
 
-  return matches;
+  return useSyncExternalStore(
+    subscribe,
+    () => window.matchMedia(query).matches,
+    // Auf dem Server gibt es kein matchMedia. `false` ist der neutrale Wert:
+    // die Hooks unten sind alle so formuliert, dass `false` den unauffälligeren
+    // Zweig ergibt.
+    () => false,
+  );
 }
 
 export function useIsMobile() {
-  return useMediaQuery("(max-width: 768px)");
+  return useMediaQuery("(max-width: 767.98px)");
 }
 
 export function useIsTablet() {
-  return useMediaQuery("(min-width: 769px) and (max-width: 1024px)");
+  return useMediaQuery("(min-width: 768px) and (max-width: 1023.98px)");
 }
 
 export function useIsDesktop() {
-  return useMediaQuery("(min-width: 1025px)");
+  return useMediaQuery("(min-width: 1024px)");
 }
 
 export function usePrefersReducedMotion() {

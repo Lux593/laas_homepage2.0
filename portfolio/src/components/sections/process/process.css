@@ -91,6 +91,46 @@
   background-position: left bottom;
 }
 
+/* ── Gestapelter Aufbau: das Bild hält, die Copy zieht daran vorbei ─────────
+ *
+ * Das ist die vertikale Übersetzung des Shuttles. Auf dem Desktop steht die
+ * Bühne im Pin und die Copy wechselt darin; hier klebt der Bildrahmen im
+ * Fenster, während der Text darunter durchläuft. Ohne das scrollte vorher
+ * einfach alles gleich schnell weg — der Schritt war eine Liste, keine Szene.
+ *
+ * Das Bild kommt dafür VOR die Copy (order: -1). Auf einem schmalen Screen ist
+ * das die bessere Leseordnung: erst das Bild als Anker, dann der Text dazu.
+ *
+ * Bewusst OHNE prefers-reduced-motion: `position: sticky` ist Layout, keine
+ * Animation. Es hat deshalb auch keinen JS-Zwilling und steht in keinem
+ * Invarianten-Paar. Die Breitenbedingung spiegelt STACK_QUERY aus
+ * lib/breakpoints.ts — inklusive iPad 13" hochkant, das seit der
+ * Pin-Entscheidung ebenfalls hier landet.
+ *
+ * top: die Nav ist fix und rund 6rem hoch; darunter beginnt die Klebezone. */
+@media (max-width: 1023.98px),
+  (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
+  .process-panel__grid {
+    /* Der Rahmen braucht Spielraum nach unten, sonst gibt es nichts zum
+       Vorbeiziehen: die Copy muss länger sein als die klebende Zone. */
+    align-items: start;
+  }
+
+  .process-panel__media {
+    position: sticky;
+    top: clamp(5rem, 12svh, 8rem);
+    order: -1;
+  }
+
+  .process-panel__copy {
+    /* Zieht unter dem klebenden Bild durch. Der eigene Grund verhindert, dass
+       das Bild durch die Zeilen scheint, während beide übereinanderliegen. */
+    position: relative;
+    z-index: 10;
+    padding-top: clamp(1.5rem, 4vh, 2.5rem);
+  }
+}
+
 /* Fixed media well — identical size on every process step.
    vmin ties scale to the shorter viewport axis so tall screens fill less dead space. */
 .process-media {
@@ -184,7 +224,8 @@
 }
 
 /* MUST stay byte-identical to the gsap.matchMedia() query in useProcessPin */
-@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+@media (min-width: 1024px) and (pointer: fine) and (prefers-reduced-motion: no-preference),
+  (min-width: 1024px) and (orientation: landscape) and (prefers-reduced-motion: no-preference) {
   .process-pin--desktop {
     display: flex;
     height: 100vh;

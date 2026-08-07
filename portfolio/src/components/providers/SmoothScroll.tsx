@@ -3,12 +3,21 @@
 import { useEffect, useRef } from "react";
 import Lenis from "lenis";
 
-export default function SmoothScroll({ children }: { children: React.ReactNode }) {
+export default function SmoothScroll({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
-    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    // 767.98 statt 768: die Kante gehört der grösseren Seite, siehe
+    // useMediaQuery.ts. Bei exakt 768px lief Lenis vorher NICHT, während
+    // hero.css und der Hero-Parallax dort schon im Desktopmodus standen.
+    const isMobile = window.matchMedia("(max-width: 767.98px)").matches;
     if (prefersReducedMotion || isMobile) return;
 
     const lenis = new Lenis({
