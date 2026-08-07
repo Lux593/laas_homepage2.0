@@ -54,7 +54,8 @@ innerer Naht — plus die Touch-Sonderfälle **oberhalb** 1024px (siehe Gerätem
 Alle Angaben in CSS-Pixeln. Die Spalte „landet bei" ist das, was die Seite dort
 **heute** tut.
 
-**Telefone — hochkant** (alle unter 768 → Lenis aus, Blur aus, Stapel):
+**Telefone — hochkant.** Das ist der **gesamte** Telefon-Scope; alle liegen
+unter 768 → Lenis aus, Blur aus, Stapel:
 
 | Gerät | Viewport | landet bei |
 |---|---|---|
@@ -66,21 +67,16 @@ Alle Angaben in CSS-Pixeln. Die Spalte „landet bei" ist das, was die Seite dor
 | iPhone 16 Plus | 430×932 | dito |
 | iPhone 16 Pro Max | 440×956 | dito |
 
-**Telefone — quer.** Hier wird es unangenehm, und das ist neu gegenüber deinem
-Entwurf: die Querformat-**Breite** schiebt fast jedes aktuelle iPhone über die
-768er-Naht, während die **Höhe** unter 660 fällt:
+**Telefone — quer: bewusst ausserhalb des Scopes.**
+Das Telefon wird gehalten, wie man es hält — hochkant. Für das Querformat wird
+**keine** eigene Ansicht entworfen, es steht in keiner Gate-Matrix und ist kein
+Abbruchgrund. Was dort heute passiert, ist damit ein akzeptierter Zustand und
+kein offener Punkt: die Querformat-Breite (852px aufwärts beim iPhone 16) liegt
+über der 768er-Naht, also laufen dort Lenis und der Hero-Blur auf einem rund
+390px hohen Fenster, während die Pins aus bleiben und die About-Kamerafahrt
+wegen `min-height: 660px` ohnehin still steht. Notiert, nicht gebaut.
 
-| Gerät quer | Viewport | landet bei |
-|---|---|---|
-| iPhone SE (3. Gen) | 667×375 | < 768 → Lenis aus, Hero ohne Blur |
-| **iPhone 16** | **852×393** | **≥ 768: Lenis AN, Hero-Blur AN, Parallax voll — auf 393px Höhe. Pins trotzdem aus. About-Kamera aus (Höhe < 660).** |
-| iPhone 16 Pro | 874×402 | dito |
-| iPhone 16 Plus | 932×430 | dito |
-| iPhone 16 Pro Max | 956×440 | dito |
-
-Das Band 768–1023px ist also **nicht** „Tablets" — es sind **Telefone im
-Querformat** und **iPads hochkant**. Ein iPhone 16 quer bekommt heute die
-Desktop-Blurs und den Smooth-Scroll auf einem 393px hohen Fenster.
+Das Band 768–1023px besteht damit ausschliesslich aus **iPads im Hochformat**.
 
 **Tablets — hochkant:**
 
@@ -133,12 +129,15 @@ nicht-gepinnten Vollhöhen-Blöcken. `body` hat das `vh`/`dvh`-Paar bereits
 (`globals.css:212-213`) — nicht anfassen. **Ein neu eingeführtes `dvh` auf einer
 Bühne ist ein rotes Gate.**
 
-### 3. „Lenis-Konflikte" → verschiebt sich auf das mittlere Band
+### 3. „Lenis-Konflikte" → sind ein reines iPad-Thema
 
 Lenis ist unter 769px **komplett aus** (`SmoothScroll.tsx:10-12`, zusammen mit
-reduced-motion). Auf dem Handy läuft nativer Scroll — die klassischen
-iOS-Lenis-Probleme (Momentum, Rubber-Band, Pointer-Capture) existieren dort
-nicht. Sie existieren im Band 769–1023px. Dorthin gehört der Test.
+reduced-motion). Jedes Telefon im Scope liegt darunter — dort läuft nativer
+Scroll, und die klassischen iOS-Lenis-Probleme (Momentum, Rubber-Band,
+Pointer-Capture) existieren schlicht nicht.
+
+Betroffen sind **alle iPads ausser dem mini hochkant** (744px). Dorthin gehört
+der Test, und nur dorthin.
 
 ### 4. Stack-Platzhalter → konkret
 
@@ -247,11 +246,12 @@ Leitplanken (deine, plus die Projektrealität):
 - Bilder: Sticky-Container + Scale/Mask beim Durchscrollen
 - **Zusatz:** Das Band 768–1023px braucht eine bewusste Entscheidung —
   Handy-Variante hochziehen oder Desktop-Pin herunterziehen. Nicht offenlassen.
-  Dort sitzen **iPhones im Querformat** (852×393 aufwärts) und **iPads
-  hochkant** (820×1180, 834×1194) — zwei sehr verschiedene Formen, ein Band.
+  Dort sitzen ausschliesslich **iPads im Hochformat** (820×1180, 834×1194/1210).
+  Ein hohes, schmales Tablet-Fenster — also eher die Handy-Dramaturgie in gross
+  als ein halber Desktop.
 - **Zusatz:** Was unter `(max-height: 659px)` passiert, gehört ins Konzept.
-  Dort ist die About-Kamerafahrt bewusst aus — und dort liegt **jedes** iPhone
-  im Querformat.
+  Dort ist die About-Kamerafahrt bewusst aus. Im Scope trifft das nur noch die
+  Untergrenze 320×568.
 - **Zusatz:** Für iPad Pro/Air 13″ hochkant (1024×1366) entscheiden: Pin dort
   behalten und für Hochformat auslegen, oder die Grenze auf `min-width: 1025px`
   bzw. auf eine Kombination aus Breite und `(pointer: fine)` heben. Beides ist
@@ -305,22 +305,21 @@ Leitplanken (deine, plus die Projektrealität):
      Maus-Variante byte-gleich zur Baseline rendert
 
 3. **Layout** — kein horizontaler Overflow, auf der vollen Gerätematrix
-   - **Pflichtbreiten hoch:** 320 · 375 · 390 · 393 · 402 · 430 · 440 ·
-     744 · 820 · 834 · **1024**
-   - **Pflichtbreiten quer:** 667 · 852 · 874 · 932 · 956 ·
-     1133 · 1180 · 1194 · 1366
+   - **Telefone (nur hochkant):** 320 · 375 · 390 · 393 · 402 · 430 · 440
+   - **iPads hochkant:** 744 · 820 · 834 · **1024**
+   - **iPads quer:** 1133 · 1180 · 1194 · 1210 · 1366
    - Jeweils mit der **echten Höhe** des Geräts fahren, nicht mit einer
      Standardhöhe — die 660px-Schwelle und die `svh`-Bühnen hängen daran
    - `svh`-Regel aus Constraint eingehalten (`dvh` auf Bühne = rot)
    - Safe-Area: `viewportFit: "cover"` ist in `layout.tsx:86` gesetzt, die
      `env()`-Insets in `Navigation.tsx:35` — neue fixe Elemente müssen nachziehen.
-     Im **Querformat** sind `safe-area-inset-left/right` auf Notch-Geräten ≠ 0
+     Auf dem **iPad quer** sind `safe-area-inset-left/right` ≠ 0
 
 4. **Performance** — **4× CPU-Throttle**, ≥ 50fps durchgehend
    - Messung per Playwright + CDP-Trace gegen `pnpm run start` (Production-Build,
      nicht `dev`)
-   - Pflicht-Profile: **iPhone 16 hoch (393×852)**, **iPhone 16 quer (852×393)**,
-     **iPad Air 11″ hoch (820×1180)**, **iPad Pro 13″ quer (1366×1024)**
+   - Pflicht-Profile: **iPhone 16 (393×852)**, **iPad Air 11″ hoch (820×1180)**,
+     **iPad Pro 13″ hoch (1024×1366)**, **iPad Pro 13″ quer (1366×1024)**
    - Nur `transform` + `opacity` animiert; keine Layout-Shifts durch Animation
    - **Transfer-Budget gegen `bd49d0b` halten:** ≤ 323 KB Aufruf /
      ≤ 451 KB nach vollem Scroll bei 390×844
@@ -348,10 +347,14 @@ Leitplanken (deine, plus die Projektrealität):
    - `Hero.tsx:380/421` nutzt `motion-safe:sticky` — Verhalten bei
      reduced-motion mitprüfen
    - `svh` wird beim Rotieren neu berechnet → `ScrollTrigger.refresh()`-Verhalten
-     explizit beim Dreh Hoch↔Quer prüfen, auf Telefon **und** iPad
-   - **Lenis-Konflikte nur ab 769px** (darunter ist Lenis aus). Das trifft alle
-     iPads und alle iPhones im Querformat außer SE — dort gegen Momentum-Scroll,
-     Rubber-Band und den Zusammenlauf mit `ScrollTrigger.update` testen
+     **beim iPad-Dreh Hoch↔Quer** prüfen. Das ist der einzige Drehfall im Scope,
+     und er ist der härteste: er kreuzt die 1024er-Grenze, der Pin geht dabei an
+     bzw. aus
+   - **Lenis-Konflikte nur ab 769px** (darunter ist Lenis aus). Im Scope heisst
+     das: **alle iPads ausser dem mini hochkant** (744px) — dort gegen
+     Momentum-Scroll, Rubber-Band und den Zusammenlauf mit
+     `ScrollTrigger.update` testen. Telefone brauchen das nicht, dort ist Lenis
+     nie aktiv
    - iPadOS meldet sich als Desktop-Safari; **nichts** darf am UA hängen
 
 8. **prefers-reduced-motion** — vollständige, nutzbare Variante
@@ -405,8 +408,8 @@ pnpm run start &
 ```
 Dann per Playwright (Chromium aus `/opt/pw-browsers`, **kein** `playwright install`):
 `http://localhost:3000` in vier Profilen laden — **393×852 (iPhone 16, touch)**,
-**852×393 (iPhone 16 quer, touch)**, **820×1180 (iPad Air 11″, touch)** und
-**1440×900 (Desktop, `hasTouch: false`)** — je ein Screenshot, Transferbytes
+**820×1180 (iPad Air 11″ hoch, touch)**, **1366×1024 (iPad Pro 13″ quer, touch)**
+und **1440×900 (Desktop, `hasTouch: false`)** — je ein Screenshot, Transferbytes
 gegen die 323/451-KB-Marke prüfen. Läuft das, ist Gate 1–4 belastbar; scheitert
 es, wird das gemeldet statt geschätzt.
 
@@ -419,11 +422,17 @@ Iterationen hinweg dasselbe bedeutet.
 
 ## Entschieden
 
-- **Tablets sind im Scope.** Arbeitsbereich `< 1024px` inklusive iPads hochkant,
-  plus die Touch-Sonderfälle oberhalb 1024px (iPads quer, iPad 13″ hochkant).
-- **Gerätebasis:** aktuelle Apple-Viewports als Standardsatz — iPhone SE 3 /
-  16 / 16 Pro / Plus / Pro Max, iPad mini / iPad A16 / Air 11″ / Pro 11″ /
-  Air 13″ / Pro 13″, jeweils hoch **und** quer, dazu 320px als Untergrenze.
-  Vollständig in der Gerätematrix oben.
+- **Telefon: nur hochkant.** So wird es gehalten, so wird es gebaut. Für das
+  Querformat gibt es keine eigene Ansicht, keine Gate-Zeile und keinen
+  Abbruchgrund — der heutige Zustand dort ist akzeptiert, nicht offen.
+- **iPad: hoch und quer.** Beide Lagen sind vollwertig im Scope, inklusive des
+  Drehs zwischen ihnen — der kreuzt beim 13″ die 1024er-Grenze und schaltet
+  dabei den Pin um.
+- **Arbeitsbereich** damit `< 1024px` (Telefone hochkant + iPads hochkant) plus
+  die Touch-Fälle ab 1024px (iPads quer, iPad 13″ hochkant bei exakt 1024).
+- **Gerätebasis:** aktuelle Apple-Viewports — iPhone SE 3 / 16 / 16 Pro /
+  Plus / Pro Max hochkant, iPad mini / A16 / Air 11″ / Pro 11″ / Air 13″ /
+  Pro 13″ hoch und quer, dazu 320×568 als Untergrenze. Vollständig in der
+  Gerätematrix oben.
 - **Abgrenzung Desktop:** nicht über die Breite, sondern
   `(min-width: 1024px) and (pointer: fine)`. Nur das ist die unantastbare Zone.
