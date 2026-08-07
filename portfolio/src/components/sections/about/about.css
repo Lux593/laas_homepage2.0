@@ -9,6 +9,16 @@
 
 .about-stage {
   position: relative;
+  /* Auch ohne Kamerafahrt skaliert die Szene: unter 660px Fensterhöhe läuft
+     statt des Iris-Zooms die Ersatzbewegung (scale 1 → 1.06, About.tsx).
+     Die Bühne ist dort aber nicht klebend und trägt deshalb auch nicht das
+     overflow: hidden aus dem Block weiter unten — die 6 % standen seitlich
+     über: auf 320×568 gemessen 9px pro Seite, documentElement.scrollWidth
+     329 statt 320. Weil <html> kein overflow-x trägt, wächst damit der
+     Layout-Viewport und die fixe Navigation rutscht aus dem Bild.
+     clip statt hidden: hidden würde die Bühne zum Scrollcontainer machen und
+     die vertikale Achse gleich mit abschneiden. */
+  overflow-x: clip;
 }
 
 /* Cream-Schleier an der Naht zu Projekte: deckt den Masken-Auslauf der Skizze
@@ -197,10 +207,37 @@
 /* Etwas mehr als unter „Was ich gerade beruflich mache" → erste Rolle. */
 .about-name {
   margin-top: clamp(1.35rem, 3.1vh, 2.1rem);
+  /* Der Name steht Wort für Wort in eigenen Zeilen und kann nirgends
+     umbrechen — „ARNOLDI" ist mit 4,12 × Schriftgrösse (gemessen 168px bei
+     40,8px) das breiteste unteilbare Element der Section. Die Untergrenze
+     2,55rem der Fensterrechnung hielt das nicht: auf 320px steht die
+     Textspalte bei 149px, das Wort lief 19px darüber hinaus und blähte —
+     wie zuvor das Statement — den Layout-Viewport auf 328px auf.
+     Die zweite Schranke rechnet deshalb gegen die Spalte statt gegen das
+     Fenster: bei 11vw belegt das Wort 45,3 % der Fensterbreite, die
+     Textspalte hat 46,5 % (60 % von Fensterbreite minus 2 × 1,5rem Rand,
+     minus 0,9rem Spalt) — und ihr Anteil wächst mit der Breite, die Schranke
+     hält also nach oben durch. Über 371px Fensterbreite greift sie nicht
+     mehr, dort gilt wieder die clamp(). */
+  font-size: min(clamp(2.55rem, 5.1vw, 4.5rem), 11vw);
 }
 
 .about-statement {
   margin-top: clamp(1.1rem, 2.8vh, 1.9rem);
+}
+
+/* Die zwei Zeilen des Statements sind als Satzbild gedacht: je eine Zeile,
+   der Zeilenfall gehört zur Typografie. Der Schutz braucht aber Platz, und
+   den gibt es nur oberhalb der Stapelschwelle. Gemessen misst die längere
+   Zeile 266px, sobald die Schriftgrösse auf ihrer 1.1rem-Untergrenze steht;
+   die Textspalte .about-identity daneben ist 149px breit (320px-Fenster)
+   bzw. 191px (393px).
+   Der Überlauf blieb dort nicht in der Section: <html> trägt kein
+   overflow-x, also wuchs der Layout-Viewport mit — auf 320×568 gemessene
+   414px statt 320px, wodurch der fixe Menü-Button der Navigation mit 2 von
+   48px im Bild stand. Deshalb wird der Schutz unten wieder gelöst. */
+.about-statement span {
+  white-space: nowrap;
 }
 
 /* ── Werdegang ───────────────────────────────────────────────────────────
@@ -415,6 +452,104 @@
     align-items: stretch;
     padding-top: 0;
     padding-bottom: 0;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Unterhalb der Pin-Zone: zwei Reihen statt drei Spalten
+
+   Warum die Reihe hier nicht bleiben kann — die Rechnung mit den
+   Mindestbreiten, die im Block darüber tatsächlich stehen, an der Obergrenze
+   dieser Zone (1023,98px, dort greifen die vw-Terme schon):
+
+     .about-lead        224px Porträt (Untergrenze von clamp(14rem,19vw,22rem))
+                      +  26px Spalt   (2,5vw)
+                      + 266px Textspalte — gemessene scrollWidth der längeren
+                        Statement-Zeile bei der 1,1rem-Untergrenze der Schrift
+     .about-annotations 448px (min-width: min(100%, 28rem), gesetzt damit
+                        „LAAS – Luca Arnoldi App Solutions" in eine Zeile passt)
+     .about-titleblock  222px (gemessene Breite des Tools-Blocks auf 1440px)
+     + 2 × 36px Spalt zwischen den Blöcken (3,5vw)
+     + 2 × 72px Panelrand (7vw)
+     = 1402px Bedarf bei 1024px Fenster.
+
+   Es fehlen also selbst am oberen Rand dieser Zone 378px, auf einem iPad Air
+   hochkant (820px, dort sind die vw-Terme kleiner) 533px. Flexbox nimmt den
+   Fehlbetrag der einzigen Spalte ohne eigene Untergrenze weg: .about-identity
+   hatte auf 820×1180 gemessen clientWidth 0px, Porträt, Name, Statement und Rollen
+   lagen sichtbar übereinander.
+
+   Eine kleinere min-width auf .about-annotations verschiebt den Kollaps nur
+   in die nächste Spalte. Drei nebeneinander sind auf einem Tablet-Hochformat
+   eine Spalte zu viel — deshalb hier zwei Reihen: oben Porträt und Name über
+   die ganze Breite, darunter Werdegang und Tools nebeneinander. Das hält den
+   einen starken Moment der Section (die Kamerafahrt in den Monitor) und
+   ändert nur, wie der Streifen darin sitzt.
+
+   Das innere (min-width: 768px) ist kein zweiter Breakpoint, sondern der
+   Boden der Reihe: unter 768px steht der Streifen längst gestapelt, dort
+   gibt es nichts umzustellen. */
+@media (max-width: 1023.98px),
+  (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
+  @media (min-width: 768px) {
+    .about-panel {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas:
+        "lead lead"
+        "roles tools";
+      /* Die Reihen bleiben inhaltshoch und stehen als Block mittig in der
+         Bühne. Ohne align-content zöge der Grid-Default (stretch) die zwei
+         Reihen über die volle min-height: 100% auseinander. */
+      align-content: center;
+      align-items: start;
+      column-gap: clamp(1.75rem, 3.5vw, 4rem);
+      row-gap: clamp(2rem, 4vh, 3rem);
+    }
+
+    .about-lead {
+      grid-area: lead;
+    }
+
+    .about-annotations {
+      grid-area: roles;
+    }
+
+    .about-titleblock {
+      grid-area: tools;
+    }
+
+    /* height: die feste Boxhöhe hielt drei gleich hohe Spalten nebeneinander;
+       in zwei Reihen addiert sie sich auf bis zu 50rem und schöbe den
+       Streifen aus der 100svh-Bühne.
+       max-width: als Grid-Items bekommen die Blöcke ihre Breite von der Spur,
+       nicht von flex-basis — die Deckel würden nur wieder Lücken reissen. */
+    .about-lead,
+    .about-annotations,
+    .about-titleblock {
+      height: auto;
+      max-width: none;
+    }
+
+    /* Die 28rem waren die Sollbreite für „LAAS – Luca Arnoldi App Solutions"
+       in einer Zeile. Eine halbe Panelbreite sind auf 820px gemessene 338px —
+       die Zeile bricht hier, und der Block darf mit der Spur schrumpfen statt
+       die Nachbarn zu verdrängen. */
+    .about-annotations {
+      min-width: 0;
+    }
+
+    .about-annotations .about-role-body > p:first-child {
+      white-space: normal;
+    }
+  }
+
+  /* Gleiche Begründung wie beim Werdegang: die 266px des Umbruchschutzes
+     stehen in keiner Spalte dieser Zone zur Verfügung. white-space: normal
+     erlaubt den Umbruch, es erzwingt ihn nicht — wo die Zeile passt (auf
+     744px hochkant hat die Textspalte 387px), steht sie weiter in einer. */
+  .about-statement span {
+    white-space: normal;
   }
 }
 

@@ -749,7 +749,11 @@ export default function About() {
                     <p className="font-mono text-[0.85rem] uppercase tracking-[0.24em] text-[#f2ede4]/50">
                       {ABOUT_INTRO.greeting}
                     </p>
-                    <h3 className="about-name font-display text-[clamp(2.55rem,5.1vw,4.5rem)] font-bold uppercase leading-[0.86] tracking-[-0.04em]">
+                    {/* Die Schriftgrösse steht in about.css bei .about-name:
+                        sie braucht neben der Fensterbreite eine zweite
+                        Schranke aus der Spaltenbreite, und die ist als
+                        Utility-Klasse nicht schreibbar. */}
+                    <h3 className="about-name font-display font-bold uppercase leading-[0.86] tracking-[-0.04em]">
                       {ABOUT_INTRO.name.split(" ").map((part) => (
                         <span key={part} className="block">
                           {part}
@@ -757,8 +761,13 @@ export default function About() {
                       ))}
                     </h3>
                     <p className="about-statement font-body text-[clamp(1.1rem,1.35vw,1.4rem)] leading-relaxed text-[#f2ede4]/70">
+                      {/* Der Umbruchschutz der beiden Zeilen steht in about.css
+                          bei .about-statement span und nicht mehr hier: er gilt
+                          nur oberhalb der Stapelschwelle. Als Utility-Klasse
+                          hätte er unter jeder Breite gegolten und blähte auf
+                          320px den Layout-Viewport auf 414px auf. */}
                       {ABOUT_INTRO.subtitle.map((line) => (
-                        <span key={line} className="block whitespace-nowrap">
+                        <span key={line} className="block">
                           {line}
                         </span>
                       ))}
