@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useMousePosition } from "@/hooks/useMousePosition";
 import { useIsMobile } from "@/hooks/useMediaQuery";
+import { PIN_QUERY, STACK_QUERY } from "@/lib/breakpoints";
 import "./hero/hero.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -35,6 +36,24 @@ const PEEK = 12;
  * löst es zu 100% auf und ist damit exakt das alte 9%.
  */
 const CONTENT_INSET = "calc(0.09 * min(100%, var(--stage-max)))";
+
+/**
+ * Layout-Zwilling von `STACK_QUERY` (lib/breakpoints.ts), bewusst OHNE dessen
+ * `prefers-reduced-motion`-Klausel.
+ *
+ * Er beantwortet nicht die Frage „darf animiert werden" — die hängt eine Ebene
+ * höher an `reduced` —, sondern „ist das ein gestapeltes Gerät, das den teuren
+ * Blur-Pfad nicht bezahlen soll". Mit der Klausel drin fiele ausgerechnet ein
+ * Telefon mit reduzierter Bewegung aus dem Stapel-Arm heraus und bekäme die
+ * zwei parallel animierten `filter` — die Umkehrung des Zwecks.
+ *
+ * Die zwei Arme sind wörtlich die aus `breakpoints.ts`: ein geklammertes `not`
+ * wäre Media Queries Level 4 und würde in Safari < 16.4 die ganze Query
+ * verwerfen. Derselbe Wortlaut steht als `@media` in den Stapel-Regeln.
+ */
+const STACK_LAYOUT_QUERY =
+  "(max-width: 1023.98px), " +
+  "(min-width: 1024px) and (pointer: coarse) and (orientation: portrait)";
 
 export default function Hero() {
   const runwayRef = useRef<HTMLDivElement>(null);
@@ -70,7 +89,12 @@ export default function Hero() {
     // Ein Dreh während dieser 1.4s ist kein realer Fall — im Gegensatz zum
     // Scroll-Parallax weiter unten, der die ganze Seitenlaufzeit lebt und
     // deshalb gsap.matchMedia braucht.
-    const narrow = window.matchMedia("(max-width: 767.98px)").matches;
+    // Die Grenze ist die Projektgrenze aus breakpoints.ts, nicht mehr 768px.
+    // Vorher stand hier `(max-width: 767.98px)`, und ein iPad Air hochkant
+    // (820px, Touch) bekam deshalb im Hero den Blur-Auftritt, während dieselbe
+    // Seite eine Section tiefer dasselbe Gerät als gestapelt behandelt —
+    // gemessen: zwei parallel animierte `filter` auf 820×1180.
+    const narrow = window.matchMedia(STACK_LAYOUT_QUERY).matches;
     // Kurzer Beat nach Paint — früher 2.2s für den Preloader, der aktuell aus ist.
     const tl = gsap.timeline({ delay: 0.4 });
 
@@ -128,7 +152,7 @@ export default function Hero() {
     // Absolute Positionen statt "-=": der Wipe oben ist länger als die
     // Textzeilen und würde die relative Kette sonst nach hinten schieben.
     // 0 / 0.4 / 0.8 sind exakt die Zeitpunkte der vorherigen "-="-Kette.
-    // Unter 768px fällt der Blur weg. `filter` ist die teuerste animierbare
+    // Im gestapelten Layout fällt der Blur weg. `filter` ist die teuerste animierbare
     // Eigenschaft überhaupt: der komplette Textkasten wird 60×/s neu gerastert
     // und weichgezeichnet — und zwar genau im LCP-Fenster, parallel zu
     // Hydration, Font-Swap und den beiden Masken-Wipes darüber. Auf 375px
@@ -155,8 +179,8 @@ export default function Hero() {
         line2Ref.current,
         { y: narrow ? 42 : 30, opacity: 0, ...soften(8) },
         { y: 0, opacity: 1, ...sharp, duration: 0.8, ease: "expo.out" },
-        // 0.52 statt 0.4: der Versatz zwischen den Zeilen ersetzt hochkant die
-        // Schärfeverlagerung. Quer bleibt es bei 0.4 — dort trägt der Blur.
+        // 0.52 statt 0.4: der Versatz zwischen den Zeilen ersetzt im Stapel die
+        // Schärfeverlagerung. Im Pin-Layout bleibt es bei 0.4 — dort trägt der Blur.
         narrow ? 0.52 : 0.4,
       );
     }
@@ -229,10 +253,15 @@ export default function Hero() {
     type Tuning = {
       blur: boolean;
       intensity: number;
+      /**
+       * Anteil der Runway, über den die Kopfzeile zurücktritt und ausblendet.
+       * Die Subzeile hängt mit +0.01 daran.
+       */
+      retreat: number;
     };
 
     const build =
-      ({ blur, intensity }: Tuning) =>
+      ({ blur, intensity, retreat }: Tuning) =>
       () => {
         const runway = runwayRef.current;
         if (!runway) return;
@@ -281,7 +310,7 @@ export default function Hero() {
               scale: 0.82,
               opacity: 0,
               ...(blur ? { filter: "blur(10px)" } : {}),
-              duration: 0.4,
+              duration: retreat,
             },
             0,
           );
@@ -296,7 +325,7 @@ export default function Hero() {
               scale: 0.85,
               opacity: 0,
               ...(blur ? { filter: "blur(8px)" } : {}),
-              duration: 0.41,
+              duration: retreat + 0.01,
             },
             0.03,
           );
@@ -338,17 +367,37 @@ export default function Hero() {
         // zweites Objekt und hat als solches gelesen.
       };
 
-    // prefers-reduced-motion: kein Context → kein Parallax. Runway und sticky
-    // sind dort per motion-safe/motion-reduce ebenfalls abgeschaltet.
-    mm.add(
-      "(min-width: 768px) and (prefers-reduced-motion: no-preference)",
-      build({ blur: true, intensity: 1 }),
-    );
-    // Ohne Blur: teuerste Operation beim Scrubben, und Lenis ist <=768px ohnehin aus.
-    mm.add(
-      "(max-width: 767px) and (prefers-reduced-motion: no-preference)",
-      build({ blur: false, intensity: 0.7 }),
-    );
+    // Die Grenze ist dieselbe wie in Services/Prozess: PIN_QUERY und
+    // STACK_QUERY sind exakte Gegenstücke, jedes Gerät matcht genau eines.
+    // Vorher trennte der Hero bei 768px und war damit als einzige Section
+    // anderer Meinung: ein iPad Air hochkant (820px, Touch) lief hier im
+    // Desktop-Arm — gemessen mit geskrubbtem filter: blur(0px) → blur(10px) auf
+    // der Kopfzeile —, während es eine Section tiefer gestapelt läuft und den
+    // Pin nie sieht. Dasselbe Gerät kann nicht zwei Performance-Klassen haben.
+    //
+    // Beide Queries tragen ihre prefers-reduced-motion-Klausel selbst: matcht
+    // keine, gibt es keinen Context und damit keinen Parallax. Runway und
+    // sticky sind dort per motion-safe/motion-reduce ebenfalls abgeschaltet.
+    mm.add(PIN_QUERY, build({ blur: true, intensity: 1, retreat: 0.4 }));
+
+    // Ohne Blur: teuerste Operation beim Scrubben. Auf dem Telefon kommt dazu,
+    // dass Lenis dort ohnehin aus ist (SmoothScroll.tsx, <= 767.98px); auf dem
+    // iPad hochkant läuft Lenis weiter und der Blur wäre umso teurer.
+    //
+    // retreat 0.86 statt 0.4 — der eigentliche Takt-Fix. Mit 0.4 war die
+    // Kopfzeile bei 44 % der Runway fertig (gemessen: opacity 0 ab scrollY 557
+    // von 1273) und stand die restlichen 56 % eingefroren da, während oben im
+    // Bild nichts mehr passierte; die Cremekante erreicht die Headline erst bei
+    // rund drei Vierteln der Strecke. Kürzen der Runway hilft dagegen nicht:
+    // die Trigger-Spanne ist Hero-Höhe + Runway, das Verhältnis 0.4 zu 1 und
+    // damit die tote Strecke bleiben prozentual gleich, nur in Pixeln kleiner.
+    // Bleibt das Strecken der Dauer. 0.86 und nicht 1.0, damit die Ordnung der
+    // Ebenen erhalten bleibt: Kopf- und Subzeile (0.87) sind vor Zeichnung und
+    // Lampe (1.0) verschwunden, die nahe Ebene geht also weiterhin zuerst.
+    // Die Kopfzeile legt dabei weiterhin den 1.8-fachen Weg der Zeichnung
+    // zurück (0.18 gegen 0.1 Bildschirmhöhe, beide mit intensity verrechnet) —
+    // die Tiefenstaffelung liegt jetzt in der Weite, nicht mehr im Tempo.
+    mm.add(STACK_QUERY, build({ blur: false, intensity: 0.7, retreat: 0.86 }));
 
     return () => {
       mm.revert();
@@ -575,8 +624,16 @@ export default function Hero() {
 
       {/* Rückzugs-Strecke: transparent, der klebende Hero bleibt dahinter
           sichtbar. Ihre Höhe ist die einzige Stellschraube dafür, wie früh die
-          Leistungen-Section anfängt sich darüberzuschieben — und sie muss zum
-          runwayVh der Timelines oben passen. */}
+          Leistungen-Section anfängt sich darüberzuschieben.
+
+          Sie muss auf keinen Wert in den Timelines abgestimmt werden: die
+          Scroll-Timeline nimmt dieses div selbst als Trigger und leitet ihre
+          Spanne daraus ab. Gemessen ist diese Spanne Hero-Höhe + diese Höhe —
+          auf 393×852 sind das 852 + 0.4·852 = 1193px, exakt die Strecke, über
+          die ScrollTrigger scrubbt.
+
+          Deshalb hilft Kürzen auch nicht gegen tote Strecke: der Nenner
+          schrumpft mit, jede Timeline-Position bleibt prozentual dieselbe. */}
       <div
         ref={runwayRef}
         aria-hidden
