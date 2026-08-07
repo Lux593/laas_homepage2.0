@@ -122,12 +122,52 @@
     order: -1;
   }
 
+  /* Die Copy zieht ÜBER das klebende Bild — gemessen bis 345px auf 393px
+     Breite (die volle Rahmenhöhe) und bis 395px auf 820px. Vorher stand der
+     cremefarbene Text dabei ohne Grund direkt auf der cremefarbenen
+     Illustration.
+     Der Grund ist exakt der Sectionsgrund (#050505, siehe bg-bg-primary an
+     <section id="process">). Deshalb ist er ausserhalb der Überdeckung nicht zu
+     sehen, und in der Überdeckung liest es sich nicht als vorgeschobene Karte,
+     sondern als das Bild, das im dunklen Raum versinkt.
+     Warum eine Fläche und keine Ausblend-Choreografie: das Kleben selbst hat
+     keine prefers-reduced-motion-Bedingung (siehe oben), GSAP läuft dort aber
+     nicht. Ein scrollgebundenes Wegblenden liesse die Überdeckung genau bei den
+     Nutzern stehen, die sie am wenigsten gebrauchen können. Der Grund gilt
+     immer.
+     Seitlich reicht die Fläche der Copy ohne Überstand: beide Spalten sind auf
+     dieselbe Mitte zentriert, und die Copy ist nirgends schmaler als der
+     Bildrahmen (gemessen 345/345px auf 393er, 525/420px auf 820er,
+     525/492px auf 1024er Breite). */
   .process-panel__copy {
-    /* Zieht unter dem klebenden Bild durch. Der eigene Grund verhindert, dass
-       das Bild durch die Zeilen scheint, während beide übereinanderliegen. */
     position: relative;
     z-index: 10;
     padding-top: clamp(1.5rem, 4vh, 2.5rem);
+    background-color: var(--color-bg-primary);
+  }
+
+  /* Der Vorlauf über der Kante. Ohne ihn schöbe sich eine harte Linie quer
+     durch die Illustration; mit ihm dunkelt das Bild von unten weg, bevor die
+     Kante da ist.
+     2.5rem ist exakt die Zeilenlücke des Grids (gap-y-10 in ProcessPanel.tsx).
+     Gemessen: solange der Rahmen noch nicht klebt, steht er exakt 40px über der
+     Copy — der Verlauf liegt dann vollständig in dieser Lücke und rührt das
+     Bild nicht an. Erst wenn der Rahmen hält, schrumpft der Abstand (13.1px,
+     dann negativ), und genau ab da frisst der Verlauf das Bild von unten auf.
+     Er startet also nicht irgendwann, sondern in dem Moment, in dem das Kleben
+     beginnt. */
+  .process-panel__copy::before {
+    content: "";
+    position: absolute;
+    inset-inline: 0;
+    bottom: 100%;
+    height: 2.5rem;
+    background-image: linear-gradient(
+      to top,
+      var(--color-bg-primary),
+      transparent
+    );
+    pointer-events: none;
   }
 }
 

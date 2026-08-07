@@ -178,10 +178,12 @@ export function useStackReveal(
         // 1.0 wenn die Etage steht.
         //
         // ACHTUNG, unfertig: das ist NICHT das Gegenstück zum Desktop-Pin. Dort
-        // steht das Bild fest und der Inhalt läuft dagegen — hier scrollt der
-        // Rahmen einfach mit. Ein `position: sticky` am Rahmen gibt es im
-        // gestapelten Layout bislang nirgends; es wäre die eigentliche
-        // Übersetzung und fehlt noch (siehe MOBILE-KONZEPT.md).
+        // steht das Bild fest und der Inhalt läuft dagegen — im rise-Fall
+        // (Projekte) scrollt der Rahmen einfach mit, gemessen mit einem
+        // Verhältnis von 0.988 zum Scrolldelta, also praktisch 1:1. Der
+        // wipe-Fall (Prozess) hat das Gegenstück inzwischen: process.css setzt
+        // dort `position: sticky` auf `.process-panel__media`. Für die Projekte
+        // fehlt es noch.
         //
         // Auf `artInner` statt auf `art`, weil dort im wipe-Fall schon der
         // Push-in sitzt und beide sonst gegeneinander schreiben würden — im

@@ -5,7 +5,11 @@ import ProcessMedia from "@/components/sections/process/ProcessMedia";
 import type { ProcessStep } from "@/lib/constants";
 
 /**
- * Stacked process step for mobile / reduced-motion — text then media.
+ * Gestapelter Prozessschritt für den mobilen Aufbau und für reduzierte
+ * Bewegung. Im DOM steht die Copy vor dem Bild; im gestapelten Layout dreht
+ * process.css die Reihenfolge per `order: -1` um, sodass das Bild oben klebt
+ * und die Copy daran vorbeizieht. Nur wenn keine der beiden Bedingungen greift
+ * (breites Fenster mit reduzierter Bewegung), bleibt es bei Text vor Bild.
  */
 export default function ProcessPanel({
   step,
