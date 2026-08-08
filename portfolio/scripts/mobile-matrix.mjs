@@ -48,9 +48,15 @@ export const TABLETS_LANDSCAPE = [
   { name: "ipad-pro13-quer", width: 1366, height: 1024, touch: true },
 ];
 
-/** Die unantastbare Zone: Breite UND feiner Zeiger. */
+/** Die unantastbare Zone: Breite UND feiner Zeiger.
+ *  desktop-900 ist kein Zielgeraet, sondern ein Waechter: seit der Hero seine
+ *  eigene 768er-Grenze aufgegeben hat und PIN_QUERY/STACK_QUERY benutzt, faellt
+ *  ein Mausfenster unter 1024px in den mobilen Arm. Das ist gewollt und
+ *  konsistent mit allen anderen Sections — aber es ist eine Verhaltensaenderung
+ *  auf einem Mausgeraet, und die soll sichtbar sein statt unbemerkt. */
 export const DESKTOP = [
   { name: "desktop-1440", width: 1440, height: 900, touch: false },
+  { name: "desktop-900", width: 900, height: 900, touch: false },
 ];
 
 export const ALL = [
@@ -116,6 +122,45 @@ function selected() {
   return only?.length ? ALL.filter((d) => only.includes(d.name)) : ALL;
 }
 
+/**
+ * Zeitbasierte Bewegung für die Aufnahme stilllegen.
+ *
+ * Ohne das ist der Vergleich zweier Läufe nicht aussagefähig. Nachgemessen:
+ * 1.88 mittlerer Kanalabstand zwischen zwei Aufnahmen DESSELBEN Builds, und
+ * 1.65 zwischen der Baseline und einer frisch gebauten, unveränderten Quelle.
+ * Ein Grenzwert von 1.0 ist damit nicht erreichbar — und eine Schranke, die
+ * jeder reisst, sagt nichts über Regressionen.
+ *
+ * Verursacher sind nicht die Animationen der Seite an sich: die GSAP-Bewegungen
+ * hängen am Scroll und sind deshalb schon deterministisch. Es sind die vier
+ * Prozess-Clips, das Filmkorn (8s) und das Kunden-Marquee (50s) — alle drei
+ * zeitbasiert und in jedem Lauf an anderer Stelle.
+ *
+ * `animation: none` statt `animation-play-state: paused`: pausiert hält die
+ * Animation an einer beliebigen Stelle fest, none setzt sie auf ihren
+ * Ruhezustand zurück — und der ist in jedem Lauf derselbe.
+ */
+async function freeze(page) {
+  await page.evaluate(() => {
+    for (const v of document.querySelectorAll("video")) {
+      v.pause();
+      try {
+        v.currentTime = 0;
+      } catch {
+        /* Clip noch nicht dekodiert — dann steht ohnehin das Standbild */
+      }
+    }
+    if (!document.getElementById("shot-freeze")) {
+      const el = document.createElement("style");
+      el.id = "shot-freeze";
+      el.textContent =
+        "*, *::before, *::after { animation: none !important; transition: none !important; }";
+      document.head.appendChild(el);
+    }
+  });
+  await page.waitForTimeout(150);
+}
+
 async function shots(outDir) {
   mkdirSync(outDir, { recursive: true });
   const browser = await chromium.launch();
@@ -130,6 +175,7 @@ async function shots(outDir) {
     for (let i = 0; i < 7; i++) {
       await page.evaluate((y) => window.scrollTo(0, y), (total * i) / 6);
       await page.waitForTimeout(700);
+      await freeze(page);
       await page.screenshot({
         path: join(outDir, `${device.name}-${i}.png`),
       });

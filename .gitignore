@@ -22,3 +22,6 @@ portfolio/.baseline/
 portfolio/.after/
 portfolio/.noise/
 portfolio/.shots/
+portfolio/.verify-*/
+portfolio/.baseline-frozen/
+portfolio/.after-frozen/
