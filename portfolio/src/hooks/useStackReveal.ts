@@ -18,9 +18,30 @@ gsap.registerPlugin(ScrollTrigger);
 
 /** Startseite der Bildblende. Gerade Schritte wischen von links herein,
  *  ungerade von rechts — dieselbe Links-rechts-Ordnung, die auf dem Desktop
- *  der Shuttle zwischen den Spalten fährt. */
-const CLIP_FROM = ["inset(0 100% 0 0)", "inset(0 0 0 100%)"];
-const CLIP_OPEN = "inset(0 0 0 0)";
+ *  der Shuttle zwischen den Spalten fährt.
+ *
+ *  Alle vier Kanten tragen ausgeschriebene `%`, auch die Nullen. Das ist keine
+ *  Kosmetik, sondern die Bedingung dafür, dass die Blende überhaupt läuft.
+ *  GSAP interpoliert `clip-path` als Zeichenkette und übernimmt die Einheit aus
+ *  dem ZIEL-Wert; stehen dort blanke Nullen, entsteht ein einheitenloser
+ *  Zwischenwert, den der Browser als ungültiges CSS verwirft. Am pausierten
+ *  Tween gemessen, Playhead von Hand gesetzt:
+ *
+ *    `inset(0 0 0 100%)` → `inset(0 0 0 0)`
+ *      p=0 / .25 / .5 / .75  alle `inset(0px 0px 0px 100%)`, p=1 `inset(0px)`
+ *    `inset(0% 0% 0% 100%)` → `inset(0% 0% 0% 0%)`
+ *      p=.25 `75%`, p=.5 `50%`, p=.75 `25%`
+ *
+ *  Mit der alten Schreibweise gab es also nie eine Blende, sondern nur einen
+ *  Sprung am Ende — auf dem Scrub wäre daraus ein Sprung mitten im Scrollen
+ *  geworden. */
+const CLIP_FROM = ["inset(0% 100% 0% 0%)", "inset(0% 0% 0% 100%)"];
+const CLIP_OPEN = "inset(0% 0% 0% 0%)";
+
+/** Ab welchem Blenden-Fortschritt die Maske ganz verschwindet. Siehe die
+ *  Begründung am `onUpdate` des Blenden-Scrubs — ein Scrub hat kein
+ *  `onComplete`, an dem man das sonst aufhängen könnte. */
+const WIPE_DONE = 0.999;
 
 interface StackRevealOptions {
   /** Selektor der einzelnen Etagen im Stapel, z. B. ".process-panel". */
@@ -40,6 +61,11 @@ interface StackRevealOptions {
  * Deckt gestapelte Etagen beim Hereinscrollen auf: Copy steigt gestaffelt hoch,
  * die Haarlinie zieht sich auf, das Bild kommt als Blende oder Aufsteiger nach.
  * Zusätzlich läuft ein leiser Parallax über die gesamte Durchfahrt.
+ *
+ * Zwei Sorten Bewegung, bewusst getrennt: Copy und Haarlinie spielen einmalig
+ * ab (`once: true`) — das ist Satz, der sich setzt, und der soll nicht
+ * rückwärts wieder auseinanderfallen. Das Bild dagegen wird gefahren: die
+ * `wipe`-Blende hängt an einem eigenen Scrub, ebenso der Parallax.
  *
  * Die Startzustände setzt bewusst GSAP und nicht CSS: bleibt das Skript aus,
  * steht der Inhalt sichtbar da statt auf opacity: 0 hängenzubleiben.
@@ -101,32 +127,74 @@ export function useStackReveal(
         }
 
         if (art && media === "wipe") {
-          // Die Blende sitzt auf der Bildkante, der Push-in auf dem Rahmen
-          // darunter — der wächst also in eine Maske hinein und landet exakt
-          // auf dem gestalteten Ausschnitt, ohne ihn dauerhaft zu beschneiden.
-          tl.fromTo(
+          // Die Blende hängt am Scrollbalken, nicht an der Uhr. Vorher lief sie
+          // in der `once`-Timeline oben mit fester Dauer mit: bei eingefrorenem
+          // scrollY zog sie gemessen über rund 1000 ms von voll geschlossen bis
+          // `none` durch, ohne einen einzigen weiteren Scroll-Input. Das ist die
+          // Umkehrung dessen, was die Seite sonst tut — auf dem Desktop fährt
+          // der Nutzer den Prozess-Shuttle mit `scrub: 0.65` selbst. Hier fährt
+          // er jetzt die Blende.
+          //
+          // Getriggert wird auf dem Panel, nicht auf dem Bildrahmen: der klebt
+          // im gestapelten Aufbau (`position: sticky` auf `.process-panel__media`
+          // in process.css). Für ein klebendes Element misst ScrollTrigger
+          // start/end an einer Position, die sich unter ihm wegschiebt.
+          //
+          // Das Fenster 82 % → 45 % der Fensterhöhe sind auf dem iPhone (852px)
+          // 315px Scrollweg, auf dem iPad (1180px) 437px. Es endet bewusst,
+          // bevor der Rahmen seine Klebeposition erreicht: gemessen steht die
+          // Maske bei scrollY 4405 auf `none`, der Rahmen rastet erst bei 4765
+          // auf `top: 102.2px` ein — 360px später. Erst zieht die Blende auf,
+          // dann hält das Bild. Zwei Momente nacheinander, nicht zwei
+          // gleichzeitig.
+          //
+          // `scrub: 0.55` liegt wie alle Scrubs des Projekts zwischen 0.4 und
+          // 0.8. Die Dämpfung ist hier nicht Sparsamkeit, sondern das Gefühl:
+          // die Blende zieht der Hand nach, statt am Rad zu kleben.
+          const wipeTl = gsap.timeline({
+            defaults: { ease: "none", duration: 1 },
+            scrollTrigger: {
+              trigger: panel,
+              start: "top 82%",
+              end: "top 45%",
+              scrub: 0.55,
+            },
+            // Ersatz für das `onComplete` der alten Timeline. Ein Scrub wird nie
+            // „fertig", er steht nur an einer Position — deshalb hängt das
+            // Abräumen der Maske am Fortschritt und nicht an einem Abschluss.
+            // Nötig ist es weiterhin: eine stehende Maske schneidet jedes
+            // spätere Overlay im Bild ab. Und es muss hier stehen und nicht in
+            // einem `onLeave` des ScrollTriggers — dessen Callbacks feuern an
+            // der echten Scrollposition, während der gedämpfte Playhead noch
+            // schreibt, und der nächste Frame überschriebe das `none` wieder.
+            //
+            // Schwelle 0.999 statt exakt 1, weil der Scroll einen Hauch vor dem
+            // Ende stehenbleiben kann und die Maske dann dauerhaft als Haarlinie
+            // stünde. Der Rahmen misst gemessen 345px — ein Promille davon sind
+            // 0.35px, der Sprung ist nicht zu sehen. Unterhalb der Schwelle
+            // schreibt der Tween den Zwischenwert im selben Frame ohnehin wieder
+            // selbst, das `none` kann also nicht kleben bleiben.
+            onUpdate: () => {
+              if (wipeTl.progress() >= WIPE_DONE) {
+                gsap.set(art, { clipPath: "none" });
+              }
+            },
+          });
+
+          // Die Maske sitzt auf der Bildkante, der Push-in auf dem Rahmen
+          // darunter — der wächst also in eine Maske hinein und landet exakt auf
+          // dem gestalteten Ausschnitt. Beide laufen deshalb auf demselben
+          // Fenster: bliebe der Push-in zeitgesteuert, während die Maske am
+          // Scroll hängt, wäre genau diese Kopplung wieder aufgelöst.
+          wipeTl.fromTo(
             art,
             { clipPath: CLIP_FROM[index % 2] },
-            {
-              clipPath: CLIP_OPEN,
-              duration: 0.95,
-              ease: "power3.inOut",
-              // Eine stehende Maske würde jedes spätere Overlay im Bild
-              // abschneiden; nach dem Aufziehen wird sie nicht mehr gebraucht.
-              onComplete: () => {
-                gsap.set(art, { clipPath: "none" });
-              },
-            },
-            0.1,
+            { clipPath: CLIP_OPEN },
+            0,
           );
 
           if (artInner) {
-            tl.fromTo(
-              artInner,
-              { scale: 1.08 },
-              { scale: 1, duration: 1.1, ease: "power3.out" },
-              0.1,
-            );
+            wipeTl.fromTo(artInner, { scale: 1.08 }, { scale: 1 }, 0);
           }
         }
 
