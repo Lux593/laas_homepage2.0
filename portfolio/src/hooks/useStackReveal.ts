@@ -245,13 +245,12 @@ export function useStackReveal(
         // Das Bild atmet über die Einfahrt zurück: 1.06 beim Hereinkommen,
         // 1.0 wenn die Etage steht.
         //
-        // ACHTUNG, unfertig: das ist NICHT das Gegenstück zum Desktop-Pin. Dort
-        // steht das Bild fest und der Inhalt läuft dagegen — im rise-Fall
-        // (Projekte) scrollt der Rahmen einfach mit, gemessen mit einem
-        // Verhältnis von 0.988 zum Scrolldelta, also praktisch 1:1. Der
-        // wipe-Fall (Prozess) hat das Gegenstück inzwischen: process.css setzt
-        // dort `position: sticky` auf `.process-panel__media`. Für die Projekte
-        // fehlt es noch.
+        // Das Gegenstück zum Desktop-Pin — Bild steht, Inhalt läuft dagegen —
+        // liegt bei allen drei Nutzern dieses Hooks im CSS und nicht hier:
+        // `position: sticky` auf `.services-landscape-stage` (services.css),
+        // `.process-panel__media` (process.css) und `.work-panel__media`
+        // (globals.css). Die Projekte kamen zuletzt dazu; sie halten gemessen
+        // 540–660px Scrollweg, je nach Gerät.
         //
         // Auf `artInner` statt auf `art`, weil dort im wipe-Fall schon der
         // Push-in sitzt und beide sonst gegeneinander schreiben würden — im

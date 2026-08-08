@@ -358,6 +358,17 @@
     display: flex;
     flex-direction: column;
     padding-bottom: clamp(4rem, 10vh, 8rem);
+    /* `clip`, nicht `hidden` — und deshalb hier statt als Utility am Element.
+       `overflow-x: hidden` zwingt die y-Achse auf `auto`: gemessen stand hier
+       overflow hidden/auto, und damit war .work-pin der nächste Scrollport über
+       dem gestapelten Gerätefeld. Ein sticky-Element misst gegen seinen
+       Scrollport, dieser scrollt aber nie (scrollHeight 6070 = clientHeight
+       6070) — der Rahmen lief trotz `position: sticky` weiter exakt 1:1 mit dem
+       Fenster mit (Verhältnis 1.000 über 16 Stichproben). `clip` erzeugt keinen
+       Scrollport, lässt y auf `visible` und klemmt die x-Achse genauso ab.
+       Gepinnt setzt der @media-Block unten ohnehin `overflow: hidden` auf beide
+       Achsen — dort ändert sich nichts. */
+    overflow-x: clip;
   }
 
   .work-track {
@@ -408,6 +419,104 @@
 
   .work-track > .work-panel + .work-panel {
     border-top: 1px solid rgba(10, 10, 10, 0.12);
+  }
+
+  /* Eine Spalte ist der Grundfall: Gerät oben, Copy darunter. */
+  .work-panel__grid {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 2.5rem;
+  }
+
+  /* Die aufgeschlagene Doppelseite — Text links, Gerät rechts.
+     Die Bedingung ist absichtlich NICHT `min-width: 1024px` allein: das trifft
+     auch das iPad Pro 13" hochkant (1024×1366), und das ist per STACK_QUERY ein
+     Stapel-Gerät. Es bekam so die Doppelseite und, sobald das Gerätefeld
+     `order: -1` trägt, die vertauschten Spalten — Gerät links, Text rechts.
+     Gemessen: `.work-panel__media` stand dort auf `sticky`, hielt aber nie
+     (Verhältnis 1.000 über 26 Stichproben), weil sein Rasterfeld in der
+     Doppelseite genauso hoch ist wie es selbst.
+     Die Klausel `prefers-reduced-motion` fehlt hier bewusst, anders als am
+     Pin-Block unten: die Doppelseite ist Leselayout, keine Bewegung. Ohne sie
+     fiele ein 1440px-Desktop mit reduzierter Bewegung auf eine Spalte zurück —
+     das wäre eine Änderung an der unantastbaren Zone. */
+  @media (min-width: 1024px) and (pointer: fine),
+    (min-width: 1024px) and (orientation: landscape) {
+    .work-panel__grid {
+      grid-template-columns: minmax(40ch, 48ch) minmax(0, 1fr);
+      column-gap: clamp(3rem, 5vw, 5rem);
+      row-gap: 0;
+    }
+  }
+
+  /* ── Gestapelter Aufbau: das Gerät hält, die Copy zieht daran vorbei ────────
+   *
+   * Die vertikale Übersetzung des horizontalen Tracks — dieselbe Figur, die der
+   * Prozess schon fährt (process.css). Gemessen war hier vorher gar nichts:
+   * der Rahmen lief mit einem Verhältnis von 0.988 zum Scrolldelta mit, also
+   * praktisch 1:1. Fünf Projekte hintereinander lasen sich als Liste von
+   * Screenshot-Karten, nicht als Szene.
+   *
+   * Das Gerät kommt dafür VOR die Copy (order: -1). Nicht nur der Leseordnung
+   * wegen: Klebt der Rahmen als LETZTE Zeile, ist sein Halteraum die Höhe seines
+   * Rasters minus sich selbst — also null. Er braucht die Copy unter sich, um
+   * überhaupt Weg zum Halten zu haben.
+   *
+   * Bewusst OHNE prefers-reduced-motion: `position: sticky` ist Layout, keine
+   * Animation, und hat deshalb auch keinen JS-Zwilling. Die Breitenbedingung
+   * spiegelt STACK_QUERY aus lib/breakpoints.ts.
+   *
+   * top: dieselben Werte wie im Prozess — die Nav ist fix und rund 6rem hoch,
+   * darunter beginnt die Klebezone. */
+  @media (max-width: 1023.98px),
+    (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
+    .work-panel__media {
+      position: sticky;
+      top: clamp(5rem, 12svh, 8rem);
+      order: -1;
+    }
+
+    /* Die Copy zieht ÜBER den klebenden Rahmen. Ohne eigenen Grund stünde der
+       dunkle Text auf dem Gerätemockup — genau der Fehler, der im Prozess schon
+       einmal gebaut wurde (dort behauptete ein Kommentar den Grund, den es nie
+       gab). Deshalb hier eine deckende Fläche und keine Behauptung.
+       Der Grund ist exakt der Sectionsgrund (#f2ede4, siehe bg-[#f2ede4] an
+       <section id="work"> und --color-panel im Theme). Ausserhalb der
+       Überdeckung ist er damit unsichtbar; in der Überdeckung liest es sich
+       nicht als vorgeschobene Karte, sondern als Gerät, das unter der Fläche
+       verschwindet.
+       Warum eine Fläche und keine Ausblend-Choreografie: das Kleben selbst
+       läuft auch bei reduzierter Bewegung, GSAP dort nicht. Ein
+       scrollgebundenes Wegblenden liesse die Überdeckung ausgerechnet bei den
+       Nutzern stehen, die sie am wenigsten gebrauchen können. */
+    .work-panel__copy {
+      position: relative;
+      z-index: 10;
+      padding-top: clamp(1.5rem, 4vh, 2.5rem);
+      background-color: var(--color-panel);
+    }
+
+    /* Der Vorlauf über der Kante. Ohne ihn schöbe sich eine harte Linie quer
+       durch das Gerät; mit ihm hellt der Rahmen von unten weg, bevor die Kante
+       da ist. 2.5rem ist exakt die Zeilenlücke des Rasters (row-gap an
+       .work-panel__grid oben) — gemessen stehen Rahmenunterkante und
+       Copy-Oberkante auf allen fünf Projekten und allen vier Stapelbreiten
+       (320/393/820/1024) genau 40.0px auseinander, solange der Rahmen noch
+       nicht klebt. Der Verlauf liegt dann vollständig in dieser Lücke und rührt
+       das Gerät nicht an. Erst wenn der Rahmen hält, schliesst sich der
+       Abstand, und genau ab da frisst der Verlauf das Bild von unten auf. */
+    .work-panel__copy::before {
+      content: "";
+      position: absolute;
+      inset-inline: 0;
+      bottom: 100%;
+      height: 2.5rem;
+      background-image: linear-gradient(
+        to top,
+        var(--color-panel),
+        transparent
+      );
+      pointer-events: none;
+    }
   }
 
   /* MUST stay byte-identical to the gsap.matchMedia() query in

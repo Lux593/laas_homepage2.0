@@ -31,7 +31,7 @@ export default function SelectedWork() {
       ref={sectionRef}
       className="relative z-10 overflow-x-clip bg-[#f2ede4] shadow-[0_-40px_80px_-24px_rgba(0,0,0,0.8)]"
     >
-      <div ref={pinRef} className="work-pin overflow-x-hidden [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+      <div ref={pinRef} className="work-pin [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
         {/* w-full is load-bearing: container-custom's auto margins would otherwise
             stop this flex item from stretching and shrink-wrap it to its content */}
         <header className="work-container w-full shrink-0 pt-[clamp(4rem,8vh,5.5rem)] pb-[clamp(0.875rem,2vh,1.375rem)]">
