@@ -44,6 +44,27 @@ const WIPE_DURATION = 0.34;
  *  Scrollweg für zu wenig Bewegung. Gleiches Muster wie ZOOM_END. */
 const WIPE_SPLIT = { desktop: 0.38, mobile: 0.3 };
 
+/** Wo die Copy einsteigt, als Anteil des VERTIKALEN Zuges der Blende.
+ *
+ *  Quer war das immer 0.3: die Copy staffelt sich in das noch schmale Band
+ *  hinein, wie das Overlay der Sidebar. Dort steht in der Bandmitte die
+ *  Textspalte „Was ich gerade beruflich mache", und ein Satz, der als Streifen
+ *  auftaucht, liest sich als Bewegung.
+ *
+ *  Hochkant liegt in der Bandmitte etwas anderes: das Porträt. Der Streifen
+ *  öffnet aus dem Querbalken auf y = 423, das Foto steht auf 313…493 — die
+ *  Blende geht also mitten im Bild auf. Nachgemessen bei 0.3: bei
+ *  Timeline-Fortschritt 0.65 ist das Band 178px hoch, deckt 80 % des Porträts
+ *  und die Gruppe steht schon auf Deckkraft 0.40. Ein Gesicht, das in einem
+ *  schmalen schwarzen Balken erscheint, liest sich nicht als Bewegung, sondern
+ *  als Fehler — genau so gemeldet.
+ *
+ *  0.5 verschiebt den Einstieg dorthin, wo das Band rund 380px misst, also
+ *  fast die halbe Bühne, und das Porträt vollständig darin liegt. Es ist dann
+ *  eine Fläche, die sich öffnet, und kein Balken mit einem Bild darin. Die
+ *  Staffelung selbst bleibt, sie sitzt nur später. */
+const COPY_IN = { desktop: 0.3, mobile: 0.5 };
+
 /** Wie weit die Blende am Ende über die Bühnenkante hinausschießt, in Pixeln.
  *  Genau 0 wäre rechnerisch bündig, ließe aber bei gebrochenen Gerätepixeln
  *  einen hellen Haarstrich an der Kante stehen. */
@@ -621,12 +642,20 @@ export default function About() {
           // feste Zahl hält das Verhältnis, wenn oben an der Aufteilung gedreht
           // wird.
           //
+          // WIE WEIT versetzt, steht in COPY_IN und ist quer und hochkant
+          // verschieden — hochkant liegt in der Bandmitte das Porträt, und das
+          // darf nicht als Bild in einem schmalen Balken auftauchen. Die
+          // Rechnung dazu steht an der Konstante.
+          //
           // Hochkant steigt hier nur das ERSTE Kapitel ein — Porträt, Name und
           // Ort. Der Rest kommt im Schwanz hinter dieser Timeline, siehe unten.
           .to(
             isMobile ? chapterOne : groups,
             { opacity: 1, y: 0, ease: "power3.out", duration: 0.14, stagger: 0.05 },
-            zoomEnd + WIPE_DURATION * (split + (1 - split) * 0.3)
+            zoomEnd +
+              WIPE_DURATION *
+                (split +
+                  (1 - split) * (isMobile ? COPY_IN.mobile : COPY_IN.desktop))
           );
 
         // ── Kapitelwechsel, nur hochkant ──────────────────────────────────
