@@ -17,7 +17,9 @@
    Render.
 
    Die Werte hier sind der Ruhezustand: bleibt das Skript aus, steht die Fläche
-   offen statt als Balken.
+   offen statt als Balken. Im Stapel bleibt es DAUERHAFT bei diesem Zustand —
+   dort tweent Services.tsx die beiden Zahlen gar nicht erst an (`inset: 0` am
+   Stapel-Arm der Einfahrt), die Section beginnt also in voller Breite.
    MUSS byte-identisch zur gsap.matchMedia()-Query in Services.tsx bleiben */
 @media (prefers-reduced-motion: no-preference) {
   .services-section {
@@ -251,35 +253,6 @@
   box-shadow: 0 0 0 3px rgba(10, 10, 10, 0.28);
 }
 
-/* Der Rahmen der gestapelten Zeichnung. Trägt im Ruhezustand nur die Masse,
-   die vorher als Utility-Klassen am Wrapper standen — das Kleben kommt weiter
-   unten im Stapel-Block dazu. */
-.services-landscape-stage {
-  width: 100%;
-  margin-top: clamp(1.25rem, 3vh, 2.5rem);
-}
-
-.services-landscape--stack {
-  /* Gleicher Zuwachs wie beim Desktop-Zoom. Bei 112vw Höhe ist die Zeichnung
-     84vw breit — mit dem linken Einzug bleibt sie im Blatt. */
-  height: min(112vw, 30rem);
-  width: auto;
-  aspect-ratio: 1600 / 2143;
-  margin-left: max(var(--container-padding), env(safe-area-inset-left));
-  -webkit-mask-image: linear-gradient(
-    to right,
-    #000 0%,
-    #000 88%,
-    transparent 100%
-  );
-  mask-image: linear-gradient(
-    to right,
-    #000 0%,
-    #000 88%,
-    transparent 100%
-  );
-}
-
 /* ── Lookbook copy column ───────────────────────────────────────────── */
 
 .services-lookbook {
@@ -460,7 +433,24 @@
   overflow: hidden;
 }
 
-/* ── Mobile stack ───────────────────────────────────────────────────── */
+/* ── Gestapelte Bühne: die Zeichnung räumt sich auf ──────────────────────────
+ *
+ * Vier Stände desselben Blatts, eins pro Kapitel. Was auf der Desktop-Bühne
+ * der Finger an der Ziehkante macht, macht hier der Scroll — und die Seite
+ * steht dabei still, weil eine Folge einen Halt braucht.
+ *
+ * Vorher lief hier ein klebendes Hauptmotiv, an dem vier Kapitel vorbeizogen:
+ * ein Bild, vier Texte. Die vier Stände sind aber vier Bilder, und die sind nur
+ * als Folge zu lesen.
+ *
+ * WAS HIER RUHEZUSTAND IST UND WAS BÜHNE:
+ * Alles unterhalb dieser Zeile bis zum @media-Block ist der FLUSS — Bild,
+ * darunter seine Copy, viermal untereinander. Das ist genau das, was reduced
+ * motion bekommt: ohne eine einzige zusätzliche Regel, allein aus der
+ * abwechselnden Reihenfolge im Markup. Die Bühne kommt erst im @media-Block
+ * darunter dazu und setzt die beiden Sorten Ebenen per `grid-area` in zwei
+ * Zeilen übereinander.
+ */
 
 .services-pin--desktop {
   display: none;
@@ -469,101 +459,198 @@
 
 .services-stack {
   display: block;
+  /* Die Höhe der Bildstufe. Sie ist FEST und nicht flexibel, und das ist der
+     ganze Trick der Bühne: läge sie im `1fr` der Gitterzeile, hinge sie an der
+     Höhe der jeweiligen Copy — die vier Kapitel sind aber verschieden lang, und
+     die Zeichnung spränge bei jedem Wechsel eine andere Grösse an. Fest gesetzt
+     steht sie über alle vier auf demselben Pixel, und nur der Inhalt wechselt.
+     svh statt vh: die Bühne misst 100svh, die Stufe soll ihr Anteil davon sein
+     und nicht der einer Fensterhöhe, die es dort gar nicht gibt. */
+  --services-art-h: clamp(8.5rem, 42svh, 27rem);
 }
 
-.services-track {
+.services-stack-art {
+  position: relative;
+  height: var(--services-art-h);
+  margin: 0;
+}
+
+.services-stack-chapter {
+  padding-block: clamp(1.25rem, 3svh, 2rem) clamp(3rem, 8vh, 5rem);
+}
+
+/* :last-of-type zählt nach Elementtyp: die Bühne trägt figure und article im
+   Wechsel, gemeint ist das vierte article. */
+.services-stack-chapter:not(:last-of-type) {
+  border-bottom: 1px solid rgba(10, 10, 10, 0.12);
+}
+
+.services-stack-chapter + .services-stack-art {
+  margin-top: clamp(3rem, 8vh, 5rem);
+}
+
+.services-stack-chapter__meta {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  gap: clamp(0.75rem, 3vw, 1.25rem);
+  margin-bottom: clamp(1rem, 2.6svh, 2rem);
 }
 
-.services-panel {
-  width: 100%;
-  flex-shrink: 0;
-  padding-block: clamp(3.5rem, 10vh, 7rem);
+.services-stack-chapter__mark {
+  font-size: clamp(2rem, 9vw, 3.25rem);
+  color: rgba(10, 10, 10, 0.12);
 }
 
-.services-panel__inner {
-  max-width: 40ch;
+.services-stack-chapter__count {
+  color: rgba(10, 10, 10, 0.45);
 }
 
-.services-panel__title {
-  font-size: clamp(2.4rem, 11vw, 3.75rem);
+.services-stack-chapter__title {
+  font-size: clamp(1.9rem, 9.5vw, 3.5rem);
+  line-height: 0.92;
 }
 
-.services-track > .services-panel + .services-panel {
-  border-top: 1px solid rgba(10, 10, 10, 0.12);
+.services-stack-chapter__body {
+  margin-top: clamp(1rem, 2.4svh, 1.75rem);
+  max-width: 34ch;
+  font-size: clamp(0.95rem, 3.9vw, 1.125rem);
+  line-height: 1.55;
 }
 
-/* ── Die Zeichnung hält, die Kapitel ziehen an ihr vorbei ───────────────────
- *
- * Vorher war sie tot: über 41 Stichproben (iPhone 16, scrollY 509→3544)
- * durchgehend `transform: none` und `opacity: 1`, ihr `top` folgte dem
- * `scrollY` exakt 1:1. Über rund 2350px Sektionshöhe liefen vier Kapitel an
- * einem Hauptmotiv vorbei, das sich kein einziges Mal rührte.
- *
- * Die Antwort ist dieselbe wie bei `.process-panel__media`: der Rahmen klebt,
- * die Copy zieht darüber. `top` ist byte-identisch zu process.css — die Nav
- * ist fix und rund 6rem hoch, darunter beginnt die Klebezone.
- *
- * Bewusst OHNE prefers-reduced-motion: `position: sticky` ist Layout, keine
- * Animation. Die Eigenbewegung der Figur steht in Services.tsx und hat ihre
- * eigene Bedingung. Die Breitenbedingung hier spiegelt STACK_QUERY aus
- * lib/breakpoints.ts — inklusive iPad hochkant.
- *
- * Die Klebestrecke reicht bis ans Ende von `.services-stack`, weil das der
- * Enthalter des Rahmens ist. Gemessen bleibt `getBoundingClientRect().top` der
- * Zeichnung dabei konstant: 102.23px über 1691px Scrollweg (iPhone 16,
- * 393x852), 128.00px über 2117px (iPad 820x1180).
- *
- * Der `clip-path` der Einfahrt am Section-Element bricht das NICHT — geprüft:
- * `clip-path` macht einen Stacking-Context auf, aber keinen Scrollport, und
- * nur der begrenzt ein sticky. Der `overflow-x: clip` der Section wäre der
- * gefährlichere Kandidat, bleibt aber ungefährlich, solange `overflow-y`
- * daneben `visible` ist (gemessen `clip / visible`): erst diese Kombination
- * verzichtet auf einen Scroll-Container.
- *
- * --services-sink ist Spalt UND Verlaufshöhe in einem: der Verlauf sitzt per
- * `bottom: 100%` genau in dem Abstand, den `margin-bottom` aufmacht. Solange
- * die Zeichnung noch nicht klebt, liegt er vollständig darin und rührt sie
- * nicht an; erst wenn sie hält, schrumpft der Spalt und der Verlauf frisst das
- * Blatt von unten weg. Zwei getrennte Zahlen könnten driften, eine kann es
- * nicht. */
-@media (max-width: 1023.98px),
-  (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
-  .services-stack {
-    --services-sink: 2.5rem;
-  }
+/* Der Zierstrich der Kapitelzeile ist das Instrument: er trägt den Fortschritt
+   der ganzen Sektion. In einer Bühne, die die Seite festhält, ist er die
+   einzige Auskunft darüber, wie weit es noch ist — und er kostet kein
+   zusätzliches Element.
+   Kein will-change: eine dauerhaft eigene Ebene liegt bei 1px Höhe auf einem
+   eigenen Geräte-Pixel-Raster und wird bei jedem Scroll-Frame neu
+   zusammengesetzt — die Linie flimmert dann durchgehend. Dieselbe Begründung
+   wie an .services-rail__fill. */
+.services-stack-rule {
+  position: relative;
+  flex: 1;
+  height: 1px;
+  min-width: 0;
+  background: rgba(10, 10, 10, 0.15);
+  overflow: hidden;
+}
 
-  .services-landscape-stage {
-    position: sticky;
-    top: clamp(5rem, 12svh, 8rem);
-    z-index: 0;
-    margin-bottom: var(--services-sink);
-  }
+.services-stack-rule__fill {
+  position: absolute;
+  inset: 0;
+  background: #0a0a0a;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
 
-  /* Der Grund der Kapitelspalte ist exakt der Sectionsgrund (--color-panel,
-     wie bg-panel an <section id="services">). Ausserhalb der Überdeckung ist
-     er deshalb nicht zu sehen, und in der Überdeckung liest er sich nicht als
-     vorgeschobene Karte, sondern als das Blatt, das in der Cremefläche
-     versinkt.
-     Warum eine Fläche und keine Ausblend-Choreografie: das Kleben hat keine
-     prefers-reduced-motion-Bedingung (siehe oben), GSAP läuft dort aber nicht.
-     Ein scrollgebundenes Wegblenden liesse die Überdeckung genau bei den
-     Nutzern stehen, die sie am wenigsten gebrauchen können. */
-  .services-track {
+/* Im Fluss gibt es keine Bühne, die stehen bleibt — also auch keine Strecke,
+   an der gescrollt würde. Die Höhe kommt erst im Block darunter dazu. */
+.services-stack-scroll {
+  display: none;
+}
+
+/* ── Die Bühne steht, die Kapitel wechseln ──────────────────────────────────
+ *
+ * MUSS byte-identisch zu STACK_QUERY aus lib/breakpoints.ts bleiben — an
+ * dieser Query hängt der GSAP-Arm, der die Kapitel fährt. Driften CSS und JS
+ * auseinander, steht entweder eine Bühne ohne Wechsel oder ein Wechsel ohne
+ * Bühne.
+ *
+ * Anders als die alte Klebezone trägt diese Query die
+ * prefers-reduced-motion-Bedingung MIT: dort war sticky reines Layout und
+ * durfte für alle gelten, hier hängt am Stehenbleiben ein Vorgang, den nur
+ * GSAP zu Ende bringt. Ohne Skript stünde sonst eine Bühne mit einem einzigen
+ * lesbaren Kapitel und 300svh totem Scroll darunter.
+ *
+ * Der `clip-path` der Einfahrt am Section-Element bricht das sticky NICHT —
+ * geprüft: `clip-path` macht einen Stacking-Context auf, aber keinen
+ * Scrollport, und nur der begrenzt ein sticky. Der `overflow-x: clip` der
+ * Section wäre der gefährlichere Kandidat, bleibt aber ungefährlich, solange
+ * `overflow-y` daneben `visible` ist (gemessen `clip / visible`): erst diese
+ * Kombination verzichtet auf einen Scroll-Container. */
+@media (max-width: 1023.98px) and (prefers-reduced-motion: no-preference),
+  (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) and (prefers-reduced-motion: no-preference) {
+  .services-stack-track {
     position: relative;
-    z-index: 1;
-    background-color: var(--color-panel);
   }
 
-  .services-track::before {
-    content: "";
-    position: absolute;
-    inset-inline: 0;
-    bottom: 100%;
-    height: var(--services-sink);
-    background-image: linear-gradient(to top, var(--color-panel), transparent);
-    pointer-events: none;
+  /* top: 0 und nicht die Klebehöhe der anderen Sections: die Bühne ist
+     bildschirmfüllend, ihre Oberkante IST die Fensterkante. Den Platz unter
+     der festen Leiste holt das padding-top — byte-identisch zum `top` von
+     .process-panel__media und .work-panel__media, damit die drei Sections auf
+     derselben Achse anfangen. */
+  .services-stack-stage {
+    position: sticky;
+    top: 0;
+    height: 100svh;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    /* Die Beweisführung des Fluss-Zustands, umgedreht: dort ist die Bildstufe
+       fest und die Copy nimmt, was sie braucht. Hier misst die Copy-Zeile
+       `auto` — und weil alle vier Kapitel in DERSELBEN Zeile liegen, nimmt sie
+       die Höhe des längsten und gilt damit für alle vier gleich. Was übrig
+       bleibt, gehört der Zeichnung. Beide Zeilen sind so über die Kapitel
+       hinweg konstant, ohne dass irgendwo eine Zahl geraten werden müsste:
+       nichts springt beim Wechsel, und die Zeichnung wird so gross, wie das
+       Gerät es hergibt.
+       `minmax(0, 1fr)` statt `1fr`: auf einem sehr kurzen Gerät darf die
+       Bildzeile zusammengehen, statt die Copy aus der Bühne zu schieben. */
+    grid-template-rows: minmax(0, 1fr) auto;
+    row-gap: clamp(1.25rem, 3.5svh, 2.25rem);
+    padding-top: clamp(5rem, 10svh, 6.5rem);
+    /* Unten mehr als die 1.5rem des Fluss-Zustands: die Copy steht hier fest
+       am Bühnengrund, statt an ihm vorbeizuziehen. Was dort ein Moment war,
+       ist hier ein Dauerzustand — auch gegenüber der festen Marke unten
+       links. */
+    padding-bottom: clamp(2.75rem, 7svh, 4.5rem);
+  }
+
+  /* Alle vier Bildstufen in Zeile 1, alle vier Kapitel in Zeile 2 — jeweils
+     deckungsgleich in derselben Zelle. Die Zeilen sind explizit gesetzt, die
+     Reihenfolge im Markup bleibt damit frei für den Fluss oben.
+     Die Deckkraft hier ist der Ruhezustand für Skript-aus; sobald GSAP läuft,
+     führt es sie inline, und .is-active bleibt für die Stapelreihenfolge
+     zuständig. Genauso wie auf der Desktop-Bühne. */
+  /* Zwei Auswahlen aus demselben Grund wie bei der Trennlinie unten: der
+     Abstand des Fluss-Zustands steht auf einem Geschwister-Kombinator und
+     schöbe die Stufen 2 bis 4 sonst in ihrer Zeile nach unten — @media hebt
+     keine Spezifität an. */
+  .services-stack-art,
+  .services-stack-chapter + .services-stack-art {
+    grid-area: 1 / 1;
+    /* Die feste Höhe des Fluss-Zustands muss hier weg, sonst füllt die Stufe
+       ihre Gitterzeile nicht aus — ein Rasterelement mit gesetzter Höhe dehnt
+       sich nicht. */
+    height: auto;
+    margin-top: 0;
+    opacity: 0;
+  }
+
+  /* Die Trennlinie des Fluss-Zustands steht auf `:not(:last-of-type)`, und
+     @media hebt keine Spezifität an — ohne dieselbe Auswahl bliebe sie mitten
+     in der Bühne stehen. Gemessen als Haarlinie unter dem Subtext. */
+  .services-stack-chapter,
+  .services-stack-chapter:not(:last-of-type) {
+    grid-area: 2 / 1;
+    padding-block: 0;
+    border-bottom: 0;
+    opacity: 0;
+  }
+
+  .services-stack-art.is-active,
+  .services-stack-chapter.is-active {
+    opacity: 1;
+    /* Während der Überlappung stehen kurz zwei Ebenen übereinander — die
+       ankommende gehört nach oben, unabhängig von der Reihenfolge im Markup. */
+    z-index: 1;
+  }
+
+  /* 300svh auf vier Kapitel: 75svh pro Kapitel, das Mass der Desktop-Bühne
+     (400vh auf vier) auf das kleinere Bild heruntergerechnet. Weniger, und ein
+     einziger Wisch überspringt zwei Kapitel; mehr, und die Sektion wird länger
+     als der Stapel, den sie ersetzt. */
+  .services-stack-scroll {
+    display: block;
+    height: 300svh;
   }
 }
 

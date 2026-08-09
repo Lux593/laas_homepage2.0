@@ -270,11 +270,13 @@ export function useStackReveal(
         // 1.0 wenn die Etage steht.
         //
         // Das Gegenstück zum Desktop-Pin — Bild steht, Inhalt läuft dagegen —
-        // liegt bei allen drei Nutzern dieses Hooks im CSS und nicht hier:
-        // `position: sticky` auf `.services-landscape-stage` (services.css),
-        // `.process-panel__media` (process.css) und `.work-panel__media`
-        // (globals.css). Die Projekte kamen zuletzt dazu; sie halten gemessen
-        // 540–660px Scrollweg, je nach Gerät.
+        // liegt bei beiden Nutzern dieses Hooks im CSS und nicht hier:
+        // `position: sticky` auf `.process-panel__media` (process.css) und
+        // `.work-panel__media` (globals.css). Die Projekte kamen zuletzt dazu;
+        // sie halten gemessen 540–660px Scrollweg, je nach Gerät.
+        // „Leistungen" war der dritte Nutzer und ist raus: die Sektion zeigt
+        // im Stapel keine ziehende Copy mehr, sondern eine eigene gepinnte
+        // Bühne mit vier Bildstufen (Services.tsx, services.css).
         //
         // Auf `artInner` statt auf `art`, weil dort im wipe-Fall schon der
         // Push-in sitzt und beide sonst gegeneinander schreiben würden — im

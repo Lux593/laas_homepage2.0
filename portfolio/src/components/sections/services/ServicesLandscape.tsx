@@ -109,14 +109,21 @@ export default function ServicesLandscape({
     >
       {/* sizes rechnet die scale(1.55) der Figur mit — sonst liefert Next eine
           Quelle, die schmaler ist als die Darstellung, und die Haarlinien der
-          Zeichnung werden weich. */}
+          Zeichnung werden weich.
+
+          KEIN priority mehr, seit die Figur nur noch auf der Desktop-Bühne
+          steht: `priority` schreibt einen Preload-Link in den Kopf, und der
+          gilt unabhängig davon, dass .services-pin--desktop im Stapel auf
+          display:none steht — beide Blätter (rund 540 KB) landeten damit auf
+          jedem Telefon, das sie nie zu sehen bekommt. Lazy hält sie dort
+          vollständig zurück; auf dem Desktop lädt sie der grosszügige
+          rootMargin von next/image lange vor der Sektion. */}
       <Image
         src={SERVICES_INTRO.visualAfter}
         alt=""
         fill
         sizes="(max-width: 1023px) 65vw, 60vw"
         className="services-landscape__after object-contain object-center"
-        priority
         aria-hidden
         draggable={false}
       />
@@ -126,7 +133,6 @@ export default function ServicesLandscape({
         fill
         sizes="(max-width: 1023px) 65vw, 60vw"
         className="services-landscape__before object-contain object-center"
-        priority
         aria-hidden
         draggable={false}
       />

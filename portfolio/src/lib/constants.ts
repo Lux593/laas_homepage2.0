@@ -554,6 +554,18 @@ export interface Service {
   mark: string;
   title: string;
   description: string;
+  /**
+   * Die Räumungsstufe der Arbeitsplatz-Zeichnung, die zu diesem Kapitel gehört.
+   *
+   * Vier Stände desselben Blatts: die Ziehkante des Desktop-Visuals steht auf
+   * 100 % / 60 % / 38 % / 0 % Chaos — was dort der Finger fährt, fährt im
+   * gestapelten Aufbau der Scroll. Deshalb hängt das Bild am Kapitel und nicht
+   * an der Sektion: die Zuordnung 1:1 ist die Aussage, nicht die Reihenfolge.
+   *
+   * Bewusst PNG und nicht die WebP-Fassungen des Desktop-Blatts: die Zeichnungen
+   * kamen so aus der Hand, Next optimiert sie beim Ausliefern ohnehin.
+   */
+  visual: string;
 }
 
 /** Angebot (Was) — bewusst getrennt von PROCESS_STEPS (Wie wir zusammenarbeiten). */
@@ -564,6 +576,7 @@ export const SERVICES: Service[] = [
     title: "Individuelle Software",
     description:
       "Maßgeschneiderte Web-Apps und Interfaces, die zu deinem Alltag passen. Statt Standardsoftware, die du verbiegen musst.",
+    visual: "/services/mobile-leistung1.png",
   },
   {
     id: "automation",
@@ -571,6 +584,7 @@ export const SERVICES: Service[] = [
     title: "Prozess Automationen",
     description:
       "Wiederkehrende Abläufe digitalisieren, verbinden und entlasten. Weniger Copy-Paste, mehr ruhiger Betrieb.",
+    visual: "/services/mobile-leistung2.png",
   },
   {
     id: "ai",
@@ -578,6 +592,7 @@ export const SERVICES: Service[] = [
     title: "KI Integrationen",
     description:
       "KI dort einbauen, wo sie echten Hebel hat: in bestehende Produkte und Workflows, nicht als Spielerei.",
+    visual: "/services/mobile-leistung3.png",
   },
   {
     id: "website",
@@ -585,6 +600,7 @@ export const SERVICES: Service[] = [
     title: "Website Design",
     description:
       "Markante Websites mit klarer Botschaft und ruhiger Bedienung. Design und Umsetzung aus einem Guss — kein Template-Feeling.",
+    visual: "/services/mobile-leistung4.png",
   },
 ];
 

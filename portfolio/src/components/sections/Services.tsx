@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, type RefObject } from "react";
+import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import TextReveal from "@/components/ui/TextReveal";
 import { useLightSection } from "@/hooks/useLightSection";
 import { PIN_QUERY, STACK_QUERY } from "@/lib/breakpoints";
-import { useStackReveal } from "@/hooks/useStackReveal";
 import { SERVICES, SERVICES_INTRO, type Service } from "@/lib/constants";
 import ServicesLandscape from "@/components/sections/services/ServicesLandscape";
 import "./services/services.css";
@@ -16,7 +16,9 @@ gsap.registerPlugin(ScrollTrigger);
 const TOTAL = String(SERVICES.length).padStart(2, "0");
 const CHAPTER = 1 / SERVICES.length;
 
-/** Seitlicher Einzug des einfahrenden Balkens in Prozent — bündig zur Hero-Copy. */
+/** Seitlicher Einzug des einfahrenden Balkens in Prozent — bündig zur Hero-Copy.
+ *  Gilt nur noch für die gepinnte Bühne; im Stapel fährt die Section ohne Einzug
+ *  in voller Breite ein (siehe mm.add(STACK_QUERY, …) bei der Einfahrt). */
 const ENTER_INSET = 9;
 
 /* Kapitelwechsel. Die Verhältnisse sind die des Prozess-Crossfades
@@ -41,10 +43,231 @@ function titleLines(title: string) {
   return [parts[0]!, parts.slice(1).join(" ")];
 }
 
+interface ChapterStageOptions {
+  /** Wurzel, in der `[data-featured]` und `[data-chapter]` gesucht werden. */
+  root: HTMLElement;
+  /** Fortschritt 0…1 der ganzen Sektion — läuft pro Frame. */
+  onProgress: (progress: number) => void;
+  /** Neuer aktiver Index — läuft nur beim Wechsel. */
+  onIndex?: (index: number) => void;
+}
+
+/**
+ * Die Kapitelmaschine beider Bühnen.
+ *
+ * Sie ist eine Fabrik und keine zweite Fassung, weil Desktop und Stapel
+ * denselben Vorgang zeigen: ein Index, der am Scroll hängt, ein Kapitel, das
+ * abgeht, eins, das kommt. Nur die Ebenen sind andere — auf dem Desktop je eine
+ * Textebene, im Stapel je ein Paar aus Bildstufe und Textebene. Deshalb ist
+ * `featured[i]` hier eine LISTE von Knoten und nicht ein Knoten: alles, was
+ * dieselbe `data-index` trägt, geht gemeinsam ab und kommt gemeinsam wieder.
+ *
+ * Jede Instanz hält ihren eigenen Stand (`lastIndex`, `armed`, `swap`). Vorher
+ * lagen die drei im Effekt und wurden von beiden matchMedia-Armen geteilt —
+ * beim Wechsel der Query räumte der eine Arm den Stand des anderen ab.
+ */
+function createChapterStage({
+  root,
+  onProgress,
+  onIndex,
+}: ChapterStageOptions) {
+  const nodes = gsap.utils.toArray<HTMLElement>("[data-featured]", root);
+  /** Pro Kapitel alles, was gemeinsam ein- und ausgeblendet wird. */
+  const featured = SERVICES.map((_, index) =>
+    nodes.filter((node) => Number(node.dataset.index) === index),
+  );
+  /** Titel und Subtext je Kapitel — nur sie werden versetzt. */
+  const featuredCopy = featured.map((layer) =>
+    layer.flatMap((node) =>
+      gsap.utils.toArray<HTMLElement>("[data-featured-copy]", node),
+    ),
+  );
+  const chapters = gsap.utils.toArray<HTMLElement>("[data-chapter]", root);
+
+  let lastIndex = -1;
+  /** Vor dem Initialstand wird nur gesetzt, nicht bewegt. */
+  let armed = false;
+  let swap: gsap.core.Timeline | null = null;
+
+  /**
+   * Kapitelwechsel — bewusst OHNE eigene Compositing-Ebene.
+   *
+   * Eine eigene Ebene ist hier nicht die Lösung, sondern die Ursache: sie
+   * entsteht mitten in der sichtbaren Bewegung, der Text landet für ihre
+   * Dauer auf einem eigenen Geräte-Pixel-Raster und wabert, und alles, was
+   * die Ebene überlappt, muss Chrome mitpromoten — das trifft als Erstes
+   * die 1-px-Fortschrittslinie darunter, die genau davon flimmert.
+   *
+   * Also: keine Promotion. Zwei Vorkehrungen halten den Wechsel trotzdem
+   * billig und ruhig:
+   *   - force3D: false — sonst schiebt GSAP von sich aus ein translate3d()
+   *     unter den Tween und promotet die Ebene doch.
+   *   - Versetzt werden nur Titel und Subtext, nicht die randlose Ebene:
+   *     deren Kasten füllt die ganze Spalte, ein horizontaler Versatz auf
+   *     der Ebene selbst würde also seitlich über die Spalte hinausragen.
+   *     Im Stapel gilt dasselbe für die Bildstufe: sie blendet nur, sie
+   *     rutscht nicht — eine wandernde Zeichnung neben wandernder Copy wären
+   *     zwei Bewegungen auf einer Kante.
+   * KEIN roundProps: bei power2.out wird die Bewegung zum Ende hin
+   * langsamer als 1px/Frame — auf ganze Pixel gerundet hieße das, die
+   * letzten Frames stehen auf demselben Pixel und springen dann, statt
+   * auszuklingen. Genau das war das ruckelige Ende der Einblendung.
+   * Und weiterhin: niemals filter, clip-path, mask oder box-shadow — das
+   * sind exakt die Eigenschaften, die eine eigene Compositing-Ebene
+   * erzwingen und damit das Ruckeln wieder hereinholen würden.
+   */
+  const swapChapter = (activeIndex: number, direction: 1 | -1) => {
+    const enter = featured[activeIndex];
+    const enterCopy = featuredCopy[activeIndex];
+    if (!enter?.length || !enterCopy) return;
+
+    // Bei schnellem Scrollen springt der Index mehrfach hintereinander.
+    swap?.kill();
+    swap = null;
+
+    // Abgehen muss alles, was noch sichtbar ist — auch eine Ebene aus einem
+    // abgebrochenen Wechsel, die sonst halbtransparent stehen bliebe.
+    const leaving = featured
+      .map((_, index) => index)
+      .filter(
+        (index) =>
+          index !== activeIndex &&
+          Number(gsap.getProperty(featured[index]![0]!, "opacity")) > 0,
+      );
+    const leave = leaving.flatMap((index) => featured[index]!);
+    const leaveCopy = leaving.flatMap((index) => featuredCopy[index]!);
+
+    swap = gsap.timeline({
+      onComplete: () => {
+        // Ruhezustand ohne Inline-Transform: erst ohne transform rendert
+        // der Text wieder mit vollem Subpixel-Antialiasing.
+        gsap.set([...enterCopy, ...leaveCopy], { clearProps: "transform" });
+        swap = null;
+      },
+    });
+
+    if (leave.length) {
+      // autoAlpha statt opacity: die abgegangene Ebene landet auf
+      // visibility: hidden und kostet danach gar keine Zeichenzeit mehr.
+      swap
+        .to(leave, { autoAlpha: 0, duration: SWAP_LEAVE, ease: "power1.in" }, 0)
+        .to(
+          leaveCopy,
+          {
+            x: -SWAP_LEAVE_SHIFT * direction,
+            duration: SWAP_LEAVE,
+            ease: "power1.in",
+            force3D: false,
+          },
+          0,
+        );
+    }
+
+    swap
+      .fromTo(
+        enter,
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: SWAP_ENTER, ease: "power2.out" },
+        SWAP_HANDOVER,
+      )
+      .fromTo(
+        enterCopy,
+        { x: SWAP_ENTER_SHIFT * direction },
+        {
+          x: 0,
+          duration: SWAP_ENTER,
+          ease: "power2.out",
+          force3D: false,
+        },
+        SWAP_HANDOVER,
+      );
+  };
+
+  const applyActive = (activeIndex: number) => {
+    featured.forEach((layer, index) => {
+      const on = index === activeIndex;
+      layer.forEach((node) => {
+        node.classList.toggle("is-active", on);
+        node.setAttribute("aria-hidden", on ? "false" : "true");
+      });
+    });
+
+    chapters.forEach((chapter, index) => {
+      chapter.classList.toggle("is-active", index === activeIndex);
+    });
+
+    onIndex?.(activeIndex);
+  };
+
+  const applyScrub = (progress: number) => {
+    const activeIndex = Math.min(
+      SERVICES.length - 1,
+      Math.floor(progress / CHAPTER),
+    );
+
+    // Kontinuierlicher Progress — pro Frame, nur Transform.
+    onProgress(progress);
+
+    if (activeIndex !== lastIndex) {
+      const previous = lastIndex;
+      lastIndex = activeIndex;
+      applyActive(activeIndex);
+      // previous === -1 ist der Initialstand: der wird gesetzt, nicht
+      // eingeblendet. Die Richtung folgt dem Indexsprung, damit der alte
+      // Text beim Hochscrollen nach unten abgeht statt nach oben.
+      if (armed && previous !== -1) {
+        swapChapter(activeIndex, activeIndex > previous ? 1 : -1);
+      }
+    }
+  };
+
+  return {
+    /** Ab hier führt GSAP die Deckkraft der Ebenen inline; die Klasse
+     *  .is-active bleibt für pointer-events, aria und die Stapelreihenfolge
+     *  zuständig. Die opacity-Regeln in services.css sind damit nur noch der
+     *  Ruhezustand für Skript-aus. */
+    prime() {
+      featured.forEach((layer, index) =>
+        gsap.set(layer, { autoAlpha: index === 0 ? 1 : 0 }),
+      );
+    },
+    applyScrub,
+    /** Den vorigen Stand wiederherstellen statt blind scharf zu schalten:
+     *  ein Refresh setzt den Stand nur nach, er animiert nicht. Der
+     *  AnimationProvider stösst nach document.fonts.ready einen an, und sonst
+     *  liefe kurz nach dem Laden ein Kapitelwechsel los, den niemand ausgelöst
+     *  hat. Feuert schon während create(), wo noch nichts animieren darf. */
+    restore(progress: number) {
+      const wasArmed = armed;
+      armed = false;
+      applyScrub(progress);
+      armed = wasArmed;
+    },
+    arm() {
+      armed = true;
+    },
+    destroy() {
+      swap?.kill();
+      swap = null;
+      armed = false;
+      lastIndex = -1;
+      // Zurück unter CSS-Kontrolle — sonst bliebe beim Wechsel der Query eine
+      // Ebene auf visibility: hidden stehen.
+      const all = featured.flat();
+      gsap.set(all, { clearProps: "opacity,visibility" });
+      gsap.set(featuredCopy.flat(), { clearProps: "transform" });
+      all.forEach((node) => node.removeAttribute("aria-hidden"));
+    },
+  };
+}
+
 function ServicesHeader({
   counterRef,
+  revealScrub,
 }: {
   counterRef?: RefObject<HTMLSpanElement | null>;
+  /** Nur der Stapel setzt das — siehe die Begründung an der Fundstelle. */
+  revealScrub?: number;
 }) {
   return (
     <header className="work-container relative z-20 w-full shrink-0 pt-[clamp(4rem,8vh,5.5rem)] pb-[clamp(0.875rem,2vh,1.375rem)]">
@@ -56,7 +279,9 @@ function ServicesHeader({
           <TextReveal
             as="h2"
             variant="words"
-            start="top 95%"
+            start={revealScrub === undefined ? "top 95%" : "top 92%"}
+            end={revealScrub === undefined ? undefined : "top 58%"}
+            scrub={revealScrub}
             className="font-display text-[clamp(1.75rem,4vw,3.5rem)] font-bold uppercase leading-[0.95] tracking-tighter text-[#0a0a0a]"
           >
             {SERVICES_INTRO.headline}
@@ -85,9 +310,19 @@ function ServicesHeader({
 }
 
 /**
- * Mobile / reduced-motion: volles Kapitel pro Panel, Lookbook-Typografie.
+ * Ein Kapitel des gestapelten Aufbaus: die Bildstufe und die Copy darunter.
+ *
+ * Sie kommen als Geschwister und nicht ineinander, weil sie in der gepinnten
+ * Bühne in ZWEI Gitterzeilen liegen müssen — Bild oben, Copy unten, alle vier
+ * Kapitel deckungsgleich in derselben Zelle. Die Zeilen sind explizit gesetzt
+ * (`grid-area`), die Reihenfolge im Markup bleibt deshalb frei: hier steht sie
+ * abwechselnd Bild/Copy, damit der ungepinnte Ruhezustand — reduced motion —
+ * ohne eine einzige Regel als lesbare Folge herausfällt.
+ *
+ * Die Bildstufe trägt KEIN data-featured-copy: sie blendet nur, sie rutscht
+ * nicht. Siehe die Begründung an swapChapter.
  */
-function ServicePanel({
+function ServicesChapter({
   service,
   index,
   total,
@@ -97,45 +332,76 @@ function ServicePanel({
   total: number;
 }) {
   const lines = titleLines(service.title);
+  const mark = String(index + 1).padStart(2, "0");
 
   return (
-    <article className="services-panel relative flex flex-col justify-start">
-      <div className="work-container w-full">
-        <div className="services-panel__inner">
-          <div
-            data-reveal="copy"
-            className="mb-8 flex items-center gap-4"
-            aria-hidden
-          >
-            <span className="font-display text-[clamp(2.5rem,12vw,4rem)] font-bold leading-none tracking-tighter tabular-nums text-[#0a0a0a]/12">
-              {String(index + 1).padStart(2, "0")}
-            </span>
-            <span data-reveal="rule" className="h-px flex-1 bg-[#0a0a0a]/15" />
-            <span className="shrink-0 font-mono text-caption tabular-nums tracking-[0.2em] text-[#0a0a0a]/45">
-              {String(index + 1).padStart(2, "0")} /{" "}
-              {String(total).padStart(2, "0")}
-            </span>
-          </div>
+    <>
+      <figure
+        data-featured
+        data-index={index}
+        className={`services-stack-art${index === 0 ? " is-active" : ""}`}
+        aria-hidden
+      >
+        {/* Kein priority: auf dem Desktop steht .services-stack auf
+            display:none, ein Preload-Link gälte aber trotzdem — vier
+            Zeichnungen, die dort niemand sieht. Lazy lädt sie genau dort,
+            wo sie gebraucht werden. */}
+        <Image
+          src={service.visual}
+          alt=""
+          fill
+          sizes="(max-width: 1023px) 90vw, 45vw"
+          className="object-contain object-center"
+          draggable={false}
+        />
+      </figure>
 
-          <header data-reveal="copy">
-            <h3 className="services-panel__title font-display font-bold uppercase tracking-tighter text-[#0a0a0a]">
-              {lines.map((line) => (
-                <span key={line} className="block leading-[0.92]">
-                  {line}
-                </span>
-              ))}
-            </h3>
-          </header>
-
-          <p
-            data-reveal="copy"
-            className="mt-7 max-w-[36ch] font-body text-body-md leading-relaxed text-[#5f574e]"
-          >
-            {service.description}
-          </p>
+      <article
+        data-featured
+        data-index={index}
+        className={`services-stack-chapter${index === 0 ? " is-active" : ""}`}
+      >
+        <div
+          data-featured-copy
+          className="services-stack-chapter__meta"
+          aria-hidden
+        >
+          <span className="services-stack-chapter__mark font-display font-bold leading-none tracking-tighter tabular-nums">
+            {mark}
+          </span>
+          {/* Aus dem Zierstrich ist das Instrument geworden: er trägt den
+              Fortschritt der ganzen Sektion. In einer Bühne, die die Seite
+              festhält, ist das die einzige Auskunft darüber, wie weit es noch
+              ist — und sie kostet kein zusätzliches Element. */}
+          <span className="services-stack-rule">
+            <span className="services-stack-rule__fill" />
+          </span>
+          {/* Display statt Mono — siehe ProcessPanel: die Mono-Null trägt
+              einen Strich und fiel als einzige Zahl aus der Reihe. */}
+          <span className="services-stack-chapter__count shrink-0 font-display text-caption font-bold tabular-nums tracking-tighter">
+            {mark} / {String(total).padStart(2, "0")}
+          </span>
         </div>
-      </div>
-    </article>
+
+        <h3
+          data-featured-copy
+          className="services-stack-chapter__title font-display font-bold uppercase tracking-tighter text-[#0a0a0a]"
+        >
+          {lines.map((line) => (
+            <span key={line} className="block">
+              {line}
+            </span>
+          ))}
+        </h3>
+
+        <p
+          data-featured-copy
+          className="services-stack-chapter__body font-body text-[#5f574e]"
+        >
+          {service.description}
+        </p>
+      </article>
+    </>
   );
 }
 
@@ -144,7 +410,8 @@ function ServicePanel({
  *
  * Desktop: sticky Bühne, asymmetrisches Split, Riesen-Kapiteltypografie,
  * kontinuierlicher Progress-Scrub, Kapitel-Rail.
- * Mobile: Stack + useStackReveal, gleiche typografische Sprache.
+ * Stapel: dieselbe Bühne hochkant — die Zeichnung räumt sich über vier Stufen
+ * auf, die Copy wechselt mit ihr, und die Seite steht dabei still.
  */
 export default function Services() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -152,295 +419,232 @@ export default function Services() {
   const counterRef = useRef<HTMLSpanElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const stackRef = useRef<HTMLDivElement>(null);
+  const stackTrackRef = useRef<HTMLDivElement>(null);
+  const stackStageRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
 
   useLightSection(sectionRef);
-  useStackReveal(stackRef, { panel: ".services-panel" });
 
   useEffect(() => {
     const track = trackRef.current;
     const stage = stageRef.current;
     if (!track || !stage) return;
 
-    const featured = gsap.utils.toArray<HTMLElement>("[data-featured]", stage);
-    /** Titel und Subtext je Ebene — nur sie werden versetzt. */
-    const featuredCopy = featured.map((layer) =>
-      gsap.utils.toArray<HTMLElement>("[data-featured-copy]", layer),
-    );
-    const chapters = stage.querySelectorAll<HTMLElement>("[data-chapter]");
-    let lastIndex = -1;
-    /** Vor dem Initialstand wird nur gesetzt, nicht bewegt. */
-    let armed = false;
-    let swap: gsap.core.Timeline | null = null;
-
-    /**
-     * Kapitelwechsel — bewusst OHNE eigene Compositing-Ebene.
-     *
-     * Eine eigene Ebene ist hier nicht die Lösung, sondern die Ursache: sie
-     * entsteht mitten in der sichtbaren Bewegung, der Text landet für ihre
-     * Dauer auf einem eigenen Geräte-Pixel-Raster und wabert, und alles, was
-     * die Ebene überlappt, muss Chrome mitpromoten — das trifft als Erstes
-     * die 1-px-Fortschrittslinie darunter, die genau davon flimmert.
-     *
-     * Also: keine Promotion. Zwei Vorkehrungen halten den Wechsel trotzdem
-     * billig und ruhig:
-     *   - force3D: false — sonst schiebt GSAP von sich aus ein translate3d()
-     *     unter den Tween und promotet die Ebene doch.
-     *   - Versetzt werden nur Titel und Subtext, nicht die randlose Ebene:
-     *     deren Kasten füllt die ganze Spalte, ein horizontaler Versatz auf
-     *     der Ebene selbst würde also seitlich über die Spalte hinausragen.
-     * KEIN roundProps: bei power2.out wird die Bewegung zum Ende hin
-     * langsamer als 1px/Frame — auf ganze Pixel gerundet hieße das, die
-     * letzten Frames stehen auf demselben Pixel und springen dann, statt
-     * auszuklingen. Genau das war das ruckelige Ende der Einblendung.
-     * Und weiterhin: niemals filter, clip-path, mask oder box-shadow — das
-     * sind exakt die Eigenschaften, die eine eigene Compositing-Ebene
-     * erzwingen und damit das Ruckeln wieder hereinholen würden.
-     */
-    const swapChapter = (activeIndex: number, direction: 1 | -1) => {
-      const enter = featured[activeIndex];
-      const enterCopy = featuredCopy[activeIndex];
-      if (!enter || !enterCopy) return;
-
-      // Bei schnellem Scrollen springt der Index mehrfach hintereinander.
-      swap?.kill();
-      swap = null;
-
-      // Abgehen muss alles, was noch sichtbar ist — auch eine Ebene aus einem
-      // abgebrochenen Wechsel, die sonst halbtransparent stehen bliebe.
-      const leaving = featured
-        .map((layer, index) => index)
-        .filter(
-          (index) =>
-            index !== activeIndex &&
-            Number(gsap.getProperty(featured[index]!, "opacity")) > 0,
-        );
-      const leave = leaving.map((index) => featured[index]!);
-      const leaveCopy = leaving.flatMap((index) => featuredCopy[index]!);
-
-      swap = gsap.timeline({
-        onComplete: () => {
-          // Ruhezustand ohne Inline-Transform: erst ohne transform rendert
-          // der Text wieder mit vollem Subpixel-Antialiasing.
-          gsap.set([...enterCopy, ...leaveCopy], { clearProps: "transform" });
-          swap = null;
-        },
-      });
-
-      if (leave.length) {
-        // autoAlpha statt opacity: die abgegangene Ebene landet auf
-        // visibility: hidden und kostet danach gar keine Zeichenzeit mehr.
-        swap
-          .to(
-            leave,
-            { autoAlpha: 0, duration: SWAP_LEAVE, ease: "power1.in" },
-            0,
-          )
-          .to(
-            leaveCopy,
-            {
-              x: -SWAP_LEAVE_SHIFT * direction,
-              duration: SWAP_LEAVE,
-              ease: "power1.in",
-              force3D: false,
-            },
-            0,
-          );
-      }
-
-      swap
-        .fromTo(
-          enter,
-          { autoAlpha: 0 },
-          { autoAlpha: 1, duration: SWAP_ENTER, ease: "power2.out" },
-          SWAP_HANDOVER,
-        )
-        .fromTo(
-          enterCopy,
-          { x: SWAP_ENTER_SHIFT * direction },
-          {
-            x: 0,
-            duration: SWAP_ENTER,
-            ease: "power2.out",
-            force3D: false,
-          },
-          SWAP_HANDOVER,
-        );
-    };
-
-    const applyActive = (activeIndex: number) => {
-      featured.forEach((layer, index) => {
-        const on = index === activeIndex;
-        layer.classList.toggle("is-active", on);
-        layer.setAttribute("aria-hidden", on ? "false" : "true");
-      });
-
-      chapters.forEach((chapter, index) => {
-        chapter.classList.toggle("is-active", index === activeIndex);
-      });
-
-      if (counterRef.current) {
-        counterRef.current.textContent = String(activeIndex + 1).padStart(
-          2,
-          "0",
-        );
-      }
-    };
-
-    const applyScrub = (progress: number) => {
-      const activeIndex = Math.min(
-        SERVICES.length - 1,
-        Math.floor(progress / CHAPTER),
-      );
-
-      // Kontinuierlicher Progress — pro Frame, nur Transform.
-      if (progressRef.current) {
-        progressRef.current.style.transform = `scaleX(${Math.max(progress, 0.02)})`;
-      }
-
-      if (activeIndex !== lastIndex) {
-        const previous = lastIndex;
-        lastIndex = activeIndex;
-        applyActive(activeIndex);
-        // previous === -1 ist der Initialstand: der wird gesetzt, nicht
-        // eingeblendet. Die Richtung folgt dem Indexsprung, damit der alte
-        // Text beim Hochscrollen nach unten abgeht statt nach oben.
-        if (armed && previous !== -1) {
-          swapChapter(activeIndex, activeIndex > previous ? 1 : -1);
-        }
-      }
-    };
-
     const mm = gsap.matchMedia();
 
     // ── Einfahrt der zweiten Seite ────────────────────────────────────────
     //
-    // Kein vorauseilender Stummel mehr: die Section selbst kommt als schmaler,
-    // seitlich eingezogener Balken herein und klappt dann auf volle Breite auf.
-    // Die Höhe macht der Scroll von allein — die Oberkante der Section IST die
-    // Oberkante des Balkens. Animiert wird deshalb nur der seitliche Einzug und
-    // der Radius, und zwar über clip-path: box-shadow/Radien am Element würden
-    // beim Aufklappen eine zweite Kante in die Cremefläche zeichnen.
-    mm.add("(prefers-reduced-motion: no-preference)", () => {
-      const section = sectionRef.current;
-      if (!section) return;
+    // Kein vorauseilender Stummel mehr: die Section selbst kommt QUER als
+    // schmaler, seitlich eingezogener Balken herein und klappt dann auf volle
+    // Breite auf. Die Höhe macht der Scroll von allein — die Oberkante der
+    // Section IST die Oberkante des Balkens. Animiert wird deshalb nur der
+    // seitliche Einzug und der Radius, und zwar über clip-path: box-shadow und
+    // Radien am Element würden beim Aufklappen eine zweite Kante in die
+    // Cremefläche zeichnen.
+    //
+    // Im Stapel gibt es diesen Balken nicht mehr, siehe mm.add(STACK_QUERY, …).
+    //
+    // ZWEI ARME, seit auf dem Telefon gemessen wurde, was die eine Timeline
+    // dort anrichtet. PIN_QUERY behält die Werte von vorher — der Desktop ist
+    // eingefroren —, STACK_QUERY bekommt eigene. Die Vereinigung beider Queries
+    // deckt genau das ab, was vorher „(prefers-reduced-motion: no-preference)"
+    // allein abdeckte: unter 1024px greift STACK, ab 1024px greift PIN für
+    // feinen Zeiger und für Querformat, STACK für groben Zeiger im Hochformat.
+    //
+    // Der Befund: mit `end: "top 55%"` und dem Versatz 0.45 standen auf 393x852
+    // die ersten 172.5px des Wegs still — der Balken war sichtbar, aber kein
+    // Wert bewegte sich —, danach fielen Öffnung UND Einblendung in die
+    // restlichen 210.9px. Auf dem echten Gerät ist es schlimmer: der Hero misst
+    // in `svh`, die Trigger-Marken rechnen in `vh`, und
+    // ScrollTrigger.config({ ignoreMobileResize: true }) unterdrückt das
+    // Nachmessen, wenn Safari die Adressleiste einklappt. Emuliert wuchs die
+    // Totstrecke damit auf 257.8px und das Öffnungsfenster schrumpfte auf
+    // 184.4px — 58% Stillstand, dann alles auf einmal.
+    //
+    // Warum sich das nur abwärts falsch anfühlt: die Werte sind in beide
+    // Richtungen identisch, gemessen auf 0.04 Prozentpunkte genau. Abwärts
+    // trifft der Finger aber erst den toten Teil und danach den ganzen Rest —
+    // das liest sich als Aufsnappen. Aufwärts liegt der lebendige Teil vorn und
+    // der tote hinten, wo ohnehin nichts mehr zu sehen ist.
+    //
+    // Der Stapel bekam deshalb einen längeren Weg (`top 40%` statt `top 55%`:
+    // 60% Fensterhöhe statt 45%). Der Weg bleibt, das Aufsnappen ist mit dem
+    // Einzug ohnehin weg — er trägt jetzt allein die Einblendung des Inhalts.
+    //
+    // `opts.inset` ist der seitliche Einzug des Balkens. Steht dort 0, entfällt
+    // die Aufklapp-Bewegung vollständig: die Section beginnt in voller Breite,
+    // es bleibt der Ruhezustand aus services.css (`--enter-inset: 0%`, Radius
+    // `--radius-panel`). Genau das ist der Stapel-Fall — dazu die Begründung an
+    // der mm.add(STACK_QUERY, …) weiter unten.
+    const buildEntry =
+      (opts: {
+        end: string;
+        scrub: number;
+        open: number;
+        ink: number;
+        inset: number;
+      }) =>
+      () => {
+        const section = sectionRef.current;
+        if (!section) return;
 
-      const token = (name: string, fallback: string) =>
-        getComputedStyle(document.documentElement)
-          .getPropertyValue(name)
-          .trim() || fallback;
+        const token = (name: string, fallback: string) =>
+          getComputedStyle(document.documentElement)
+            .getPropertyValue(name)
+            .trim() || fallback;
 
-      const wide = window.matchMedia("(min-width: 768px)").matches;
-      const openRadius = wide ? 3 : 2.5;
-      const restRadius = parseFloat(
-        wide
-          ? token("--radius-panel-lg", "2rem")
-          : token("--radius-panel", "1.5rem"),
-      );
+        const wide = window.matchMedia("(min-width: 768px)").matches;
+        const openRadius = wide ? 3 : 2.5;
+        const restRadius = parseFloat(
+          wide
+            ? token("--radius-panel-lg", "2rem")
+            : token("--radius-panel", "1.5rem"),
+        );
 
-      // clip-path als Ganzes tweenen geht nicht: Chrome meldet den eingezogenen
-      // Startwert in der Kurzform (`inset(0% 9% round …)`) zurück, GSAP mischt
-      // dann Rechts-Einzug gegen Unten-Einzug und der Radius springt. Also
-      // laufen zwei Zahlen, den String setzt services.css zusammen.
-      //
-      // Dass GSAP diese Zahlen als CSS-Variablen selbst schreibt und sie nicht
-      // aus einem onUpdate in style.clipPath wandern, ist kein Stil, sondern
-      // Bedingung: bei jedem refresh() rendert ScrollTrigger die Timeline
-      // einmal mit unterdrückten Callbacks neu (revert → invalidate → zurück
-      // auf den alten Fortschritt). Ein aus onUpdate gesetzter clip-path bliebe
-      // dabei auf dem Balken-Wert stehen, während die Animation sich für
-      // „offen" hält — und da der Fortschritt sich nicht ändert, holt das keine
-      // spätere Aktualisierung nach. Die Section hinge bis zum nächsten echten
-      // Scrubben quer über den Inhalt geschnitten fest.
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: section,
-          start: "top bottom",
-          end: "top 55%",
-          scrub: 0.4,
-          invalidateOnRefresh: true,
-        },
-      });
+        // clip-path als Ganzes tweenen geht nicht: Chrome meldet den eingezogenen
+        // Startwert in der Kurzform (`inset(0% 9% round …)`) zurück, GSAP mischt
+        // dann Rechts-Einzug gegen Unten-Einzug und der Radius springt. Also
+        // laufen zwei Zahlen, den String setzt services.css zusammen.
+        //
+        // Dass GSAP diese Zahlen als CSS-Variablen selbst schreibt und sie nicht
+        // aus einem onUpdate in style.clipPath wandern, ist kein Stil, sondern
+        // Bedingung: bei jedem refresh() rendert ScrollTrigger die Timeline
+        // einmal mit unterdrückten Callbacks neu (revert → invalidate → zurück
+        // auf den alten Fortschritt). Ein aus onUpdate gesetzter clip-path bliebe
+        // dabei auf dem Balken-Wert stehen, während die Animation sich für
+        // „offen" hält — und da der Fortschritt sich nicht ändert, holt das keine
+        // spätere Aktualisierung nach. Die Section hinge bis zum nächsten echten
+        // Scrubben quer über den Inhalt geschnitten fest.
+        const tl = gsap.timeline({
+          scrollTrigger: {
+            trigger: section,
+            start: "top bottom",
+            end: opts.end,
+            scrub: opts.scrub,
+            invalidateOnRefresh: true,
+          },
+        });
 
-      // Erst als Balken hereinfahren (Werte stehen still, daher der Versatz auf
-      // 0.45), dann aufklappen.
-      //
-      // MUSS ein fromTo bleiben, kein set + to: revert() merkt sich als
-      // Ursprungswert `style[prop]`, und das ist bei einer Custom Property
-      // immer undefined — GSAP löscht die Inline-Variable also, statt sie
-      // zurückzuschreiben. Der Wert fällt damit auf den Ruhezustand aus
-      // services.css (0%), und ein to() läse beim invalidate() genau diese 0%
-      // als neuen Startwert ein: die Einfahrt wäre nach dem ersten Refresh tot
-      // und die Section schöbe sich in voller Breite über den Hero. Beim fromTo
-      // steht der Startwert in den Vars und übersteht das.
-      tl.fromTo(
-        section,
-        {
-          "--enter-inset": `${ENTER_INSET}%`,
-          "--enter-radius": `${openRadius}rem`,
-        },
-        {
-          "--enter-inset": "0%",
-          "--enter-radius": `${restRadius}rem`,
-          duration: 0.55,
-          ease: "power2.out",
-          immediateRender: true,
-        },
-        0.45,
-      );
+        // Erst als Balken hereinfahren, dann aufklappen. `opts.open` ist die
+        // Länge dieser Balkenphase; sie fehlt der Öffnung, damit beide zusammen
+        // die Timeline genau füllen.
+        //
+        // MUSS ein fromTo bleiben, kein set + to: revert() merkt sich als
+        // Ursprungswert `style[prop]`, und das ist bei einer Custom Property
+        // immer undefined — GSAP löscht die Inline-Variable also, statt sie
+        // zurückzuschreiben. Der Wert fällt damit auf den Ruhezustand aus
+        // services.css (0%), und ein to() läse beim invalidate() genau diese 0%
+        // als neuen Startwert ein: die Einfahrt wäre nach dem ersten Refresh tot
+        // und die Section schöbe sich in voller Breite über den Hero. Beim fromTo
+        // steht der Startwert in den Vars und übersteht das.
+        if (opts.inset > 0) {
+          tl.fromTo(
+            section,
+            {
+              "--enter-inset": `${opts.inset}%`,
+              "--enter-radius": `${openRadius}rem`,
+            },
+            {
+              "--enter-inset": "0%",
+              "--enter-radius": `${restRadius}rem`,
+              duration: 1 - opts.open,
+              ease: "power2.out",
+              immediateRender: true,
+            },
+            opts.open,
+          );
+        }
 
-      // Der Balken fährt leer herein. Sonst steht die Kopfzeile schon in dem
-      // schmalen Streifen und wird von der Clip-Kante mitten im Wort
-      // abgeschnitten — der Inhalt kommt erst, wenn die Fläche fast offen ist.
-      const content = [track, stackRef.current].filter(
-        (el): el is HTMLDivElement => el !== null,
-      );
-      if (content.length) {
-        tl.fromTo(
-          content,
-          { opacity: 0 },
-          { opacity: 0, duration: 0.55, ease: "none" },
-          0,
-        ).to(content, { opacity: 1, duration: 0.4, ease: "power1.out" }, 0.55);
-      }
+        // Der Balken fährt leer herein. Sonst steht die Kopfzeile schon in dem
+        // schmalen Streifen und wird von der Clip-Kante mitten im Wort
+        // abgeschnitten — der Inhalt kommt erst, wenn die Fläche weit offen ist.
+        // `opts.ink` ist der Moment, in dem das Einblenden beginnt; im Stapel
+        // liegt er bei 0.45, wo der Einzug rechnerisch noch 3.2% misst — die
+        // Deckkraft ist dort aber selbst erst bei 0, und voll ist sie bei 0.85,
+        // wo der Einzug unter 1px liegt.
+        const content = [track, stackRef.current].filter(
+          (el): el is HTMLDivElement => el !== null,
+        );
+        if (content.length) {
+          tl.fromTo(
+            content,
+            { opacity: 0 },
+            { opacity: 0, duration: opts.ink, ease: "none" },
+            0,
+          ).to(
+            content,
+            { opacity: 1, duration: 0.4, ease: "power1.out" },
+            opts.ink,
+          );
+        }
 
-      return () => {
-        tl.scrollTrigger?.kill();
-        tl.kill();
-        gsap.set(section, { clearProps: "--enter-inset,--enter-radius" });
-        if (content.length) gsap.set(content, { clearProps: "opacity" });
+        return () => {
+          tl.scrollTrigger?.kill();
+          tl.kill();
+          gsap.set(section, { clearProps: "--enter-inset,--enter-radius" });
+          if (content.length) gsap.set(content, { clearProps: "opacity" });
+        };
       };
-    });
+
+    // Byte-identisch zu vorher: end "top 55%", scrub 0.4, Öffnung ab 0.45,
+    // Einblendung ab 0.55.
+    mm.add(
+      PIN_QUERY,
+      buildEntry({
+        end: "top 55%",
+        scrub: 0.4,
+        open: 0.45,
+        ink: 0.55,
+        inset: ENTER_INSET,
+      }),
+    );
+    // Im Stapel OHNE Einzug: die Fläche beginnt in voller Breite.
+    //
+    // Der Balken war für die Desktop-Bühne gedacht, wo die Section quer über
+    // ein breites Bild fährt und die eingezogene Kante als eigenes Blatt lesbar
+    // ist. Auf dem Telefon steht daneben nichts — dort liest sich derselbe
+    // Vorgang als Fläche, die sich aus der Mitte heraus aufzieht, während sie
+    // ohnehin schon von unten steigt. Zwei Bewegungen auf einer Kante, und die
+    // seitliche gewinnt gegen die eigentliche.
+    //
+    // `open` ist damit gegenstandslos (es war die Länge der Balkenphase) und
+    // steht auf 0. `end`, `scrub` und `ink` bleiben: an ihnen hängt weiterhin
+    // die Einblendung des Inhalts, die kein Einzug ist, sondern das Ankommen.
+    mm.add(
+      STACK_QUERY,
+      buildEntry({
+        end: "top 40%",
+        scrub: 0.55,
+        open: 0,
+        ink: 0.45,
+        inset: 0,
+      }),
+    );
 
     // MUSS byte-identisch zur @media-Query für .services-pin--desktop bleiben
     mm.add(PIN_QUERY, () => {
-      // Ab hier führt GSAP die Deckkraft der Ebenen inline; die Klasse
-      // .is-active bleibt für pointer-events, aria und die
-      // Stapelreihenfolge zuständig. Die opacity-Regeln in services.css
-      // sind damit nur noch der Ruhezustand für Skript-aus.
-      featured.forEach((layer, index) =>
-        gsap.set(layer, { autoAlpha: index === 0 ? 1 : 0 }),
-      );
+      const chapters = createChapterStage({
+        root: stage,
+        onProgress: (progress) => {
+          if (progressRef.current) {
+            progressRef.current.style.transform = `scaleX(${Math.max(progress, 0.02)})`;
+          }
+        },
+        onIndex: (index) => {
+          if (counterRef.current) {
+            counterRef.current.textContent = String(index + 1).padStart(2, "0");
+          }
+        },
+      });
+      chapters.prime();
 
       const st = ScrollTrigger.create({
         trigger: track,
         start: "top top",
         end: "bottom bottom",
         scrub: 0.45,
-        onUpdate: (self) => applyScrub(self.progress),
-        // Ein Refresh setzt den Stand nur nach, er animiert nicht: der
-        // AnimationProvider stößt nach document.fonts.ready einen an, und
-        // sonst liefe kurz nach dem Laden ein Kapitelwechsel los, den
-        // niemand ausgelöst hat.
-        // Den vorigen Stand wiederherstellen statt blind scharf zu
-        // schalten: dieses onRefresh feuert schon während create(), und
-        // dort darf noch nichts animieren.
-        onRefresh: (self) => {
-          const wasArmed = armed;
-          armed = false;
-          applyScrub(self.progress);
-          armed = wasArmed;
-        },
+        onUpdate: (self) => chapters.applyScrub(self.progress),
+        onRefresh: (self) => chapters.restore(self.progress),
         invalidateOnRefresh: true,
         refreshPriority: 1,
       });
@@ -448,89 +652,77 @@ export default function Services() {
       // Erststand aus der tatsächlichen Scrollposition, bevor scharf
       // geschaltet wird: beim Reload mitten in der Sektion steht sofort das
       // richtige Kapitel da, ohne Einblendung.
-      applyScrub(st.progress);
-      armed = true;
+      chapters.applyScrub(st.progress);
+      chapters.arm();
 
       return () => {
         st.kill();
-        swap?.kill();
-        swap = null;
-        armed = false;
-        lastIndex = -1;
-        // Zurück unter CSS-Kontrolle — sonst bliebe beim Wechsel unter
-        // 1024 px eine Ebene auf visibility: hidden stehen.
-        gsap.set(featured, { clearProps: "opacity,visibility" });
-        gsap.set(featuredCopy.flat(), { clearProps: "transform" });
+        chapters.destroy();
       };
     });
 
-    // ── Die klebende Zeichnung tritt zurück ───────────────────────────────
+    // ── Die Zeichnung räumt sich auf, die Seite steht still ───────────────
     //
-    // Das Kleben selbst steht in services.css und ist Layout. Hier kommt nur
-    // die Eigenbewegung dazu, die aus dem blossen Stillstand ein Zurücktreten
-    // macht: während die Cremefläche der Kapitel von unten über das Blatt
-    // steigt, schrumpft es auf seine eigene Oberkante zu und verliert Licht.
-    // Das ist die Kamera, die zurückfährt, während sich das zweite Material
-    // davorschiebt — ein Moment, nicht zwei nebeneinander.
+    // Dieselbe Bühne wie oben, nur hochkant und mit einem zweiten Satz Ebenen:
+    // über der Copy hängt die Bildstufe des Kapitels. Vier Stände desselben
+    // Blatts, und was auf dem Desktop der Finger an der Ziehkante macht, macht
+    // hier der Scroll.
     //
-    // transformOrigin auf die Oberkante ist keine Geschmacksfrage, sondern die
-    // Bedingung dafür, dass beides gleichzeitig gilt: die Figur bewegt sich
-    // messbar, und ihre Oberkante bleibt trotzdem exakt dort stehen, wo das
-    // sticky sie hält. Ein Versatz in y würde die Klebekante wieder wandern
-    // lassen und das Kleben damit unsichtbar machen.
+    // Warum gepinnt und nicht gestapelt: gestapelt lief die Zeichnung als
+    // klebendes Hauptmotiv mit, während vier Kapitel an ihr vorbeizogen — ein
+    // Bild, vier Texte. Die vier Stände sind aber vier Bilder, und die sind nur
+    // als Folge zu lesen. Eine Folge braucht einen Halt: die Fläche steht, der
+    // Scroll ist der Schnitt. Genau das ist die Bühne, die der Desktop schon
+    // hat; sie kostet hier keine zweite Mechanik, nur eine zweite Wurzel.
     //
-    // force3D: false aus demselben Grund wie beim Kapitelwechsel weiter oben:
-    // sonst schiebt GSAP ein translate3d() unter den Tween und promotet die
-    // Figur auf eine eigene Compositing-Ebene. Die trägt Kinder mit
-    // mix-blend-mode und müsste bildschirmfüllend gerastert werden — genau der
-    // in services.css dokumentierte Fall, bei dem die ganze Seite ruckelt.
+    // Die Fortschrittslinie ist der Zierstrich der Kapitelzeile. Geschrieben
+    // wird auf alle vier, obwohl immer nur eine sichtbar ist: vier direkte
+    // Style-Zuweisungen sind billiger als eine Custom Property auf der Bühne,
+    // die bei jedem Frame die Stile des ganzen Teilbaums ungültig macht — und
+    // die verdeckten stehen so beim Wechsel schon richtig, statt einen Frame
+    // lang auf dem alten Wert.
     //
-    // Der Scrub hängt am Kapitelstapel und nicht an der Figur: ScrollTrigger
-    // misst seine Marken an der Dokumentposition des Triggers, und die eines
-    // klebenden Elements ist nicht die, an der es steht.
-    //
-    // Die Marken sind die Strecke, über die die Cremefläche das Blatt zudeckt:
-    // von „Oberkante des Stapels erscheint unten im Bild" bis „Oberkante des
-    // Stapels steht auf 12 % der Fensterhöhe" — und das ist exakt die Höhe, auf
-    // der das sticky die Zeichnung hält (12svh aus der clamp in services.css,
-    // gemessen 102.2px auf 393x852). Ab da liegt sie vollständig unter der
-    // Cremefläche; jede weitere Bewegung liefe im Verborgenen.
-    //
-    // scrub 0.6 wie überall sonst im Projekt: die Bewegung hängt am Scrollbalken,
-    // klebt aber nicht am Rad — die Trägheit ist das Gefühl.
+    // scrub 0.5 zwischen den 0.45 der Desktop-Bühne und den 0.55 der übrigen
+    // Stapel-Scrubs: der Wechsel zieht der Hand nach, klebt aber nicht am Rad.
     mm.add(STACK_QUERY, () => {
-      const stack = stackRef.current;
-      const figure = stack?.querySelector<HTMLElement>(
-        ".services-landscape--stack",
-      );
-      const panels = stack?.querySelector<HTMLElement>(".services-track");
-      if (!figure || !panels) return;
+      const stackStage = stackStageRef.current;
+      const stackTrack = stackTrackRef.current;
+      if (!stackStage || !stackTrack) return;
 
-      const recede = gsap.fromTo(
-        figure,
-        { scale: 1, opacity: 1 },
-        {
-          scale: 0.93,
-          opacity: 0.8,
-          ease: "none",
-          force3D: false,
-          transformOrigin: "50% 0%",
-          scrollTrigger: {
-            trigger: panels,
-            start: "top bottom",
-            end: "top 12%",
-            scrub: 0.6,
-            invalidateOnRefresh: true,
-          },
-        },
+      const rails = gsap.utils.toArray<HTMLElement>(
+        ".services-stack-rule__fill",
+        stackStage,
       );
+
+      const chapters = createChapterStage({
+        root: stackStage,
+        onProgress: (progress) => {
+          const fill = `scaleX(${Math.max(progress, 0.02)})`;
+          for (const rail of rails) rail.style.transform = fill;
+        },
+      });
+      chapters.prime();
+
+      const st = ScrollTrigger.create({
+        trigger: stackTrack,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 0.5,
+        onUpdate: (self) => chapters.applyScrub(self.progress),
+        onRefresh: (self) => chapters.restore(self.progress),
+        invalidateOnRefresh: true,
+        refreshPriority: 1,
+      });
+
+      chapters.applyScrub(st.progress);
+      chapters.arm();
 
       return () => {
-        recede.scrollTrigger?.kill();
-        recede.kill();
-        // Zurück unter CSS-Kontrolle: sonst bliebe beim Wechsel auf den
-        // Desktop-Pfad eine geschrumpfte, halbdurchsichtige Figur stehen.
-        gsap.set(figure, { clearProps: "transform,opacity,transformOrigin" });
+        st.kill();
+        chapters.destroy();
+        // Zurück unter CSS-Kontrolle: sonst bliebe die Linie beim Wechsel auf
+        // den Desktop-Pfad auf ihrem letzten Stand stehen.
+        for (const rail of rails) rail.style.removeProperty("transform");
       };
     });
 
@@ -633,23 +825,37 @@ export default function Services() {
       </div>
 
       <div ref={stackRef} className="services-stack">
-        <ServicesHeader />
+        {/* Diese Kopfzeile gehört dem Stapel — auf dem Desktop steht
+            .services-stack auf display:none (services.css). Sie ist damit der
+            einzige Ort, an dem `revealScrub` wirkt, und der Desktop behält sein
+            einmaliges Abspielen. Gemessen war genau diese Zeile die Asymmetrie,
+            die als Aufsnappen ankam: abwärts lief sie 1002ms nach dem Finger
+            weiter, aufwärts rührte sie sich nie. */}
+        <ServicesHeader revealScrub={0.5} />
 
-        {/* Eigene Klasse statt Utilities: services.css klebt diesen Rahmen im
-            Stapel fest, und die Klasse ist der einzige Griff dafür. */}
-        <div className="services-landscape-stage">
-          <ServicesLandscape className="services-landscape--stack" />
-        </div>
+        {/* Die Kopfzeile bleibt AUSSERHALB der Klebestrecke und zieht vorbei.
+            Innen gerechnet kostete sie auf 375x667 rund 155px der Bühne — die
+            fehlen dort dem Bild, und das Bild ist die Aussage. Draussen ist sie
+            das, was sie ist: die Ankündigung, nach der die Bühne einrastet. */}
+        <div ref={stackTrackRef} className="services-stack-track">
+          <div
+            ref={stackStageRef}
+            className="services-stack-stage work-container"
+          >
+            {SERVICES.map((service, index) => (
+              <ServicesChapter
+                key={service.id}
+                service={service}
+                index={index}
+                total={SERVICES.length}
+              />
+            ))}
+          </div>
 
-        <div className="services-track">
-          {SERVICES.map((service, index) => (
-            <ServicePanel
-              key={service.id}
-              service={service}
-              index={index}
-              total={SERVICES.length}
-            />
-          ))}
+          {/* Die Strecke, über die die Bühne steht. Sie ist der einzige Grund,
+              warum die Seite hier nicht weiterläuft: gescrollt wird an ihr,
+              gezeigt wird auf der klebenden Bühne darüber. */}
+          <div className="services-stack-scroll" aria-hidden />
         </div>
       </div>
     </section>
