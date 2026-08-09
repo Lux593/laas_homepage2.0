@@ -143,11 +143,38 @@ export default function GiganticCTA() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="contact" className="relative min-h-screen">
+    // svh statt vh unterhalb von lg — das ist der eigentliche Grund, warum die
+    // Überschrift auf dem Gerät in die Leiste lief. `min-h-screen` ist 100vh,
+    // und das ist in Safari die GROSSE Ansicht: bei sichtbarer Adressleiste ist
+    // die Karte damit rund 107px höher als der Bildschirm. Am Seitenende richtet
+    // der Browser das Dokumentende am sichtbaren Rand aus, die zu hohe Karte
+    // rutscht nach oben, und `justify-center` schiebt die mittig gesetzte
+    // Überschrift mit. Gemessen bei 393x734: Karte top −62.6, h2 bei 40.4 — die
+    // Wortmarke stand mitten in der Zeilenbox. Bei voller 852er Bühne ist davon
+    // nichts zu sehen, deshalb fiel es im Emulator nie auf.
+    // Der body macht es in globals.css längst richtig; diese Karte war die
+    // einzige Vollbild-Bühne, die der Regel nicht folgte. Ab lg bleibt 100vh
+    // stehen — dort sind svh und vh ohnehin dieselbe Zahl.
+    <section
+      ref={sectionRef}
+      id="contact"
+      className="relative min-h-svh lg:min-h-screen"
+    >
       {/* Inverted card that reveals from bottom */}
       <div
         ref={cardRef}
-        className="relative min-h-screen flex flex-col justify-center overflow-hidden"
+        // justify-end unter md: die Karte ist 100svh hoch, der Inhaltsblock
+        // misst gemessen 628px. Zentriert fällt die Hälfte des Rests — 112px —
+        // zwischen die Social-Links und die Fusszeile und liest sich dort als
+        // Loch; genau das war die Meldung „unten zu viel Leerraum". Hängt die
+        // Gruppe stattdessen unten, sammelt sich der ganze Rest ÜBER der
+        // Überschrift, wo er als Luft durchgeht, und die Fusszeile steht bündig
+        // am unteren Rand wie ab md die absolute Positionierung.
+        // Gefahrlos, weil `min-h-svh` eine MINDESThöhe ist: wird der Inhalt
+        // höher als der Bildschirm, wächst die Karte mit und justify-end hat
+        // nichts mehr zu verteilen — es kann nichts nach oben aus dem Bild
+        // laufen.
+        className="relative min-h-svh flex flex-col justify-end overflow-hidden md:justify-center lg:min-h-screen"
         style={{
           backgroundColor: "#f2ede4",
           clipPath: "inset(100% 0 0 0)",
@@ -156,8 +183,30 @@ export default function GiganticCTA() {
       >
         {/* py-section (min 8rem) sprengte zusammen mit der Fußzeile kurze
             Handy-Displays; der eigene clamp lässt erst unterhalb von ~850px
-            Fensterhöhe nach und ist auf dem Desktop identisch zu vorher. */}
-        <div className="relative z-10 text-center container-custom py-[clamp(5rem,15vh,16rem)] flex flex-col items-center">
+            Fensterhöhe nach und ist auf dem Desktop identisch zu vorher.
+
+            Unter md ein eigener, kleinerer clamp in svh: 15vh ergaben auf
+            393x852 gemessen 127.8px Polsterung pro Seite, und die untere davon
+            war der grössere Teil der 183.8px Leere zwischen den Social-Links und
+            der Fusszeile. Zusammen mit dem kürzeren mt weiter unten schrumpft
+            der Abstand vom letzten Link bis zum Seitenende von 268.2px (31.5%
+            der Bildhöhe) auf rund 144px. svh, damit die Zahl nicht wieder gegen
+            eine svh-Bühne rechnet. Ab md steht der alte Wert.
+
+            Und zwar ASYMMETRISCH, denn genau darin lag der Fehler: die
+            Polsterung war oben wie unten 127.8px, oben steht sie aber zwischen
+            Leiste und Überschrift und liest sich als Luft, unten zwischen den
+            Social-Links und der Fusszeile und liest sich als Loch. Zusammen mit
+            dem mt der Fusszeile ergaben die beiden gemessene 183.8px Leere.
+            Unten bleiben davon 34px, oben stehen 102px — die Zahl, die vorher
+            unten verschwendet wurde, arbeitet jetzt oben.
+
+            Eine reine Verkleinerung hätte übrigens NICHTS gebracht: die Karte
+            ist 100svh hoch und verteilt den Rest selbst. Nachgemessen wuchs der
+            Abstand bis zum Seitenende bei symmetrisch kleinerer Polsterung von
+            268.2px sogar auf 286.5px. Das löst erst das justify-end an der Karte
+            darüber. */}
+        <div className="relative z-10 text-center container-custom pt-[clamp(3rem,12svh,8rem)] pb-[clamp(1.5rem,4svh,2.5rem)] md:py-[clamp(5rem,15vh,16rem)] flex flex-col items-center">
           <TextReveal
             as="h2"
             variant="words"
@@ -178,9 +227,24 @@ export default function GiganticCTA() {
             schreib mir - dann starten wir.
           </TextReveal>
 
-          {/* relative + absolute cow: Button bleibt optisch zentriert,
-              die Kuh hängt als Easter Egg links daneben ohne Layout-Shift. */}
-          <div className="relative inline-flex items-center justify-center">
+          {/* Ab sm: relative + absolute cow — Button bleibt optisch zentriert,
+              die Kuh hängt als Easter Egg links daneben ohne Layout-Shift.
+
+              Auf dem Telefon geht diese Rechnung nicht auf, und zwar aus Platz-
+              und nicht aus Geschmacksgründen: die Kuh hängt an `right: calc(100%
+              + …)` und misst sich damit am Knopf, nicht am Fenster. Gemessen auf
+              393px war der Knopf 219.7px breit und mittig — links davon blieben
+              86.7px, gebraucht wurden 111.2px. Die Kuh stand also 24.5px
+              ausserhalb und wurde vom overflow-hidden der Karte hart
+              abgeschnitten. Auf 320px wäre es schlimmer.
+
+              Deshalb ist sie unter sm ein normales Flex-Kind: die Gruppe aus Kuh
+              und Knopf wird als GANZES zentriert. Der Knopf sitzt damit ein
+              Stück rechts der Mitte — sichtbar, aber harmlos, und allemal besser
+              als eine halbe Kuh. Der Knopf gibt unter sm ausserdem etwas
+              Innenabstand ab, damit die Gruppe auch auf 320px in den Container
+              passt. */}
+          <div className="relative inline-flex items-center justify-center gap-1.5 sm:gap-0">
             {/* Die Kuh bringt ihre Bewegung selbst mit: ein 2.7-Sekunden-Loop
                 als animiertes WebP (mit Higgsfield aus dem Original-PNG
                 erzeugt, Vor- und Rücklauf aneinandergehängt, damit der Loop
@@ -196,7 +260,7 @@ export default function GiganticCTA() {
                 Bild-Tag. */}
             <span
               aria-hidden
-              className="pointer-events-none absolute right-[calc(100%+0.55rem)] top-1/2 w-[6.4rem] -translate-y-[48%] select-none sm:right-[calc(100%+0.9rem)] sm:w-[8rem] md:right-[calc(100%+1.2rem)] md:w-[9.6rem]"
+              className="pointer-events-none relative w-[clamp(3.25rem,17vw,6.4rem)] shrink-0 select-none sm:absolute sm:right-[calc(100%+0.9rem)] sm:top-1/2 sm:w-[8rem] sm:-translate-y-[48%] md:right-[calc(100%+1.2rem)] md:w-[9.6rem]"
             >
               <picture>
                 {/* Reduzierte Bewegung bekommt das Standbild — ohne JS, und
@@ -220,7 +284,7 @@ export default function GiganticCTA() {
             <MagneticButton>
               <a
                 href={`mailto:${SITE_CONFIG.email}`}
-                className="inline-flex items-center gap-3 px-10 py-5 text-body-md font-display font-bold tracking-tight rounded-full transition-colors duration-500 ease-out-expo group"
+                className="inline-flex items-center gap-3 px-8 py-5 text-body-md font-display font-bold tracking-tight rounded-full transition-colors duration-500 ease-out-expo group sm:px-10"
                 style={{
                   backgroundColor: "#0a0a0a",
                   color: "#f0ede8",
@@ -240,7 +304,7 @@ export default function GiganticCTA() {
               pointer-coarse:min-h-11 macht aus den 18px hohen Zeilen ein
               44px-Tippziel — an der Eingabeart festgemacht, nicht an der
               Breite, sonst hätte das Handy im Querformat wieder Mausmaße. */}
-          <div className="mt-32 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 md:mt-40 md:gap-x-8">
+          <div className="mt-16 flex flex-wrap items-center justify-center gap-x-6 gap-y-1 md:mt-40 md:gap-x-8">
             {Object.entries(SITE_CONFIG.socials).map(([platform, url]) => (
               <a
                 key={platform}
@@ -292,7 +356,7 @@ export default function GiganticCTA() {
             env(safe-area-inset-bottom) ist bei viewportFit "cover" nötig,
             damit der Home-Indicator die Links nicht verdeckt — ohne Notch
             löst es zu 0 auf und ändert nichts. */}
-        <div className="relative mt-14 w-full px-[var(--container-padding)] pb-[env(safe-area-inset-bottom)] max-w-[var(--container-max)] mx-auto flex flex-col items-center gap-3 text-center md:absolute md:bottom-8 md:left-0 md:right-0 md:mt-0 md:pb-0 md:flex-row md:justify-between md:text-left">
+        <div className="relative mt-8 w-full px-[var(--container-padding)] pb-[env(safe-area-inset-bottom)] max-w-[var(--container-max)] mx-auto flex flex-col items-center gap-3 text-center md:absolute md:bottom-8 md:left-0 md:right-0 md:mt-0 md:pb-0 md:flex-row md:justify-between md:text-left">
           <p className="text-caption font-mono" style={{ color: "#9a9a9a" }}>
             © {new Date().getFullYear()} {SITE_CONFIG.name}
           </p>

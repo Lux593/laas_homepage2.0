@@ -38,6 +38,23 @@ gsap.registerPlugin(ScrollTrigger);
 const CLIP_FROM = ["inset(0% 100% 0% 0%)", "inset(0% 0% 0% 100%)"];
 const CLIP_OPEN = "inset(0% 0% 0% 0%)";
 
+/**
+ * Halber Weg des Parallax auf [data-reveal="media"], in Pixeln: das Bild fährt
+ * von -10 nach +10.
+ *
+ * ZWILLING IM CSS: `padding-block: 0.75rem` auf `.process-panel__media`
+ * (sections/process/process.css) und `.work-panel__media` (app/globals.css).
+ * Beide Felder kleben und ihr Kind füllt sie exakt aus — ohne diese Fahrbahn
+ * tritt das verschobene Kind unten heraus und malt einen Streifen unter die
+ * Copy. Genau das war auf dem Gerät zu sehen: gemessen 7.7-8.8px im Prozess und
+ * 10.8-12.8px bei den Projekten, in einem Kontrollversuch mit `transform: none`
+ * auf 0.00px zurückgeführt.
+ *
+ * 12px CSS gegen 10px hier lässt 2px Reserve für Teilpixel. Wer den Weg
+ * vergrössert, muss die Polsterung mitziehen — sonst kehrt der Streifen zurück.
+ */
+const MEDIA_DRIFT_PX = 10;
+
 /** Ab welchem Blenden-Fortschritt die Maske ganz verschwindet. Siehe die
  *  Begründung am `onUpdate` des Blenden-Scrubs — ein Scrub hat kein
  *  `onComplete`, an dem man das sonst aufhängen könnte. */
@@ -225,12 +242,19 @@ export function useStackReveal(
         // Scrubs im Projekt liegen zwischen 0.4 und 0.8, und die Dämpfung ist
         // hier nicht nur billiger, sie ist der Punkt: der Nutzer FÄHRT die
         // Bewegung, sie klebt nicht am Rad. Genau das trägt den Desktop.
+        //
+        // Feste Pixel statt yPercent, seit der Streifen aufgefallen ist: mit
+        // ±2.5% hing der Weg an der Rahmenhöhe und lief zwischen 5.2px (iPad im
+        // Projektpanel) und 12.8px (iPhone auf 430px Breite) auseinander. Kein
+        // CSS-Wert kann eine Fahrbahn decken, die er nicht kennt — mit einem
+        // festen Weg schon. Sichtbar ist der Unterschied nicht: gemessen lag
+        // der alte Weg genau in dieser Grössenordnung.
         if (art) {
           gsap.fromTo(
             art,
-            { yPercent: -2.5 },
+            { y: -MEDIA_DRIFT_PX },
             {
-              yPercent: 2.5,
+              y: MEDIA_DRIFT_PX,
               ease: "none",
               scrollTrigger: {
                 trigger: panel,

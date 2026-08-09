@@ -138,6 +138,12 @@ export default function FramerMoveableThumbnails({
   // against — the strip drags freely for any distance, but release only ever
   // steps by one slide, so a swipe longer than one slide-width sprang back hard
   // instead of settling.
+  //
+  // Float, not offsetWidth: the cutout is percentage-sized, so its used width
+  // is often fractional (e.g. 234.67px). offsetWidth floors that; translating
+  // by N×floor(w) while each slide is still laid out at the true w leaves a
+  // N×frac(w) gap — on a 6-shot gallery that is a several-pixel stripe of the
+  // previous screenshot peeking in at the left of the bezel.
   const [screenWidth, setScreenWidth] = useState(0);
   // Read by the resize observer, which must not re-subscribe on every step.
   const indexRef = useRef(0);
@@ -147,6 +153,30 @@ export default function FramerMoveableThumbnails({
   const imageFit = fit ? SCREEN_FIT[fit] : device.fit;
   const insetPct = Math.min(Math.max(screenInset, 0), 0.4) * 100;
   const len = items.length;
+
+  // Letzte LAYOUT-Breite des Ausschnitts, subpixelgenau — geschrieben vom
+  // ResizeObserver weiter unten.
+  const layoutWidth = useRef(0);
+
+  // Same number the transform and the slide `flex-basis` both use.
+  //
+  // Bewusst NICHT getBoundingClientRect(): das Rechteck ist die Breite NACH
+  // allen Transformationen der Vorfahren, und im Stapel liegt genau eine
+  // darüber — useStackReveal fährt das Gerätefeld mit `scale: 0.96 → 1` herein
+  // und lässt `artInner` über die halbe Einfahrt von 1.06 zurückatmen. Wer
+  // dazwischen misst, bekommt eine Breite, die es im Layout nie gab: die
+  // Folien werden auf diesen Wert festgenagelt, und die erste Aufnahme steht
+  // schief im Rahmen, bis der nächste Wechsel neu misst. Genau das war zu
+  // sehen — und nur mobil, weil der Hook nur dort läuft.
+  //
+  // ResizeObserver meldet die untransformierte Border-Box und ist damit die
+  // richtige Quelle; offsetWidth ist der Notnagel für den einen Commit, bevor
+  // der Observer das erste Mal gefeuert hat (ganzzahlig, aber ebenfalls
+  // transformfrei — der Observer korrigiert ihn im selben Zug).
+  const measureWidth = useCallback((el: HTMLElement) => {
+    if (layoutWidth.current > 0) return layoutWidth.current;
+    return el.offsetWidth || el.getBoundingClientRect().width || 1;
+  }, []);
 
   // With motion there is a settle to hide the re-base behind, so the index may
   // sit outside 0..len-1 until `onComplete` folds it. Without motion there is no
@@ -174,7 +204,7 @@ export default function FramerMoveableThumbnails({
     if (isDragging || !screenRef.current) return;
 
     const el = screenRef.current;
-    const width = el.offsetWidth || 1;
+    const width = measureWidth(el);
     setScreenWidth(width);
     const targetX = slotX(index, width);
 
@@ -206,14 +236,14 @@ export default function FramerMoveableThumbnails({
         // "carousel rewinds to the start" bug. jump() resets velocity to 0.
         const folded = wrap(index, len);
         if (folded !== index) {
-          x.jump(slotX(folded, el.offsetWidth || 1));
+          x.jump(slotX(folded, measureWidth(el)));
           setIndex(folded);
         }
       },
     });
 
     return () => controls.stop();
-  }, [index, x, isDragging, prefersReducedMotion, len, slotX]);
+  }, [index, x, isDragging, prefersReducedMotion, len, slotX, measureWidth]);
 
   // The pinned frame is sized off viewport height, so a resize changes the slide
   // width under a transform that is already in pixels. Without this the reel
@@ -222,8 +252,15 @@ export default function FramerMoveableThumbnails({
     const el = screenRef.current;
     if (!el || typeof ResizeObserver === "undefined") return;
 
-    const ro = new ResizeObserver(() => {
-      const width = el.offsetWidth || 1;
+    const ro = new ResizeObserver(([entry]) => {
+      // borderBoxSize ist die Layoutgrösse ohne Transformationen — siehe
+      // measureWidth. contentRect wäre hier dasselbe (der Ausschnitt trägt
+      // weder Polsterung noch Rahmen), steht aber nur als Rückfallebene für
+      // ältere Umsetzungen da.
+      const measured =
+        entry?.borderBoxSize?.[0]?.inlineSize ?? entry?.contentRect.width ?? 0;
+      if (measured > 0) layoutWidth.current = measured;
+      const width = measureWidth(el);
       setScreenWidth(width);
       // jump() for the same two reasons as the fold above: it leaves no phantom
       // velocity for the next spring to inherit, and it stops any animation that
@@ -234,7 +271,7 @@ export default function FramerMoveableThumbnails({
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [x, slotX]);
+  }, [x, slotX, measureWidth]);
 
   if (len === 0) return null;
 
@@ -290,7 +327,8 @@ export default function FramerMoveableThumbnails({
               onDragStart={() => setIsDragging(true)}
               onDragEnd={(_e, info) => {
                 setIsDragging(false);
-                const screenWidth = screenRef.current?.offsetWidth || 1;
+                const el = screenRef.current;
+                const width = el ? measureWidth(el) : 1;
                 const offset = info.offset.x;
                 const velocity = info.velocity.x;
 
@@ -298,7 +336,7 @@ export default function FramerMoveableThumbnails({
 
                 if (Math.abs(velocity) > 500) {
                   newIndex = velocity > 0 ? index - 1 : index + 1;
-                } else if (Math.abs(offset) > screenWidth * 0.3) {
+                } else if (Math.abs(offset) > width * 0.3) {
                   newIndex = offset > 0 ? index - 1 : index + 1;
                 }
 
@@ -327,13 +365,17 @@ export default function FramerMoveableThumbnails({
                 return (
                 <div
                   key={`${item.id}-${i}`}
-                  className="relative h-full w-full shrink-0"
+                  className="relative h-full shrink-0"
                   aria-hidden={isSpare || undefined}
-                  style={
-                    insetPct
-                      ? { padding: `${insetPct}%` }
-                      : undefined
-                  }
+                  style={{
+                    // Lock each slide to the same float width the transform
+                    // steps by. Percentage `w-full` on a width:auto flex track
+                    // can resolve a hair differently from the viewport measure
+                    // we feed into slotX — pin both to one number instead.
+                    width: screenWidth || "100%",
+                    flex: "0 0 auto",
+                    ...(insetPct ? { padding: `${insetPct}%` } : null),
+                  }}
                 >
                   <div className="relative h-full w-full">
                     <Image
@@ -366,12 +408,23 @@ export default function FramerMoveableThumbnails({
 
           {/* Positioned against the frame box, not the screen, so the portrait
               device can place them outside the bezel instead of over the content.
-              Never disabled now — both directions always have somewhere to go. */}
+              Never disabled now — both directions always have somewhere to go.
+
+              `device-nav` blendet sie im Stapel aus (globals.css). Auf dem
+              Telefon gemessen verdeckten sie beim iPad 26.8% der
+              Screenshot-Breite, weil sie dort mangels Platz neben dem Rahmen
+              auf dem Bild selbst sitzen; beim iPhone kosteten sie über
+              --frame-pad 112px von 345px Spaltenbreite. Ihre Aufgabe übernimmt
+              dort das Wischen, das ohnehin schon da ist (drag="x" oben) — und
+              die Punkte darunter sagen, dass es da ist.
+
+              Kein `flex` als Utility: die Sichtbarkeit steuert eine ungelayerte
+              Regel, und eine Tailwind-Utility aus @layer utilities schlüge sie. */}
           <motion.button
             type="button"
             aria-label="Vorheriges Bild"
             onClick={() => step(-1)}
-            className={`absolute ${device.nav.left} ${device.nav.color} top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full opacity-90 transition-transform hover:scale-110 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2`}
+            className={`device-nav absolute ${device.nav.left} ${device.nav.color} top-1/2 z-10 h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full opacity-90 transition-transform hover:scale-110 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2`}
           >
             <ChevronLeft className="h-5 w-5" aria-hidden />
           </motion.button>
@@ -380,11 +433,39 @@ export default function FramerMoveableThumbnails({
             type="button"
             aria-label="Nächstes Bild"
             onClick={() => step(1)}
-            className={`absolute ${device.nav.right} ${device.nav.color} top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full opacity-90 transition-transform hover:scale-110 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2`}
+            className={`device-nav absolute ${device.nav.right} ${device.nav.color} top-1/2 z-10 h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full opacity-90 transition-transform hover:scale-110 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2`}
           >
             <ChevronRight className="h-5 w-5" aria-hidden />
           </motion.button>
         </div>
+      </div>
+
+      {/* Fortschrittspunkte — nur im Stapel, wo die Pfeile fehlen.
+          Sie sind bewusst Knöpfe und keine blossen Punkte: fällt die Pfeilnavigation
+          weg, bliebe sonst nur das Wischen, und Tastatur wie Screenreader hätten
+          keinen Weg mehr zu den übrigen Aufnahmen. Sichtbar sind trotzdem nur die
+          6px-Punkte — die 44px Trefferfläche liegt unsichtbar darum.
+          `step` zählt Schritte, nicht Folien; deshalb der Umweg über wrap(). */}
+      <div className="device-dots" role="group" aria-label="Aufnahmen dieses Projekts">
+        {items.map((_, i) => {
+          const current = wrap(index, len);
+          return (
+            <button
+              key={i}
+              type="button"
+              aria-label={`Aufnahme ${i + 1} von ${len}`}
+              aria-current={i === current ? "true" : undefined}
+              onClick={() => step(i - current)}
+              className="flex h-11 w-6 cursor-pointer items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a]"
+            >
+              <span
+                className={`block h-1.5 w-1.5 rounded-full bg-[#0a0a0a] transition-opacity duration-300 ${
+                  i === current ? "opacity-90" : "opacity-25"
+                }`}
+              />
+            </button>
+          );
+        })}
       </div>
     </div>
   );

@@ -56,7 +56,16 @@ export function useLightSection(
 
     const st = ScrollTrigger.create({
       trigger: el,
-      // +=40 ≈ the nav's vertical centre (py-5 around a 32px logo)
+      // +=40 liegt im Leistenband und damit vor der Wortmarke — der Wechsel ist
+      // vollzogen, bevor die Sectionkante sie erreicht.
+      //
+      // Der frühere Kommentar hier ("≈ the nav's vertical centre, py-5 around a
+      // 32px logo") beschrieb eine Leiste, die es nie gab: gemessen sind es
+      // pt/pb statt py, ein 20px hohes Logo, und die Leistenmitte lag bei 52.
+      // Seit die Leiste mobil auf 72px steht, ist ihre Mitte 36 und der
+      // Desktop-Wert 52 — eine einzelne Zahl kann beide nicht treffen. 40
+      // bleibt unverändert, weil jede Änderung hier den eingefrorenen Desktop
+      // beträfe; sie liegt in beiden Fällen innerhalb des Bandes.
       start: "top top+=40",
       end: resolveEnd,
       // Resolve after the pin has established this section's final height.

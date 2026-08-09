@@ -120,9 +120,21 @@
 }
 
 /* Die mitlaufende Ausgabe des LAAS-Zeichens. Liegt über der Szene und unter
-   der Blende; Breite und Lage setzt About.tsx pro Frame in Pixeln.
-   Ausdrücklich OHNE will-change: genau dieser Hinweis würde das Raster wieder
-   festhalten, das hier bei jeder Größe frisch entstehen soll. */
+   der Blende. Ihre Layoutbreite setzt About.tsx EINMAL pro Messung auf die
+   Endgröße der Kamerafahrt; pro Frame bewegt sie nur noch ein Transform.
+   Das ist keine Feinheit, sondern der Grund gegen das frühere Zittern: eine
+   gebrochene Breite ist ein Layoutwert, und Chrome rundet Layoutkanten
+   einzeln aufs Gerätepixel — die gemalte Breite pendelte damit pro Frame hin
+   und her. Ein Transform kennt diese Rundung nicht.
+
+   transform-origin: 0 0, weil translate3d die Ecke setzt und scale von genau
+   dort aus schrumpfen muss — mit der Mitte als Ursprung wanderte die Kopie
+   beim Skalieren vom Monitor weg.
+
+   Ausdrücklich OHNE will-change: genau dieser Hinweis würde das Raster
+   festhalten, das hier bei jedem Maßstab frisch aus dem Vektor entstehen soll.
+   Nachgemessen bringt er hier ohnehin nichts — translate3d legt die Ebene
+   bereits eigenständig an. */
 .about-logo-hud {
   position: absolute;
   left: 0;
@@ -238,6 +250,47 @@
    48px im Bild stand. Deshalb wird der Schutz unten wieder gelöst. */
 .about-statement span {
   white-space: nowrap;
+}
+
+/* ── Hochkant: das Porträt führt ─────────────────────────────────────────
+   Nebeneinander bleibt vom Bild ein Briefmarkenformat: 40 % einer 393px-
+   Spalte sind gemessen 133px, und die Textspalte daneben reicht gerade für
+   „ARNOLDI". Gestapelt bekommt beides die volle Breite — erst der Auftakt,
+   dann das Bild, darunter Name, Satz und Ort.
+
+   Der Auftakt „Hey, ich bin" bleibt im Markup bei Name und Satz: dorthin
+   gehört er, sobald ab 768px zwei Spalten nebeneinander stehen. Hochkant
+   löst `display: contents` die Textspalte auf, ihre vier Zeilen werden
+   selbst zu Rasterzellen, und `order` zieht nur den Auftakt vor das Bild.
+   Kein zusätzliches Element im DOM — die eingefrorene Reihe ab 768px sieht
+   von der Umstellung also nichts.
+
+   Die Zeilenabstände bleiben, wo sie waren: .about-lead trägt kein row-gap,
+   die Abstände kommen weiter aus den margin-top von Name, Satz und Ort. Nur
+   der Sprung vom Auftakt aufs Bild ist neu und steht am Porträt. */
+@media (max-width: 767.98px) {
+  .about-lead {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .about-identity {
+    display: contents;
+  }
+
+  .about-greeting {
+    order: -1;
+  }
+
+  /* Als Auftakt trägt das Porträt mehr Fläche als in der alten 40 %-Spalte —
+     es ist jetzt das erste Bild der Section, nicht die Beigabe zum Namen.
+     Die Blende weiter unten rechnet die Breite hochkant zusätzlich gegen die
+     Bühnenhöhe; hier gilt die Spalte, weil auf kurzen Fenstern gestapelt
+     wird und die Section dort mitwachsen darf. */
+  .about-plate {
+    width: min(72%, 17rem);
+    margin-top: clamp(0.7rem, 1.8vh, 1.1rem);
+  }
 }
 
 /* ── Werdegang ───────────────────────────────────────────────────────────
@@ -673,23 +726,135 @@
    einer 100svh-Bühne, und unter ~660px Fensterhöhe passt sie dort nicht mehr
    hinein. Darunter bleibt die Section gestapelt und statisch. */
 @media (max-width: 767px) and (min-height: 660px) and (prefers-reduced-motion: no-preference) {
-  /* 280vh = 100vh Bühne + 180vh Scrollweg. Kürzer als quer, weil die Kamera
-     hochkant nur bis zur Bildschirmbreite fährt (ZOOM_END.mobile = 0.46). */
+  /* 400vh = 100vh Bühne + 300vh Klebestrecke. Die Haupt-Timeline verbraucht
+     davon unverändert die ersten 180vh — ihr `end` ist in About.tsx hochkant
+     auf genau diese Strecke festgenagelt, damit die Kamerafahrt ihre Taktung
+     behält. Die restlichen 120vh sind der Schwanz, in dem die beiden Kapitel
+     wechseln. Vorher standen hier 280vh, also 180vh Scrollweg und kein
+     Schwanz. */
   .about-track {
-    height: 280vh;
+    height: 400vh;
   }
 
+  /* ── Der weiße Balken unter der Bühne ──────────────────────────────────
+   *
+   * Der Befund: die klebende Bühne misst 100svh — das ist auf iOS die KLEINE
+   * Ansicht, also die mit ausgefahrener Adressleiste. Beim Scrollen fährt die
+   * Leiste ein und der Browser gibt bis zu (100lvh - 100svh) zusätzlich frei.
+   * Die Bühne wächst nicht mit, und was darunter steht, ist der cremefarbene
+   * Grund der Section: ein heller Streifen am unteren Bildrand, mitten im
+   * schwarzen Panel. Reproduziert mit künstlich verkürzter Bühne — der Streifen
+   * stand exakt so da, samt Logo-Button darauf.
+   *
+   * Die Bühne DARF nicht einfach auf 100lvh umgestellt werden: an ihrem
+   * svh-Maß hängt, dass die Copy in die kleine Ansicht passt (die ganze
+   * Rechnung dazu steht beim Kapitelwechsel weiter oben). Deshalb getrennt —
+   * gemalt wird bis zur großen Ansicht, gerechnet weiter in der kleinen:
+   *
+   *   .about-stage    wird um die Lücke höher; sie ist selbst durchsichtig,
+   *                   im Skizzen-Teil bleibt der Streifen also weiter cream
+   *                   und damit unsichtbar — genau die Letterbox, die dort
+   *                   gewollt ist.
+   *   .about-content  liegt auf inset: 0, deckt die Lücke also mit; die
+   *                   Polsterung unten nimmt sie wieder auf, damit die Copy
+   *                   auf demselben Fleck sitzt wie zuvor.
+   *   .about-scene    behält ihre svh-Box, damit der Establishing-Shot
+   *                   unverändert im Bild steht.
+   *
+   * Als Custom Property und nicht direkt als calc(): so lässt sich die Lücke
+   * im Test setzen: Chromium rechnet svh = lvh und kann den Fehler von sich
+   * aus nicht zeigen. */
+  .about-stage {
+    --toolbar-gap: calc(100lvh - 100svh);
+    height: calc(100svh + var(--toolbar-gap));
+  }
+
+  .about-scene {
+    bottom: var(--toolbar-gap);
+  }
+
+  /* Zwei Kapitel auf demselben Feld.
+   *
+   * Der Befund: der Streifen brauchte gemessen 929.96px (Lead 310.5 +
+   * Annotations 270.5 + Titleblock 170 + zwei Lücken à 34.08 + 110.76
+   * Polsterung), die Bühne hat 100svh. In Chromium sind das 852px und es fehlen
+   * 78px; auf einem echten iPhone ist `svh` die KLEINE Ansicht — bei ~745px
+   * fehlen 185px, und weil .about-content `align-items: center` trägt, teilt
+   * sich der Überlauf auf beide Enden: 15.8px oben, 58.4px unten. Genau das war
+   * zu sehen — „Hey, ich bin" oben angeschnitten, die untere Werkzeugreihe
+   * ganz weg.
+   *
+   * Statt den Inhalt zu verkleinern, zeigt der Stapel ihn in zwei Zügen. Der
+   * Trick ist die Zeilenzuweisung und kein zusätzliches Element: .about-lead
+   * überspannt beide Zeilen, .about-annotations und .about-titleblock belegen
+   * je eine davon. Beide Kapitel liegen damit deckungsgleich übereinander, ohne
+   * dass das DOM sich ändert — und weil diese Regeln vollständig in der
+   * Mobil-Query stehen, kann der eingefrorene Desktop von ihnen nicht berührt
+   * werden. Ein umschliessendes <div> hätte dafür `display: contents` gebraucht
+   * und damit ausgerechnet dort eingegriffen.
+   *
+   * Die Rasterhöhe ist das Maximum beider Kapitel, also 474.5px statt 819.2px.
+   * Mit der Polsterung darunter sind es 578.8px in einer 745px-Bühne — 166px
+   * Reserve statt 185px Überlauf.
+   *
+   * `gap` erbt aus der Basisregel von .about-panel und trennt weiter die beiden
+   * Zeilen des zweiten Kapitels. */
+  .about-panel {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto;
+    align-content: center;
+  }
+
+  .about-lead {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+    align-self: center;
+  }
+
+  .about-annotations {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: end;
+  }
+
+  .about-titleblock {
+    grid-column: 1;
+    grid-row: 2;
+    align-self: start;
+  }
+
+  /* svh statt vh, und das ist der zweite Teil desselben Befunds: die Polsterung
+     rechnete in `vh` INNERHALB einer Box, die in `svh` misst. Auf iOS sind das
+     zwei verschiedene Zahlen — die Box schrumpft auf 745, die Polsterung rechnet
+     weiter mit 852 und frisst 110.76px aus einem Kasten, der sie nicht mehr hat.
+     Mit svh laufen beide auf derselben Zahl.
+     Oben mindestens 4.5rem, damit die Copy unter der 72px hohen Leiste beginnt:
+     11svh sind 81.95px bei svh 745 und 93.7px bei 852. */
   .about-content {
-    padding-top: clamp(4rem, 9vh, 5.5rem);
-    padding-bottom: clamp(1.5rem, 4vh, 2.5rem);
+    padding-top: clamp(4.5rem, 11svh, 6rem);
+    /* + Lücke: die Ebene deckt die volle, gewachsene Bühne, der Inhalt darin
+       bleibt aber in der kleinen Ansicht zentriert — sonst rutschte die Copy
+       um die halbe Lücke nach unten, ausgerechnet dort, wo der Platz knapp
+       ist. Das Innenmaß ist damit dasselbe wie vor der Korrektur. */
+    padding-bottom: calc(clamp(1.25rem, 3svh, 2rem) + var(--toolbar-gap));
   }
 
   /* Gestapelt bindet die Spaltenbreite, in der Blende die Höhe: Foto, Name,
      Werdegang und Tools müssen zusammen in eine 100svh-Bühne passen. Ohne den
      svh-Term schöbe das Foto auf flachen Fenstern die Reihen darunter heraus.
-     Bleibt es unter der Spaltenbreite, sitzt es links am schwarzen Rand. */
+     Bleibt es unter der Spaltenbreite, sitzt es links am schwarzen Rand.
+
+     34svh statt der früheren 26: seit das Bild den Stapel anführt statt neben
+     dem Namen zu stehen, ist die Spalte nicht mehr der knappe Faktor. Der
+     Rahmen bleibt die Kapitelhöhe — Kapitel eins darf nicht höher werden als
+     Kapitel zwei (Werdegang + Werkzeuge), sonst wächst die Rasterzeile und
+     der Streifen läuft aus der Bühne. Nachgemessen, Kapitel eins gegen
+     Kapitel zwei: 393×852 430,4 : 472,6 — 375×667 374,3 : 443,3 —
+     440×956 462,5 : 465,4. Der engste Fall ist das grösste Gerät, weil das
+     Bild mit svh wächst und der Satz daneben nicht. */
   .about-plate {
-    width: min(100%, calc(26svh / (1206 / 953)));
+    width: min(100%, calc(34svh / (1206 / 953)));
     justify-self: start;
   }
 }

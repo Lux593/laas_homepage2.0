@@ -15,6 +15,27 @@ interface TextRevealProps {
   start?: string;
   as?: "h1" | "h2" | "h3" | "p" | "span";
   fromVars?: gsap.TweenVars;
+  /**
+   * Bindet die Enthüllung an den Scroll, statt sie einmalig abzuspielen.
+   *
+   * Ohne diesen Wert bleibt es beim `toggleActions: "play none none none"` von
+   * vorher — das ist der Ruhezustand aller bestehenden Aufrufe und darf sich
+   * nicht ändern.
+   *
+   * Wozu: auf dem Telefon fiel auf, dass die Kopfzeile der Leistungen 1002ms
+   * NACH dem Finger noch auf der Uhr weiterlief (duration 1, expo.out) und
+   * rückwärts überhaupt nicht mehr reagierte, weil `play none none none` nur
+   * das Hinspielen kennt. Gemessen im Flick-Test: abwärts erreichte die
+   * Deckkraft der Wörter erst nach einer Sekunde die 1, während die Fläche
+   * längst offen stand; aufwärts stand sie unverrückt auf 1. Wer die Bewegung
+   * fahren soll, darf sie nicht abgespielt bekommen.
+   *
+   * Mit `scrub` gehört auch `end` gesetzt — sonst endet der Bereich beim
+   * ScrollTrigger-Standard und die Staffelung quetscht sich hinein.
+   */
+  scrub?: number;
+  /** Nur zusammen mit `scrub` wirksam. */
+  end?: string;
 }
 
 /** Stable default — inline `fromVars = {}` would remount the tween on every parent render. */
@@ -28,6 +49,8 @@ export default function TextReveal({
   start = "top 85%",
   as: Tag = "p",
   fromVars = EMPTY_FROM,
+  scrub,
+  end,
 }: TextRevealProps) {
   const containerRef = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -58,11 +81,10 @@ export default function TextReveal({
 
     const ctx = gsap.context(() => {
       const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: container,
-          start,
-          toggleActions: "play none none none",
-        },
+        scrollTrigger:
+          scrub === undefined
+            ? { trigger: container, start, toggleActions: "play none none none" }
+            : { trigger: container, start, end, scrub },
       });
 
       tl.fromTo(
@@ -87,7 +109,7 @@ export default function TextReveal({
     return () => {
       ctx.revert();
     };
-  }, [children, variant, stagger, start, fromVars]);
+  }, [children, variant, stagger, start, fromVars, scrub, end]);
 
   return (
     <Tag

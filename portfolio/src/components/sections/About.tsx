@@ -80,8 +80,8 @@ const LOGO_CROSS = { x: 49.22, y: 42.5, size: 3.24 };
  *  überholt: da ist die Blende breiter als das Zeichen. */
 const LOGO_BAR = { left: 32.52, right: 66.06, top: 38.74, bottom: 46.24 };
 
-/** Seitenverhältnis von /laas-logo-full.svg. applyZoom schreibt der HUD-Kopie
- *  nur die Breite, die Höhe folgt aus dem Bild — für die Balkenkanten braucht
+/** Seitenverhältnis von /laas-logo-full.svg. Die Höhe der HUD-Kopie steht
+ *  nirgends als Stil — sie folgt aus dem Bild — für die Balkenkanten braucht
  *  es sie aber als Zahl, ohne dafür pro Frame das Layout zu lesen. */
 const LOGO_RATIO = 777.06 / 1798.74;
 
@@ -195,6 +195,19 @@ export default function About() {
         const groups = gsap.utils.toArray<HTMLElement>(".about-in", content);
         gsap.set(groups, { opacity: 0, y: 32 });
 
+        // Hochkant liegen die drei Blöcke als ZWEI Kapitel deckungsgleich
+        // übereinander — die Zeilenzuweisung dazu steht in about.css. Quer
+        // stehen sie wie bisher nebeneinander und diese beiden Listen bleiben
+        // ungenutzt.
+        const chapterOne = groups.filter((el) =>
+          el.classList.contains("about-lead"),
+        );
+        const chapterTwo = groups.filter(
+          (el) => !el.classList.contains("about-lead"),
+        );
+        /** Gesetzt nur im Hochformat, siehe den Kapitelwechsel weiter unten. */
+        let swapTeardown: (() => void) | undefined;
+
         // Ab hier zeigt die Kopie das Zeichen, das Original im Monitor liefert
         // nur noch Maße. Der Tausch passiert erst in diesem Kontext: ohne
         // Kamerafahrt (reduzierte Bewegung, kurze Fenster) läuft applyZoom nie,
@@ -233,6 +246,10 @@ export default function About() {
         let hudX = 0;
         let hudY = 0;
         let hudW = 0;
+        let hudH = 0;
+        /** Layoutbreite der HUD-Kopie: steht die ganze Fahrt über fest, siehe
+         *  measure und applyZoom. Nie 0 — sie steht im Nenner des Maßstabs. */
+        let hudBaseW = 1;
 
         const measure = () => {
           gsap.set(scene, { x: 0, y: 0, scale: 1 });
@@ -254,29 +271,37 @@ export default function About() {
             endScale = 1;
             offsetX = 0;
             offsetY = 0;
-            return;
+          } else {
+            // 1.04 schiebt die Monitorblende über die Viewport-Kante hinaus,
+            // bevor die Skizze ausblendet — ohne den Zuschlag steht am Ende eine
+            // unscharfe Rahmenlinie im Bild.
+            //
+            // Hochkant deckt bewusst nur die Breite: die Bildschirmfläche ist
+            // dort rund 110 × 60 px groß, „cover" bräuchte den ~14-fachen Maßstab
+            // und machte aus der Skizze Brei. Die Kamera fährt also nur, bis der
+            // Monitor die Breite füllt — die Blende deckt den Rest der Höhe
+            // ohnehin zu.
+            endScale =
+              (isMobile
+                ? v.width / s.width
+                : Math.max(v.width / s.width, v.height / s.height)) * 1.04;
+
+            // Die Kamera zielt auf das A-Kreuz, nicht auf die Mitte der
+            // Bildschirmfläche: aus diesem Punkt öffnet die Blende, und ein paar
+            // Pixel Versatz sind nach dem ~3,5-fachen Zoom sichtbar. Das Kreuz
+            // liegt fast mittig im Zeichen, der Monitor deckt die Bühne also
+            // weiterhin — die 1.04 oben tragen den Rest.
+            offsetX = c.left + c.width / 2 - (v.left + v.width / 2);
+            offsetY = c.top + c.height / 2 - (v.top + v.height / 2);
           }
 
-          // 1.04 schiebt die Monitorblende über die Viewport-Kante hinaus, bevor
-          // die Skizze ausblendet — ohne den Zuschlag steht am Ende eine
-          // unscharfe Rahmenlinie im Bild.
-          //
-          // Hochkant deckt bewusst nur die Breite: die Bildschirmfläche ist dort
-          // rund 110 × 60 px groß, „cover" bräuchte den ~14-fachen Maßstab und
-          // machte aus der Skizze Brei. Die Kamera fährt also nur, bis der Monitor
-          // die Breite füllt — die Blende deckt den Rest der Höhe ohnehin zu.
-          endScale =
-            (isMobile
-              ? v.width / s.width
-              : Math.max(v.width / s.width, v.height / s.height)) * 1.04;
-
-          // Die Kamera zielt auf das A-Kreuz, nicht auf die Mitte der
-          // Bildschirmfläche: aus diesem Punkt öffnet die Blende, und ein paar
-          // Pixel Versatz sind nach dem ~3,5-fachen Zoom sichtbar. Das Kreuz
-          // liegt fast mittig im Zeichen, der Monitor deckt die Bühne also
-          // weiterhin — die 1.04 oben tragen den Rest.
-          offsetX = c.left + c.width / 2 - (v.left + v.width / 2);
-          offsetY = c.top + c.height / 2 - (v.top + v.height / 2);
+          // Die Layoutbreite der Kopie, EINMAL pro Messung. Genommen wird die
+          // Endgröße der Fahrt, damit der Maßstab unterwegs immer ≤ 1 bleibt
+          // (Begründung in applyZoom). Die Untergrenze ist keine Kosmetik: die
+          // Zahl steht im Nenner des Maßstabs, und misst die Marke vor dem
+          // ersten Layout 0, stünde dort NaN.
+          hudBaseW = Math.max(1, logoW * endScale);
+          hud.style.width = `${hudBaseW}px`;
         };
 
         const push = gsap.parseEase("power2.in");
@@ -297,29 +322,54 @@ export default function About() {
           gsap.set(scene, { x, y, scale, force3D: true });
 
           // Das Zeichen läuft NICHT in der Szene mit, sondern als Kopie darüber
-          // (siehe .about-logo-hud): Breite und Lage stehen hier in Pixeln,
-          // also ist seine Layoutgröße immer seine Bildschirmgröße und Chrome
-          // rastert es bei jedem Maßstab frisch aus dem Vektor.
+          // (siehe .about-logo-hud). Sie trägt ihre Endgröße als feste
+          // Layoutbreite (measure) und wird von dort auf die Größe des
+          // aktuellen Frames HERUNTERskaliert — Lage und Maßstab stehen
+          // ausschließlich im Transform, das Layout rührt sich nicht.
           //
-          // In der Szene ging das nicht: die trägt `will-change: transform`
-          // (about.css) und wird deshalb EINMAL gerastert und danach als Textur
-          // aufgezogen — beim ~3,5-fachen Zoom kam das Zeichen als
-          // Bitmap-Upscale an (gemessen 3,6 px breite Kanten statt 1,4 px). Den
-          // Hinweis situativ fallen zu lassen half nicht: entweder flippte er
-          // mitten in der Fahrt und ruckelte, oder man sah das Nachrastern als
-          // Schärfesprung. Der Schreibtisch darunter bleibt gepinnt — er ist an
-          // dieser Stelle ohnehin weichgezeichnet, seine Auflösung sieht
-          // niemand. Eine eigene Compositing-Ebene nur fürs Zeichen wäre
-          // übrigens keine Lösung gewesen: der Teilbaum erbt die
-          // festgehaltene Rasterskala (gemessen 2,75 px).
+          // Genau da saß das Wackeln: eine gebrochene `width` pro Frame ist ein
+          // Layoutwert, und Chrome malt Layoutboxen pixelgenau — linke und
+          // rechte Kante werden EINZELN gerundet. Bei stetig wachsender Box
+          // gemessen: linke Kante 447,5 / 447,0 / 446,5 / 446,5, rechte dazu
+          // 542,5 / 543,0 / 542,5 / 543,5. Die gerenderte Breite pendelte also
+          // pro Frame um ein Gerätepixel vor und zurück, statt monoton zu
+          // wachsen. Am Schreibtisch darunter sah man davon nichts: der ist eine
+          // Textur, die der Compositor stufenlos weiterskaliert. Das Zeichen
+          // dagegen lag im Layout — und zitterte. Ein Transform kennt diese
+          // Rundung nicht; gemessen fiel das Restzittern des Schwerpunkts damit
+          // von 0,26 px auf 0,08 px pro Frame, ohne einen einzigen Rückschritt
+          // in der gemalten Breite (vorher in fast jedem Frame einer).
+          //
+          // Warum die Kopie überhaupt außerhalb von .about-scene steht, bleibt
+          // wie gehabt: die Szene trägt `will-change: transform` (about.css),
+          // wird deshalb EINMAL gerastert und danach als Textur aufgezogen —
+          // beim ~3,5-fachen Zoom kam das Zeichen dort als Bitmap-Upscale an
+          // (gemessen 3,6 px breite Kanten statt 1,4 px). Den Hinweis situativ
+          // fallen zu lassen half nicht: entweder flippte er mitten in der Fahrt
+          // und ruckelte, oder man sah das Nachrastern als Schärfesprung. Der
+          // Schreibtisch darunter bleibt gepinnt — er ist an dieser Stelle
+          // ohnehin weichgezeichnet, seine Auflösung sieht niemand.
+          //
+          // Diese Ebene hier bekommt ausdrücklich KEIN will-change (about.css):
+          // ohne den Hinweis folgt ihr Raster dem Maßstab, den das Transform
+          // gerade setzt, statt auf einem festzukleben. Gemessen liegt die
+          // Kantenschärfe über die ganze Fahrt rund 11 % über der früheren
+          // Layout-Variante — es wird also weiterhin aus dem Vektor gerastert,
+          // nur eben ohne Layoutbox dazwischen. Die Basisbreite ist trotzdem die
+          // ENDgröße und nicht die Startgröße: bliebe die Rasterskala wider
+          // Erwarten doch einmal stehen, ist ein zu großes Raster nur weich
+          // gefiltert, ein zu kleines sichtbar aufgeblasen. Herunterskalieren
+          // ist die Richtung, die im Zweifel verzeiht.
           //
           // Die Formel ist dieselbe wie oben, nur für einen Punkt statt für die
           // Ebene: um die Bühnenmitte skalieren, dann den Kameraversatz drauf.
           hudW = logoW * scale;
+          hudH = hudW * LOGO_RATIO;
           hudX = stageW / 2 + (logoX - stageW / 2) * scale + x;
           hudY = stageH / 2 + (logoY - stageH / 2) * scale + y;
-          hud.style.width = `${hudW}px`;
-          hud.style.transform = `translate3d(${hudX}px, ${hudY}px, 0)`;
+          hud.style.transform = `translate3d(${hudX}px, ${hudY}px, 0) scale(${
+            hudW / hudBaseW
+          })`;
         };
 
         // Die Blende: ein Rechteck, das exakt im Querbalken zwischen den beiden
@@ -348,10 +398,10 @@ export default function About() {
             gsap.utils.clamp(0, 1, (p - split) / (1 - split))
           );
 
-          // Der Balken in Bühnenpixeln. Die Höhe der Kopie steht nirgends —
-          // applyZoom schreibt ihr nur die Breite, den Rest macht das Bild —
-          // also aus dem Seitenverhältnis der Datei.
-          const hudH = hudW * LOGO_RATIO;
+          // Der Balken in Bühnenpixeln, aus der Box, die applyZoom der Kopie
+          // gerade geschrieben hat — inklusive Höhe. Früher stand hier
+          // `hudW * LOGO_RATIO`, weil die Höhe nirgends festgehalten war; seit
+          // sie mitgerastet wird, ist der Wert von dort der genauere.
           const barL = hudX + hudW * (LOGO_BAR.left / 100);
           const barR = hudX + hudW * (LOGO_BAR.right / 100);
           const barT = hudY + hudH * (LOGO_BAR.top / 100);
@@ -389,7 +439,16 @@ export default function About() {
           scrollTrigger: {
             trigger: track,
             start: "top top",
-            end: "bottom bottom",
+            // Quer wie bisher bis ans Trackende. Hochkant NICHT: der Track ist
+            // dort von 280vh auf 400vh gewachsen, damit hinter dieser Timeline
+            // noch Strecke für den Kapitelwechsel bleibt. Bliebe das `end` an
+            // „bottom bottom", zöge sich die Kamerafahrt einfach mit in die
+            // Länge und die Taktung wäre eine andere. 1.8 × innerHeight ist
+            // exakt der Weg, den 280vh Track minus 100vh Bühne vorher ergaben —
+            // die Fahrt selbst ändert sich also um keinen Pixel.
+            end: isMobile
+              ? () => `+=${window.innerHeight * 1.8}`
+              : "bottom bottom",
             scrub: true,
             // applyZoom zuerst: applyWipe liest die HUD-Geometrie ab, die dort
             // geschrieben wird.
@@ -461,11 +520,70 @@ export default function About() {
           // schlicht weg, man sähe sie nie. Der Bezug auf split statt auf eine
           // feste Zahl hält das Verhältnis, wenn oben an der Aufteilung gedreht
           // wird.
+          //
+          // Hochkant steigt hier nur das ERSTE Kapitel ein — Porträt, Name und
+          // Ort. Der Rest kommt im Schwanz hinter dieser Timeline, siehe unten.
           .to(
-            groups,
+            isMobile ? chapterOne : groups,
             { opacity: 1, y: 0, ease: "power3.out", duration: 0.14, stagger: 0.05 },
             zoomEnd + WIPE_DURATION * (split + (1 - split) * 0.3)
           );
+
+        // ── Kapitelwechsel, nur hochkant ──────────────────────────────────
+        //
+        // Warum überhaupt zwei Kapitel: der Streifen braucht gemessen 929.96px,
+        // die Bühne hat 100svh. Auf einem echten iPhone sind das ~745px — es
+        // fehlen 185px, und weil .about-content mittig ausrichtet, teilt sich
+        // der Überlauf auf beide Enden. „Hey, ich bin" stand oben angeschnitten,
+        // die untere Werkzeugreihe fehlte ganz. Genau der gemeldete Fehler.
+        //
+        // Warum ein EIGENER Trigger und nicht eine Position in der Timeline
+        // oben: die hängt an der Kamerafahrt, und jede zusätzliche Strecke
+        // darin verlangsamte sie mit. Der Track ist stattdessen um 120vh
+        // gewachsen, die Haupt-Timeline endet unverändert nach 180vh, und diese
+        // 120vh gehören allein dem Wechsel. Die Bühne klebt über 300vh, hört
+        // also erst 10vh nach dem Ende hier auf.
+        //
+        // Scrub statt Abspielen: der Nutzer fährt den Wechsel. Rückwärts kommt
+        // Kapitel eins deshalb von selbst zurück.
+        if (isMobile) {
+          const swap = gsap.timeline({
+            scrollTrigger: {
+              trigger: track,
+              start: () => `top top-=${window.innerHeight * 1.9}`,
+              end: () => `top top-=${window.innerHeight * 2.85}`,
+              scrub: 0.5,
+              invalidateOnRefresh: true,
+            },
+          });
+
+          swap
+            .to(
+              chapterOne,
+              { opacity: 0, y: -30, ease: "power2.in", duration: 0.34 },
+              0,
+            )
+            .fromTo(
+              chapterTwo,
+              { opacity: 0, y: 34 },
+              {
+                opacity: 1,
+                y: 0,
+                ease: "power3.out",
+                duration: 0.5,
+                stagger: 0.08,
+              },
+              0.3,
+            );
+
+          // Hängt am selben mm-Kontext und wird von dessen revert() mit
+          // aufgeräumt; der explizite Kill nimmt nur den Trigger mit, den
+          // revert() nicht kennt.
+          swapTeardown = () => {
+            swap.scrollTrigger?.kill();
+            swap.kill();
+          };
+        }
 
         // Browser-Zoom (Strg/Cmd +) ist ein Layoutwechsel ohne Scrollbewegung:
         // die Bühne misst in svh/vw und fließt sofort neu, das Zeichen steht
@@ -507,6 +625,7 @@ export default function About() {
         // verlassen.
         return () => {
           ro.disconnect();
+          swapTeardown?.();
           logo.style.visibility = "";
           hud.style.visibility = "";
           hud.style.width = "";
@@ -706,9 +825,11 @@ export default function About() {
           <div ref={veilRef} className="about-veil">
             {/* Die sichtbare Ausgabe des Zeichens, bewusst außerhalb von
                 .about-scene: dort läge sie in der gepinnten, hochskalierten
-                Textur (Begründung in applyZoom). Hier setzt applyZoom Breite und
-                Lage in Pixeln, deckungsgleich mit dem Original im Monitor.
-                Startet unsichtbar — ohne Kamerafahrt übernimmt sie nichts. */}
+                Textur (Begründung in applyZoom). Die Layoutbreite setzt measure
+                einmal auf die Endgröße der Fahrt, Lage und Maßstab schreibt
+                applyZoom pro Frame ins Transform — deckungsgleich mit dem
+                Original im Monitor. Startet unsichtbar: ohne Kamerafahrt
+                übernimmt sie nichts. */}
             <div
               ref={hudRef}
               aria-hidden
@@ -746,7 +867,10 @@ export default function About() {
                   </figure>
 
                   <div className="about-identity">
-                    <p className="font-mono text-[0.85rem] uppercase tracking-[0.24em] text-[#f2ede4]/50">
+                    {/* Die Klasse trägt hochkant die Umstellung: dort löst
+                        about.css die Textspalte auf und zieht allein diese
+                        Zeile über das Porträt. */}
+                    <p className="about-greeting font-mono text-[0.85rem] uppercase tracking-[0.24em] text-[#f2ede4]/50">
                       {ABOUT_INTRO.greeting}
                     </p>
                     {/* Die Schriftgrösse steht in about.css bei .about-name:

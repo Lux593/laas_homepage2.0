@@ -36,7 +36,7 @@ export default function ProjectPanel({
         {/* Zweispaltig steht der Text links (dieselbe Kante wie „PROJEKTE"),
             das Gerät in der rechten 1fr-Spalte. Gestapelt liegt das Gerät oben
             und der Text darunter. */}
-        <div className="mt-[clamp(1.75rem,4vh,3rem)] lg:mt-0">
+        <div className="mt-[clamp(0.75rem,2vh,1.25rem)] lg:mt-0">
           {/* Spalten und Abstände stehen als CSS in globals.css, nicht als
               lg:-Utilities. `lg:` heisst nur „ab 1024px" und ist damit auf dem
               iPad Pro 13" hochkant (1024×1366) falsch: das Gerät ist per
@@ -60,8 +60,18 @@ export default function ProjectPanel({
                 Gerät stehen lassen.
                 Gepinnt ändert sich dadurch nichts: die Spalte ist dort per
                 minmax(40ch,48ch) ohnehin nie breiter als das Mass selbst. */}
+            {/* Zwei Blöcke statt eines Fliesstexts: gestapelt gehören Zähler und
+                Titel ÜBER den Rahmen, Fliesstext und Liste darunter. Die
+                Umsortierung macht globals.css — dort löst `display: contents`
+                diese beiden Hüllen im Stapel auf, sodass Kopf, Rahmen und Rumpf
+                drei Geschwister im selben Raster werden und über `order` in die
+                gewünschte Folge gehen.
+                Auf dem Desktop bleiben beide gewöhnliche Blöcke in derselben
+                Spalte: h3 trägt keinen Aussenabstand, der Fliesstext bringt
+                seine 12px selbst mit und gibt sie durch die Hülle nach aussen
+                weiter — die Zeilenabstände sind dieselben wie zuvor. */}
             <div className="work-panel__copy min-w-0 w-full">
-              <div className="max-w-[48ch]">
+              <div className="work-panel__head max-w-[48ch]">
                 {/* Stacked, the header counter is out of sight by the time a panel
                     is on screen — so the position belongs to the panel itself.
                     Pinned, the counter in the section header already says it. */}
@@ -70,27 +80,35 @@ export default function ProjectPanel({
                   className="mb-7 flex items-center gap-4 lg:hidden"
                   aria-hidden
                 >
-                  <span className="shrink-0 font-mono text-caption tabular-nums tracking-[0.2em] text-[#6a6a6a]">
+                  {/* Display statt Mono — siehe ProcessPanel: die Mono-Null
+                      trägt einen Strich und fiel als einzige Zahl aus der
+                      Reihe. */}
+                  <span className="shrink-0 font-display text-caption font-bold tabular-nums tracking-tighter text-[#6a6a6a]">
                     {String(index + 1).padStart(2, "0")} /{" "}
                     {String(total).padStart(2, "0")}
                   </span>
-                  <span
-                    data-reveal="rule"
-                    className="h-px flex-1 bg-[#0a0a0a]/15"
-                  />
+                  {/* Hier lief eine Haarlinie neben der Zahl bis an den
+                      Satzspiegelrand. Raus auf Ansage — die Zahl steht allein.
+                      useStackReveal zieht [data-reveal="rule"] auf, findet hier
+                      aber nichts mehr und überspringt den Tween. */}
                 </div>
 
                 <header data-reveal="copy">
                   <h3 className="whitespace-pre-line font-display text-[clamp(1.9rem,3.1vw,3.1rem)] font-bold leading-[0.98] tracking-tighter text-[#0a0a0a] uppercase">
                     {project.title}
                   </h3>
-
-                  <p className="mt-3 max-w-[46ch] font-body text-body-md text-[#3a3a3a]">
-                    {project.subtitle}
-                  </p>
                 </header>
+              </div>
 
-                <ul className="mt-7 border-t border-[#0a0a0a]/12">
+              <div className="work-panel__body max-w-[48ch]">
+                <p
+                  data-reveal="copy"
+                  className="work-panel__lede mt-3 max-w-[46ch] font-body text-body-md text-[#3a3a3a]"
+                >
+                  {project.subtitle}
+                </p>
+
+                <ul className="work-panel__features mt-7 border-t border-[#0a0a0a]/12">
                   {project.features.map((feature, i) => (
                     <li
                       key={feature.title}
@@ -101,10 +119,10 @@ export default function ProjectPanel({
                         {String(i + 1).padStart(2, "0")}
                       </span>
                       <div className="min-w-0">
-                        <p className="font-display text-body-sm font-semibold text-[#0a0a0a]">
+                        <p className="work-panel__feature-title font-display text-body-sm font-semibold text-[#0a0a0a]">
                           {feature.title}
                         </p>
-                        <p className="mt-1 font-body text-caption leading-relaxed text-[#6a6a6a]">
+                        <p className="work-panel__feature-copy mt-1 font-body text-caption leading-relaxed text-[#6a6a6a]">
                           {feature.description}
                         </p>
                       </div>

@@ -61,12 +61,14 @@
 .process-panel {
   width: 100%;
   flex-shrink: 0;
-  padding-block: clamp(3rem, 8vh, 6rem);
+  /* Wie bei den Projekten: der Abstand trennt die Schritte, seit die Haarlinie
+     dazwischen weg ist. Vorher clamp(3rem, 8vh, 6rem) — bis zu 192px zwischen
+     zwei Schritten. Der Stapel ist auf dem Desktop display:none, die Zeile
+     wirkt also ausschliesslich mobil. */
+  padding-block: clamp(1.25rem, 3.5vh, 2.5rem);
 }
 
-.process-track > .process-panel + .process-panel {
-  border-top: 1px solid rgba(242, 237, 228, 0.15);
-}
+/* Hier stand eine Haarlinie zwischen zwei Schritten. Raus auf Ansage. */
 
 /* Hairlines span the full accordion row (through to the chevron). */
 .process-points {
@@ -107,7 +109,12 @@
  * lib/breakpoints.ts — inklusive iPad 13" hochkant, das seit der
  * Pin-Entscheidung ebenfalls hier landet.
  *
- * top: die Nav ist fix und rund 6rem hoch; darunter beginnt die Klebezone. */
+ * top: unter der festen Leiste. Der frühere Wert clamp(5rem, 12svh, 8rem) war
+ * auf eine 104px hohe Leiste gerechnet und ergab gemessen 102.24px auf 393x852.
+ * Seit die Leiste mobil 72px misst, blieben davon 30px totes Feld. 10svh statt
+ * 12svh und 6.5rem als Deckel ergeben 85.2px auf 393x852 und 80px, wenn Safari
+ * die svh auf ~745 zusammenzieht — in beiden Fällen mindestens 8px Luft unter
+ * der Leiste, und rund 20px mehr Höhe für den Rahmen. */
 @media (max-width: 1023.98px),
   (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
   .process-panel__grid {
@@ -118,8 +125,35 @@
 
   .process-panel__media {
     position: sticky;
-    top: clamp(5rem, 12svh, 8rem);
+    top: clamp(5rem, 10svh, 6.5rem);
     order: -1;
+
+    /* Fahrbahn für den Parallax aus useStackReveal.
+     *
+     * Der Befund: das Kind [data-reveal="media"] füllt diese Box exakt aus, und
+     * der Parallax verschob es darin. Gemessen stand es 7.7-8.8px UNTER der
+     * Boxunterkante — und weil `position: sticky` die Box am Rasterende an die
+     * Copy-Unterkante klemmt, malte dieser Rest unter den letzten
+     * Akkordeon-Punkt. Ein Kontrollversuch mit transform:none ergab 0.00px
+     * Überstand; damit ist die Ursache belegt und nicht vermutet.
+     *
+     * Warum Polsterung UND overflow und nicht nur eins von beidem: ein Kind,
+     * das seine Box ausfüllt, tritt beim Verschieben zwangsläufig an einer
+     * Kante heraus und lässt an der anderen eine Lücke. `overflow: hidden`
+     * allein schnitte also die Gerätekante an, sobald die Drift nach oben
+     * zeigt. Die Polsterung gibt dem Kind erst den Weg, den es fahren soll;
+     * `overflow` ist die Zusicherung, dass nichts durchkommt, falls ein Rahmen
+     * je grösser wird als hier gerechnet.
+     *
+     * ZWILLING: 0.75rem = 12px ist der Deckel über MEDIA_DRIFT_PX = 10 in
+     * hooks/useStackReveal.ts. Ändert sich der eine Wert, muss der andere mit —
+     * sonst kehrt der Streifen zurück oder das Gerät bekommt einen Rand.
+     *
+     * Zulässig neben `position: sticky`: `overflow: hidden` macht diese Box zum
+     * Scrollport für ihre KINDER, nicht für sich selbst. Ihr eigener Halt hängt
+     * weiter am Viewport. */
+    padding-block: 0.75rem;
+    overflow: hidden;
   }
 
   /* Die Copy zieht ÜBER das klebende Bild — gemessen bis 345px auf 393px
@@ -146,29 +180,10 @@
     background-color: var(--color-bg-primary);
   }
 
-  /* Der Vorlauf über der Kante. Ohne ihn schöbe sich eine harte Linie quer
-     durch die Illustration; mit ihm dunkelt das Bild von unten weg, bevor die
-     Kante da ist.
-     2.5rem ist exakt die Zeilenlücke des Grids (gap-y-10 in ProcessPanel.tsx).
-     Gemessen: solange der Rahmen noch nicht klebt, steht er exakt 40px über der
-     Copy — der Verlauf liegt dann vollständig in dieser Lücke und rührt das
-     Bild nicht an. Erst wenn der Rahmen hält, schrumpft der Abstand (13.1px,
-     dann negativ), und genau ab da frisst der Verlauf das Bild von unten auf.
-     Er startet also nicht irgendwann, sondern in dem Moment, in dem das Kleben
-     beginnt. */
-  .process-panel__copy::before {
-    content: "";
-    position: absolute;
-    inset-inline: 0;
-    bottom: 100%;
-    height: 2.5rem;
-    background-image: linear-gradient(
-      to top,
-      var(--color-bg-primary),
-      transparent
-    );
-    pointer-events: none;
-  }
+  /* Hier stand ein 2.5rem hoher Verlauf über der Kante, der das Bild von unten
+     wegdunkelte, bevor die Kante da war. Raus auf Ansage: die Fläche schiebt
+     sich jetzt mit sichtbarer Kante über die Illustration. Der Grund darüber
+     bleibt — ohne ihn stünde der cremefarbene Text auf der Zeichnung. */
 }
 
 /* Fixed media well — identical size on every process step.

@@ -23,7 +23,7 @@ export default function ProcessPanel({
   return (
     <article className="process-panel relative flex flex-col justify-start">
       <div className="process-container w-full">
-        <div className="mt-[clamp(1.75rem,4vh,3rem)] flex justify-center">
+        <div className="mt-[clamp(0.75rem,2vh,1.25rem)] flex justify-center">
           <div className="process-panel__grid grid w-full max-w-full grid-cols-1 items-start gap-y-10">
             <div className="process-panel__copy relative z-10 min-w-0 max-w-[48ch] justify-self-center">
               {/* Ersetzt den Zähler, den der gepinnte Aufbau oben im Header
@@ -34,14 +34,16 @@ export default function ProcessPanel({
                 className="mb-7 flex items-center gap-4"
                 aria-hidden
               >
-                <span className="shrink-0 font-mono text-caption tabular-nums tracking-[0.2em] text-[#f2ede4]/55">
+                {/* Display statt Mono: die Mono-Ziffern tragen eine
+                    durchgestrichene Null und standen damit als einzige Zahlen
+                    der Seite in einer anderen Schrift als die Zähler im
+                    Desktop-Header, die Kapitelmarken und die Punktnummern. */}
+                <span className="shrink-0 font-display text-caption font-bold tabular-nums tracking-tighter text-[#f2ede4]/55">
                   {String(index + 1).padStart(2, "0")} /{" "}
                   {String(total).padStart(2, "0")}
                 </span>
-                <span
-                  data-reveal="rule"
-                  className="h-px flex-1 bg-[#f2ede4]/20"
-                />
+                {/* Hier lief eine Haarlinie neben der Zahl bis an den
+                    Satzspiegelrand. Raus auf Ansage — die Zahl steht allein. */}
               </div>
 
               <ProcessCopy step={step} />

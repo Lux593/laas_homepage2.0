@@ -379,7 +379,12 @@
   .work-panel {
     width: 100%;
     flex-shrink: 0;
-    padding-block: clamp(3rem, 8vh, 6rem);
+    /* Gestapelt trennt die Polsterung die Projekte, seit die Haarlinie
+       dazwischen weg ist — vorher waren es clamp(3rem, 8vh, 6rem), also bis zu
+       192px Leerraum zwischen zwei Etagen plus Linie. Der gepinnte Aufbau
+       überschreibt den Wert weiter unten mit seinem eigenen; auf dem Desktop
+       ändert sich hier nichts. */
+    padding-block: clamp(1.25rem, 3.5vh, 2.5rem);
     /* Stacked, the device frame is width-driven and this is only an upper bound. */
     --frame-h: clamp(240px, 60vh, 560px);
     /* Width actually available to the device, stated in viewport units on
@@ -408,18 +413,23 @@
     padding-inline: var(--frame-pad);
   }
 
-  /* Below lg the iPad arrows sit on the screen itself (left-5 / right-5), so the
-     well needs no clearance there and the device gets the full column. */
+  /* Im Stapel gibt es keine Pfeile mehr (siehe .device-nav weiter unten), also
+     auch keine Freistellung für sie: das Feld gibt beide Seiten an den Rahmen
+     zurück. Beim iPhone waren das gemessen 112px von 345px Spaltenbreite —
+     32.5% gingen an zwei Knöpfe. Der Rahmen stand deshalb bei 232.98px statt
+     möglicher 345px und war durch --frame-avail begrenzt statt durch --frame-h.
+     Beim iPad war die Regel schon vorher richtig, nur aus dem anderen Grund:
+     dort sassen die Pfeile mangels Platz auf dem Screenshot selbst. */
   @media (max-width: 1023.98px),
     (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
-    .device-well--ipad {
+    .device-well {
       --frame-pad: 0rem;
     }
   }
 
-  .work-track > .work-panel + .work-panel {
-    border-top: 1px solid rgba(10, 10, 10, 0.12);
-  }
+  /* Hier stand eine Haarlinie zwischen zwei gestapelten Projekten. Raus auf
+     Ansage — die Etagen trennen sich über den Abstand, nicht über einen
+     Strich. Der gepinnte Aufbau setzte sie ohnehin auf 0 zurück. */
 
   /* Eine Spalte ist der Grundfall: Gerät oben, Copy darunter. */
   .work-panel__grid {
@@ -465,14 +475,44 @@
    * Animation, und hat deshalb auch keinen JS-Zwilling. Die Breitenbedingung
    * spiegelt STACK_QUERY aus lib/breakpoints.ts.
    *
-   * top: dieselben Werte wie im Prozess — die Nav ist fix und rund 6rem hoch,
-   * darunter beginnt die Klebezone. */
+   * top und padding-block: dieselben Werte wie im Prozess, aus denselben
+   * Gründen — siehe die ausführliche Herleitung an .process-panel__media in
+   * sections/process/process.css. Kurz: die feste Leiste misst mobil 72px, der
+   * alte Wert clamp(5rem, 12svh, 8rem) war auf 104px gerechnet und liess 30px
+   * totes Feld stehen; die Polsterung ist die Fahrbahn für den Parallax, dessen
+   * verschobenes Kind hier gemessen 10.8-12.8px unter der Boxkante hervorstand
+   * und einen Streifen des iPhone-Rahmens unter „04 …" zeigte.
+   *
+   * ZWILLING: 0.75rem deckelt MEDIA_DRIFT_PX = 10 in hooks/useStackReveal.ts. */
   @media (max-width: 1023.98px),
     (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
+    /* Die Copy ist im Stapel keine eigene Box mehr, sondern gibt ihre beiden
+       Blöcke direkt ans Raster weiter. Erst dadurch lässt sich der Rahmen
+       ZWISCHEN Kopf und Rumpf schieben — als Kind einer gemeinsamen Hülle
+       stünde er zwangsläufig vor oder hinter beiden.
+       `display: contents` steht nur hier im Stapelzweig; auf dem Desktop
+       bleibt .work-panel__copy die gewohnte Spaltenbox. */
+    .work-panel__copy {
+      display: contents;
+    }
+
+    /* Kopf über dem Rahmen, Rahmen, Rumpf darunter. Die DOM-Folge ist
+       Kopf → Rumpf → Rahmen und bleibt es: sie ist die Leseordnung ohne CSS
+       und die Reihenfolge, in der useStackReveal die Marken staffelt. */
+    .work-panel__head {
+      order: 1;
+    }
+
     .work-panel__media {
       position: sticky;
-      top: clamp(5rem, 12svh, 8rem);
-      order: -1;
+      top: clamp(5rem, 10svh, 6.5rem);
+      order: 2;
+      padding-block: 0.75rem;
+      overflow: hidden;
+    }
+
+    .work-panel__body {
+      order: 3;
     }
 
     /* Die Copy zieht ÜBER den klebenden Rahmen. Ohne eigenen Grund stünde der
@@ -488,35 +528,18 @@
        läuft auch bei reduzierter Bewegung, GSAP dort nicht. Ein
        scrollgebundenes Wegblenden liesse die Überdeckung ausgerechnet bei den
        Nutzern stehen, die sie am wenigsten gebrauchen können. */
-    .work-panel__copy {
+    .work-panel__body {
       position: relative;
       z-index: 10;
       padding-top: clamp(1.5rem, 4vh, 2.5rem);
       background-color: var(--color-panel);
     }
 
-    /* Der Vorlauf über der Kante. Ohne ihn schöbe sich eine harte Linie quer
-       durch das Gerät; mit ihm hellt der Rahmen von unten weg, bevor die Kante
-       da ist. 2.5rem ist exakt die Zeilenlücke des Rasters (row-gap an
-       .work-panel__grid oben) — gemessen stehen Rahmenunterkante und
-       Copy-Oberkante auf allen fünf Projekten und allen vier Stapelbreiten
-       (320/393/820/1024) genau 40.0px auseinander, solange der Rahmen noch
-       nicht klebt. Der Verlauf liegt dann vollständig in dieser Lücke und rührt
-       das Gerät nicht an. Erst wenn der Rahmen hält, schliesst sich der
-       Abstand, und genau ab da frisst der Verlauf das Bild von unten auf. */
-    .work-panel__copy::before {
-      content: "";
-      position: absolute;
-      inset-inline: 0;
-      bottom: 100%;
-      height: 2.5rem;
-      background-image: linear-gradient(
-        to top,
-        var(--color-panel),
-        transparent
-      );
-      pointer-events: none;
-    }
+    /* Hier stand ein 2.5rem hoher Verlauf über der Kante, der den Rahmen von
+       unten weghellte, bevor die Kante da war. Raus auf Ansage: die Fläche
+       schiebt sich jetzt mit sichtbarer Kante über das Gerät, statt es
+       auszublenden. Der Grund darüber bleibt — ohne ihn stünde der dunkle Text
+       auf dem Mockup. */
   }
 
   /* MUST stay byte-identical to the gsap.matchMedia() query in
@@ -562,9 +585,39 @@
       );
     }
 
-    .work-track > .work-panel + .work-panel {
-      border-top: 0;
-    }
+  }
+}
+
+/* Kräftigere Schrift unter dem Rahmen.
+ *
+ * Gestapelt trägt der Rumpf allein, was vorher direkt unter einer grossen
+ * Überschrift stand — in Regular liest sich das dort wie eine Fussnote.
+ * Geändert wird nur das Gewicht und eine Nuance Farbe, keine Grösse: der
+ * Umbruch soll bleiben, wo er ist.
+ *
+ * UNGELAYERT, im Gegensatz zum Rest des Work-Blocks: `@import "tailwindcss"`
+ * legt die Layer-Folge oben in dieser Datei fest, und utilities steht darin
+ * NACH components. Eine Regel aus @layer components verlöre deshalb gegen
+ * `font-semibold` und `text-[#3a3a3a]` am selben Element. Ungelayerte Regeln
+ * schlagen jeden Layer — dieselbe Technik, mit der hero.css und process.css
+ * ihre mobilen Overrides setzen.
+ *
+ * Die Breitenbedingung ist der Zwilling des Stapelblocks weiter oben; ab
+ * 1024px mit feinem Zeiger greift hier nichts. */
+@media (max-width: 1023.98px),
+  (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
+  .work-panel__lede {
+    font-weight: 500;
+    color: #2a2a2a;
+  }
+
+  .work-panel__feature-title {
+    font-weight: 700;
+  }
+
+  .work-panel__feature-copy {
+    font-weight: 500;
+    color: #5a5a5a;
   }
 }
 
@@ -591,4 +644,65 @@
 .nav-logo {
   filter: brightness(0) invert(var(--ui-logo-invert));
   transition: filter 350ms var(--ease-out-quint);
+}
+
+/* Kein Schleier hinter der festen Leiste.
+ *
+ * Hier stand ein zweilagiger Verlauf (dunkel/hell, umgeschaltet über
+ * --ui-scrim-light), der mobil unter der Leiste lag, damit durchziehender Text
+ * die Wortmarke nicht deckt. Er hat sichtbar mehr gekostet als gebracht: die
+ * helle Lage stand über einer dunklen Section als cremefarbene Blende quer im
+ * Bild — ein 128px hoher Balken mit harter Kante, wo die Leiste schweben soll.
+ * Ersatzlos gestrichen; die Wortmarke trägt sich über ihrem eigenen Kontrast.
+ *
+ * Auf dem Desktop war der Schleier ohnehin nie sichtbar (display:none ab
+ * 1024px mit feinem Zeiger) — dort ändert das Entfernen nichts. */
+
+/* Pfeile am Gerätemockup und ihr Ersatz im Stapel.
+ *
+ * Ungelayert, beides: die Sichtbarkeit ist hier die eigentliche Regel, und
+ * jede Tailwind-Utility aus @layer utilities schlüge eine Regel aus
+ * @layer components. Deshalb tragen die Knöpfe in
+ * ui/framer-moveable-thumbnails.tsx auch KEIN `flex` mehr als Utility.
+ *
+ * Wischen ist unabhängig davon vorhanden und gemessen funktionsfähig
+ * (`drag="x"`, rastet exakt auf Slide-Grenzen ein) — das Ausblenden nimmt also
+ * niemandem den Zugang zu den übrigen Aufnahmen. Die Punkte sind Knöpfe, damit
+ * auch Tastatur und Screenreader einen behalten. */
+.device-nav {
+  display: flex;
+}
+
+.device-dots {
+  display: none;
+}
+
+@media (max-width: 1023.98px),
+  (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
+  .device-nav {
+    display: none;
+  }
+
+  .device-dots {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /* Kein zusätzlicher Aussenabstand nach oben: die 44px Trefferflächen
+       bringen ihre Luft selbst mit, der Punkt sitzt in ihrer Mitte und steht
+       damit 19px unter dem Rahmen. */
+    gap: 0.125rem;
+  }
+}
+
+@media (max-width: 1023.98px),
+  (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
+  /* Sprungziele aus dem Menü landeten bisher unter der Leiste: gemessen stand
+     „PROJEKTE" nach #work 12.4px unter ihrer Unterkante, #services und
+     #process legten die kompletten oberen Pixel der Section dahinter. Im
+     Projekt gab es bis hier kein einziges scroll-padding-top. 6rem deckt die
+     Leiste in beiden Ausbaustufen mit Luft: 64px im Hochformat, 76px ab 768px.
+     Nur im Stapelbereich — auf dem Desktop ändert sich damit nichts. */
+  html {
+    scroll-padding-top: 6rem;
+  }
 }
