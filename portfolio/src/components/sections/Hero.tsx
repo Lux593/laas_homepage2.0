@@ -65,6 +65,12 @@ export default function Hero() {
   const illuRef = useRef<HTMLImageElement>(null);
   const lampRef = useRef<HTMLImageElement>(null);
 
+  /** Die beiden endlosen Tweens des Auftritts. Sie laufen nicht von selbst
+   *  aus — deshalb müssen sie angehalten werden, sobald der Hero verdeckt ist,
+   *  siehe den Effekt bei `heroActive` weiter unten. */
+  const swayRef = useRef<gsap.core.Tween | null>(null);
+  const arrowBobRef = useRef<gsap.core.Tween | null>(null);
+
   // Parallax-Ebenen. Bewusst eigene Wrapper: die Entry-Timeline unten besitzt
   // line1Ref/line2Ref/scrollIndicatorRef und der Maus-Parallax besitzt den
   // .text-left-Knoten — die Scroll-Timeline darf keinen davon anfassen.
@@ -198,7 +204,7 @@ export default function Hero() {
     // y-Werte der Entry-Timeline auf dem Elternknoten nicht überschreibt.
     const arrow = arrowRef.current;
     if (arrow && !reduced) {
-      gsap.to(arrow, {
+      arrowBobRef.current = gsap.to(arrow, {
         y: 5,
         duration: 1.1,
         repeat: -1,
@@ -224,7 +230,7 @@ export default function Hero() {
         delay: 1.2,
       });
 
-      gsap.to(sway, {
+      swayRef.current = gsap.to(sway, {
         phase: Math.PI * 2,
         duration: 8,
         ease: "none",
@@ -242,8 +248,46 @@ export default function Hero() {
       if (lamp) gsap.killTweensOf(lamp);
       gsap.killTweensOf(sway);
       gsap.killTweensOf(amp);
+      swayRef.current = null;
+      arrowBobRef.current = null;
     };
   }, []);
+
+  // ── Der verdeckte Hero hört auf zu arbeiten ─────────────────────────────
+  //
+  // Der Hero klebt nicht bis zu seiner eigenen Unterkante, sondern bis zum
+  // Ende des Wrappers aus page.tsx — und der umschließt Hero UND Leistungen.
+  // Er steht also über die gesamte Leistungen-Section weiter gepinnt hinter
+  // der Cremefläche, die ihn vollständig deckt.
+  //
+  // Gemessen wurde dort mitten in der gestapelten Leistungen-Bühne: der Hero
+  // ist `visibility: visible`, volle Bildschirmhöhe, und trägt weiter seine
+  // teuersten Ebenen — eine bildschirmfüllende Ebene mit mix-blend-screen und
+  // zwei Bilder mit mask-image. Dazu schrieb die Lampe in 4 s Fahrt 241 Stile,
+  // also in jedem Frame einen: der Pendel-Tween läuft mit `repeat: -1` und
+  // kennt kein Ende. Derselbe Befund beim Pfeil des Scroll-Hinweises.
+  //
+  // Das ist die Rechnung, die auf dem Telefon als Ruckeln über die ganze
+  // Fläche ankam: ein Blendmodus zwingt den Browser, für seine Ebene den
+  // Hintergrund zurückzulesen, und beide Masken kosten eine eigene
+  // Rasterung — jeden Frame, für ein Bild, das niemand sehen kann.
+  //
+  // `visibility: hidden` nimmt den ganzen Teilbaum aus dem Zeichenlauf und
+  // lässt das Layout stehen; die Tweens werden zusätzlich pausiert, sonst
+  // liefen ihre Stilschreibungen unsichtbar weiter. Beides ist umkehrbar —
+  // `onEnterBack` am Runway-Trigger schaltet `heroActive` zurück, und zwar in
+  // dem Moment, in dem die Creme den Hero nicht mehr voll deckt.
+  //
+  // Bei reduzierter Bewegung greift keiner der beiden matchMedia-Arme, der
+  // Trigger entsteht gar nicht und `heroActive` bleibt auf seinem
+  // Anfangswert true — dort ändert sich nichts.
+  useEffect(() => {
+    for (const tween of [swayRef.current, arrowBobRef.current]) {
+      if (!tween) continue;
+      if (heroActive) tween.resume();
+      else tween.pause();
+    }
+  }, [heroActive]);
 
   // Scroll-Parallax: der Hero klebt im Wrapper und tritt ebenenweise in die Tiefe
   // zurück. Nahe Ebenen wandern weit, die Zeichnung kaum — daher der Tiefeneindruck.
@@ -447,7 +491,10 @@ export default function Hero() {
           Er ist eine volle Bildschirmhöhe hoch, damit Prozentwerte darin ein
           verlässliches Bezugsmaß haben, und zieht sich per negativem
           margin-bottom denselben Betrag wieder ab: im Fluss belegt er nichts. */}
-      <div className="pointer-events-none relative z-30 h-svh mb-[-100svh] motion-safe:sticky motion-safe:top-0">
+      <div
+        className="pointer-events-none relative z-30 h-svh mb-[-100svh] motion-safe:sticky motion-safe:top-0"
+        style={{ visibility: heroActive ? undefined : "hidden" }}
+      >
         {/* Der Hinweis steht jetzt auf dem dunklen Hero, nicht mehr auf Creme:
             helle Tinte statt panel-ink. Er hängt am unteren Bildrand, damit ihn
             die einfahrende Leistungen-Kante nicht mitzieht. */}
@@ -487,9 +534,17 @@ export default function Hero() {
           Das padding-bottom hält die untere Bildhälfte für Zeichnung und
           Balken frei: der zentrierte Text wird dadurch nach oben gedrückt und
           kann die Illustration nicht überlagern. */}
+      {/* visibility: der gepinnte Hero steht sonst über die gesamte
+          Leistungen-Section hinter der Creme weiter im Zeichenlauf — die
+          Rechnung dazu am `heroActive`-Effekt oben. Sichtbar ändert sich
+          nichts: an dem Punkt, an dem umgeschaltet wird, deckt die Cremefläche
+          den Hero vollständig, und was durch ihre beiden runden Ecken
+          hindurchscheint, ist der #050505-Grund von <main> — dieselbe Farbe,
+          die der Hero dort hat. */}
       <section
         className="relative motion-safe:sticky motion-safe:top-0 h-svh flex flex-col items-center justify-center overflow-hidden bg-[#050505] pb-[28svh] md:pb-[32svh]"
         id="hero"
+        style={{ visibility: heroActive ? undefined : "hidden" }}
       >
         {/* Illustration — hinterste Ebene, bewegt sich am wenigsten */}
         {/* opacity/blend bewusst als Klassen, nicht als Inline-Style: GSAP schreibt

@@ -726,14 +726,19 @@
    einer 100svh-Bühne, und unter ~660px Fensterhöhe passt sie dort nicht mehr
    hinein. Darunter bleibt die Section gestapelt und statisch. */
 @media (max-width: 767px) and (min-height: 660px) and (prefers-reduced-motion: no-preference) {
-  /* 400vh = 100vh Bühne + 300vh Klebestrecke. Die Haupt-Timeline verbraucht
+  /* 330vh = 100vh Bühne + 230vh Klebestrecke. Die Haupt-Timeline verbraucht
      davon unverändert die ersten 180vh — ihr `end` ist in About.tsx hochkant
-     auf genau diese Strecke festgenagelt, damit die Kamerafahrt ihre Taktung
-     behält. Die restlichen 120vh sind der Schwanz, in dem die beiden Kapitel
-     wechseln. Vorher standen hier 280vh, also 180vh Scrollweg und kein
-     Schwanz. */
+     auf genau diese Strecke festgenagelt (CAMERA_SPAN), damit die Kamerafahrt
+     ihre Taktung behält. Die restlichen 50vh sind der Schwanz, in dem die
+     beiden Kapitel wechseln (SWAP_SPAN 1.62 → 2.17) plus 13vh Lesezeit auf
+     Kapitel zwei, bevor die Bühne sich löst.
+     Vorher standen hier 400vh: der Wechsel begann erst bei 190vh und lief bis
+     285vh. Zwischen dem fertigen ersten Kapitel und dem fertigen zweiten lagen
+     damit 145vh, davon rund 50vh, in denen sich nichts bewegte — genau der
+     Weg, der sich zu lang anfühlte. Die Klebestrecke ist damit um 70vh kürzer,
+     die Kamerafahrt um keinen Pixel. */
   .about-track {
-    height: 400vh;
+    height: 330vh;
   }
 
   /* ── Der weiße Balken unter der Bühne ──────────────────────────────────

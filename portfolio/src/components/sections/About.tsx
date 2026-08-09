@@ -93,6 +93,48 @@ const LOGO_RATIO = 777.06 / 1798.74;
  *  der Bildschirmfläche wie vorher. */
 const LOGO_WIDTH = 22.4;
 
+/** Wie breit das Zeichen am Ende der Kamerafahrt steht, als Anteil der
+ *  Bühnenbreite — NUR hochkant.
+ *
+ *  Quer ergibt sich die Endgröße aus dem Bild: die Kamera fährt, bis die
+ *  Bildschirmfläche des Monitors die Bühne deckt, und wie groß das Zeichen
+ *  darin landet, ist eine Folge davon (gemessen ~27 % der Fensterbreite).
+ *  Hochkant trägt dieselbe Regel nicht: die Bildschirmfläche ist dort rund
+ *  110 × 60 px groß, „cover" bräuchte den ~14-fachen Maßstab. Die Fahrt endete
+ *  deshalb schon, sobald der Monitor die BREITE füllt — und das Zeichen stand
+ *  am Ende auf gemessenen 23,3 % der Fensterbreite, also kleiner als auf dem
+ *  Desktop, obwohl dort viermal so viel Platz daneben ist.
+ *
+ *  Statt eines Maßstabs steht hier deshalb das Ergebnis: das Zeichen soll am
+ *  Ende so breit sein, und den nötigen Faktor rechnet measure() aus. Der Wert
+ *  ist unabhängig von der Gerätebreite — Skizze, Bildschirmfläche und Zeichen
+ *  sind durchgehend in Prozent der Bühne bemaßt, der Faktor kommt auf jedem
+ *  Telefon auf dieselben ~8,7 heraus. */
+const LOGO_END_WIDTH = 0.56;
+
+/** Scrollweg der Kamerafahrt hochkant, in Bildschirmhöhen.
+ *
+ *  Quer läuft die Timeline bis ans Trackende. Hochkant NICHT: hinter ihr liegt
+ *  der Kapitelwechsel, und ohne eigene Marke zöge sich die Fahrt einfach mit
+ *  in die Länge. Die Zahl ist der Weg, den 280vh Track minus 100vh Bühne
+ *  ergaben, bevor der Track für den Wechsel wuchs — die Fahrt selbst hat sich
+ *  seither um keinen Pixel geändert. */
+const CAMERA_SPAN = 1.8;
+
+/** Kapitelwechsel hochkant: Anfang und Ende, in Bildschirmhöhen ab
+ *  Trackoberkante.
+ *
+ *  Gemessen auf 393 × 852 steht die Blende bei 1.44 offen und Kapitel eins
+ *  vollständig bei 1.40. Vorher begann der Wechsel erst bei 1.9 und lief bis
+ *  2.85 — zwischen dem fertigen ersten Kapitel und dem fertigen zweiten lagen
+ *  damit 1.45 Bildschirmhöhen, davon eine halbe, in der sich überhaupt nichts
+ *  rührte. Jetzt setzt er kurz nach der Blende an und ist nach 0.55
+ *  Bildschirmhöhen durch; die Strecke von Kapitel zu Kapitel schrumpft damit
+ *  auf 0.97. Die Lesezeit auf Kapitel zwei bleibt, was sie war: hinter dem
+ *  Ende stehen weiterhin 0.13 Bildschirmhöhen Klebestrecke (siehe die
+ *  Trackhöhe in about.css). */
+const SWAP_SPAN = { start: 1.62, end: 2.17 };
+
 /**
  * Lage der Monitor-Bildschirmfläche innerhalb von
  * /vorschaubilder/office_new.webp, in Prozent der gerenderten Bildbox. Nur diese
@@ -138,12 +180,19 @@ export default function About() {
   // mit. 0.78 ist der Punkt, an dem die Oberkante des Bandes bei power2.inOut
   // die Navhöhe passiert (nachgemessen, nicht geschätzt).
   //
-  // Gerechnet wird auf der SCROLLSTRECKE des Triggers, nicht auf der Trackhöhe:
-  // die Blende hängt an `trigger: track, start "top top", end "bottom bottom"`,
-  // und deren Fortschritt läuft über track.offsetHeight MINUS Viewporthöhe. Mit
-  // der reinen Trackhöhe war der Faktor hier ein anderes Maß als der Fortschritt
-  // dort — bei 340vh Track und 100vh Bühne um Faktor 1,42 daneben, der Umschlag
-  // fiel deshalb erst am Ende der klebenden Phase statt beim Deckenwerden.
+  // Gerechnet wird auf der SCROLLSTRECKE DER TIMELINE, nicht auf der Trackhöhe:
+  // der Faktor oben ist ein Fortschritt DIESER Timeline, und nur wenn er gegen
+  // dieselbe Strecke gerechnet wird, meint er auch denselben Punkt. Mit der
+  // reinen Trackhöhe war er ein anderes Maß — bei 340vh Track und 100vh Bühne
+  // um Faktor 1,42 daneben, der Umschlag fiel erst am Ende der klebenden Phase
+  // statt beim Deckenwerden.
+  //
+  // Quer ist diese Strecke track.offsetHeight minus Viewporthöhe („bottom
+  // bottom"). Hochkant NICHT: dort nagelt die Timeline ihr Ende auf
+  // CAMERA_SPAN Bildschirmhöhen fest, der Track ist aber länger — der
+  // Kapitelwechsel hängt hinten dran. Mit der Trackstrecke lag der Umschlag
+  // deshalb gemessene 0.8 Bildschirmhöhen zu spät: die Blende war längst
+  // schwarz, und die Leiste stand mit dunkler Tinte darauf.
   useLightSection(sectionRef, {
     end: () => {
       const track = trackRef.current;
@@ -154,7 +203,9 @@ export default function About() {
       const zoomEnd = mobile ? ZOOM_END.mobile : ZOOM_END.desktop;
       const split = mobile ? WIPE_SPLIT.mobile : WIPE_SPLIT.desktop;
       const flip = zoomEnd + WIPE_DURATION * (split + (1 - split) * 0.78);
-      const distance = Math.max(0, track.offsetHeight - window.innerHeight);
+      const distance = mobile
+        ? window.innerHeight * CAMERA_SPAN
+        : Math.max(0, track.offsetHeight - window.innerHeight);
       // +40 hebt den Versatz des Startpunkts wieder auf, sonst läge der
       // Umschlag um die Navhöhe zu früh.
       return `top+=${distance * flip + 40} top+=40`;
@@ -226,13 +277,22 @@ export default function About() {
         // dimensioniert, also wandern Zielgröße UND Außermittigkeit mit dem
         // Viewport. Hardcodierte Werte wären auf genau einer Fenstergröße richtig.
         let endScale = 1;
-        let offsetX = 0;
-        let offsetY = 0;
+        /** Abstand des Kreuzes zur Mitte der BÜHNE — dorthin zielt die Kamera. */
+        let aimX = 0;
+        let aimY = 0;
+        /** Abstand des Kreuzes zur Mitte der SZENE — um die wird skaliert.
+         *  Zwei verschiedene Punkte, sobald --toolbar-gap > 0 ist, siehe
+         *  measure(). */
+        let pivotX = 0;
+        let pivotY = 0;
 
         // Bühnenmaß und die Lage des Zeichens darin, beides bei Maßstab 1.
         // Daraus rechnet applyZoom die mitlaufende Kopie (siehe dort).
         let stageW = 0;
         let stageH = 0;
+        /** Mitte der Szene, in Bühnenkoordinaten. */
+        let sceneCx = 0;
+        let sceneCy = 0;
         let logoX = 0;
         let logoY = 0;
         let logoW = 0;
@@ -255,11 +315,32 @@ export default function About() {
           gsap.set(scene, { x: 0, y: 0, scale: 1 });
           const s = target.getBoundingClientRect();
           const v = stage.getBoundingClientRect();
+          const n = scene.getBoundingClientRect();
           const c = cross.getBoundingClientRect();
           const l = logo.getBoundingClientRect();
 
           stageW = v.width;
           stageH = v.height;
+
+          // Die Szene ist hochkant NICHT so hoch wie die Bühne: about.css zieht
+          // ihre Unterkante um --toolbar-gap herauf (die Lücke, die iOS beim
+          // Einklappen der Adressleiste freigibt), damit der Establishing-Shot
+          // in der kleinen Ansicht steht, während die Bühne bis in die große
+          // hinein deckt. Skaliert wird um die Mitte DIESER Box, gezielt wird
+          // auf die Mitte der Bühne — mit Lücke sind das zwei verschiedene
+          // Punkte, und genau die wurden vorher gleichgesetzt.
+          //
+          // Der Fehler war deshalb auf dem Desktop und in Chromium unsichtbar
+          // (dort ist svh = lvh, die Lücke also 0) und auf dem Telefon jedes
+          // Mal zu sehen: die Kopie des Zeichens driftet um (Lücke/2)·(1−scale)
+          // nach oben vom Monitor weg. Mit einer 90px-Lücke nachgestellt sind
+          // das am Ende der Fahrt gemessene 118,8px — das Zeichen stand hoch
+          // über der Bildschirmfläche, auf der es sitzen soll, und die Blende
+          // öffnete dort ebenfalls, weil sie ihre Kanten aus dieser Kopie
+          // ableitet.
+          sceneCx = n.left + n.width / 2 - v.left;
+          sceneCy = n.top + n.height / 2 - v.top;
+
           logoX = l.left - v.left;
           logoY = l.top - v.top;
           logoW = l.width;
@@ -267,32 +348,39 @@ export default function About() {
           // Fehlt die Bilddatei noch oder ist sie nicht dekodiert, schrumpft die
           // Bildbox auf ein paar Pixel — daraus berechnete Faktoren wären absurd.
           // Dann lieber gar kein Zoom als ein 400-facher.
-          if (s.width < 40 || s.height < 40) {
+          if (s.width < 40 || s.height < 40 || logoW < 4) {
             endScale = 1;
-            offsetX = 0;
-            offsetY = 0;
+            aimX = 0;
+            aimY = 0;
+            pivotX = 0;
+            pivotY = 0;
           } else {
-            // 1.04 schiebt die Monitorblende über die Viewport-Kante hinaus,
-            // bevor die Skizze ausblendet — ohne den Zuschlag steht am Ende eine
-            // unscharfe Rahmenlinie im Bild.
+            // Quer: 1.04 schiebt die Monitorblende über die Viewport-Kante
+            // hinaus, bevor die Skizze ausblendet — ohne den Zuschlag steht am
+            // Ende eine unscharfe Rahmenlinie im Bild.
             //
-            // Hochkant deckt bewusst nur die Breite: die Bildschirmfläche ist
-            // dort rund 110 × 60 px groß, „cover" bräuchte den ~14-fachen Maßstab
-            // und machte aus der Skizze Brei. Die Kamera fährt also nur, bis der
-            // Monitor die Breite füllt — die Blende deckt den Rest der Höhe
-            // ohnehin zu.
-            endScale =
-              (isMobile
-                ? v.width / s.width
-                : Math.max(v.width / s.width, v.height / s.height)) * 1.04;
+            // Hochkant zielt die Fahrt stattdessen auf die Endgröße des
+            // Zeichens (LOGO_END_WIDTH). „Cover" ist dort keine Option — die
+            // Bildschirmfläche ist rund 110 × 60 px groß und bräuchte den
+            // ~14-fachen Maßstab —, und die alte Ersatzregel „bis der Monitor
+            // die Breite füllt" ließ das Zeichen kleiner enden als auf dem
+            // Desktop. Den Rest der Höhe deckt die Blende ohnehin zu, hier wie
+            // dort.
+            endScale = isMobile
+              ? (LOGO_END_WIDTH * stageW) / logoW
+              : Math.max(v.width / s.width, v.height / s.height) * 1.04;
 
             // Die Kamera zielt auf das A-Kreuz, nicht auf die Mitte der
             // Bildschirmfläche: aus diesem Punkt öffnet die Blende, und ein paar
-            // Pixel Versatz sind nach dem ~3,5-fachen Zoom sichtbar. Das Kreuz
+            // Pixel Versatz sind nach dem mehrfachen Zoom sichtbar. Das Kreuz
             // liegt fast mittig im Zeichen, der Monitor deckt die Bühne also
             // weiterhin — die 1.04 oben tragen den Rest.
-            offsetX = c.left + c.width / 2 - (v.left + v.width / 2);
-            offsetY = c.top + c.height / 2 - (v.top + v.height / 2);
+            const crossX = c.left + c.width / 2 - v.left;
+            const crossY = c.top + c.height / 2 - v.top;
+            aimX = crossX - stageW / 2;
+            aimY = crossY - stageH / 2;
+            pivotX = crossX - sceneCx;
+            pivotY = crossY - sceneCy;
           }
 
           // Die Layoutbreite der Kopie, EINMAL pro Messung. Genommen wird die
@@ -311,14 +399,21 @@ export default function About() {
           // beschleunigt dann hinein — eine Kamerafahrt, kein linearer Zug.
           const t = push(gsap.utils.clamp(0, 1, progress / zoomEnd));
           const scale = 1 + (endScale - 1) * t;
-          // Skaliert wird um die Bühnenmitte: ein Punkt mit Abstand offset
-          // landet bei offset·scale. Wir wollen ihn stattdessen bei
-          // offset·(1-t) — also linear von seiner Startlage in die Mitte.
-          // x = offset·((1-t) - scale) leistet genau das. Die frühere Formel
-          // `-offset·scale·t` ließ den Restfehler mit dem Scale mitwachsen;
-          // deshalb saß die Iris in der Viewport-Mitte, das Icon aber daneben.
-          const x = offsetX * (1 - t - scale);
-          const y = offsetY * (1 - t - scale);
+          // Skaliert wird um die Mitte der SZENE: ein Punkt mit Abstand pivot
+          // landet dort bei pivot·scale. Ankommen soll das Kreuz aber in der
+          // Mitte der BÜHNE, und zwar linear — von seiner Startlage aus um
+          // aim·t verschoben. Aufgelöst nach der Verschiebung:
+          //
+          //   sceneMitte + pivot·scale + x  =  kreuzStart − aim·t
+          //   x = pivot·(1 − scale) − aim·t
+          //
+          // Ohne Lücke fallen die beiden Mitten zusammen, dann sind pivot und
+          // aim derselbe Wert und die Formel ist Zeichen für Zeichen die alte
+          // `offset·(1 − t − scale)`. Der Desktop rechnet also unverändert.
+          // Was die frühere Fassung nicht konnte: pivot und aim auseinander
+          // halten, wenn die Szene kürzer ist als die Bühne (siehe measure).
+          const x = pivotX * (1 - scale) - aimX * t;
+          const y = pivotY * (1 - scale) - aimY * t;
           gsap.set(scene, { x, y, scale, force3D: true });
 
           // Das Zeichen läuft NICHT in der Szene mit, sondern als Kopie darüber
@@ -362,11 +457,14 @@ export default function About() {
           // ist die Richtung, die im Zweifel verzeiht.
           //
           // Die Formel ist dieselbe wie oben, nur für einen Punkt statt für die
-          // Ebene: um die Bühnenmitte skalieren, dann den Kameraversatz drauf.
+          // Ebene: um die Szenenmitte skalieren, dann den Kameraversatz drauf.
+          // Sie MUSS denselben Ursprung benutzen wie das Transform der Szene —
+          // steht hier die Bühnenmitte und dort die Szenenmitte, löst sich die
+          // Kopie mit wachsendem Maßstab vom Original im Monitor.
           hudW = logoW * scale;
           hudH = hudW * LOGO_RATIO;
-          hudX = stageW / 2 + (logoX - stageW / 2) * scale + x;
-          hudY = stageH / 2 + (logoY - stageH / 2) * scale + y;
+          hudX = sceneCx + (logoX - sceneCx) * scale + x;
+          hudY = sceneCy + (logoY - sceneCy) * scale + y;
           hud.style.transform = `translate3d(${hudX}px, ${hudY}px, 0) scale(${
             hudW / hudBaseW
           })`;
@@ -439,15 +537,12 @@ export default function About() {
           scrollTrigger: {
             trigger: track,
             start: "top top",
-            // Quer wie bisher bis ans Trackende. Hochkant NICHT: der Track ist
-            // dort von 280vh auf 400vh gewachsen, damit hinter dieser Timeline
-            // noch Strecke für den Kapitelwechsel bleibt. Bliebe das `end` an
-            // „bottom bottom", zöge sich die Kamerafahrt einfach mit in die
-            // Länge und die Taktung wäre eine andere. 1.8 × innerHeight ist
-            // exakt der Weg, den 280vh Track minus 100vh Bühne vorher ergaben —
-            // die Fahrt selbst ändert sich also um keinen Pixel.
+            // Quer wie bisher bis ans Trackende. Hochkant NICHT: hinter dieser
+            // Timeline liegt noch der Kapitelwechsel, und bliebe das `end` an
+            // „bottom bottom", zöge sich die Kamerafahrt mit jeder Änderung an
+            // der Trackhöhe in die Länge. CAMERA_SPAN nagelt sie fest.
             end: isMobile
-              ? () => `+=${window.innerHeight * 1.8}`
+              ? () => `+=${window.innerHeight * CAMERA_SPAN}`
               : "bottom bottom",
             scrub: true,
             // applyZoom zuerst: applyWipe liest die HUD-Geometrie ab, die dort
@@ -476,14 +571,19 @@ export default function About() {
           // Schärfeverlagerung: macht aus dem unvermeidlichen Upscale des
           // Rasterbilds eine gewollte Kamerabewegung statt sichtbarer Pixel.
           // Bewusst flach gehalten, damit sie der Blende nicht die Schau stiehlt.
-          // Hochkant einen Tick stärker: dort steht am Ende ein gröberer Upscale.
           // Zielt auf die Skizze, nicht auf .about-art — das LAAS-Zeichen liegt
           // im selben Container und muss scharf bleiben, es ist das Ziel.
+          //
+          // Der Wert ist im LOKALEN Koordinatensystem der Skizze angegeben und
+          // wird vom Maßstab der Szene mitskaliert: auf dem Schirm steht am Ende
+          // das Produkt aus beidem. Hochkant sind das mit 2px und dem Faktor
+          // ~8,7 rund 17px — vorher 4px auf Faktor 3,64, also 14,6px. Bliebe die
+          // 4 stehen, wären es jetzt 35px und aus der Skizze würde Schlieren.
           .fromTo(
             sketch,
             { filter: "blur(0px)" },
             {
-              filter: `blur(${isMobile ? 4 : 3}px)`,
+              filter: `blur(${isMobile ? 2 : 3}px)`,
               ease: "power2.in",
               duration: 0.18,
             },
@@ -539,10 +639,9 @@ export default function About() {
         //
         // Warum ein EIGENER Trigger und nicht eine Position in der Timeline
         // oben: die hängt an der Kamerafahrt, und jede zusätzliche Strecke
-        // darin verlangsamte sie mit. Der Track ist stattdessen um 120vh
-        // gewachsen, die Haupt-Timeline endet unverändert nach 180vh, und diese
-        // 120vh gehören allein dem Wechsel. Die Bühne klebt über 300vh, hört
-        // also erst 10vh nach dem Ende hier auf.
+        // darin verlangsamte sie mit. Der Track trägt den Wechsel stattdessen
+        // als Schwanz hinter CAMERA_SPAN; wo der anfängt und aufhört, steht in
+        // SWAP_SPAN.
         //
         // Scrub statt Abspielen: der Nutzer fährt den Wechsel. Rückwärts kommt
         // Kapitel eins deshalb von selbst zurück.
@@ -550,8 +649,8 @@ export default function About() {
           const swap = gsap.timeline({
             scrollTrigger: {
               trigger: track,
-              start: () => `top top-=${window.innerHeight * 1.9}`,
-              end: () => `top top-=${window.innerHeight * 2.85}`,
+              start: () => `top top-=${window.innerHeight * SWAP_SPAN.start}`,
+              end: () => `top top-=${window.innerHeight * SWAP_SPAN.end}`,
               scrub: 0.5,
               invalidateOnRefresh: true,
             },

@@ -39,6 +39,47 @@
   }
 }
 
+/* ── Im Stapel ohne Schnitt ──────────────────────────────────────────────
+ *
+ * Quer trägt der clip-path die Einfahrt: die Section kommt als schmaler,
+ * seitlich eingezogener Balken herein und klappt auf. Im Stapel gibt es diese
+ * Bewegung nicht — `inset: 0` am Stapel-Arm von buildEntry lässt die beiden
+ * Zahlen ungetweent, der Schnitt steht also dauerhaft auf `inset(0% round …)`
+ * und ist nichts als zwei runde Ecken oben.
+ *
+ * Bezahlt wird er trotzdem, und in dieser Section besonders teuer: er sitzt am
+ * Section-Element, und darin klebt über 300svh Scrollweg die Bühne der
+ * Leistungen. Ein clip-path auf dem Vorfahren eines position:sticky lässt sich
+ * nicht als fertige Ebene verschieben — der Schnitt ist gegen die Border-Box
+ * der Section definiert, die Bühne wandert darin, und beides muss pro
+ * Scrollposition neu gegeneinander verrechnet werden. Zusammen mit dem Hero,
+ * der hinter dieser Section weiter gepinnt steht (siehe Hero.tsx), war das der
+ * Grund, warum beim Scrollen durch die Leistungen die ganze Fläche ruckelte.
+ *
+ * border-radius zeichnet dieselben zwei Ecken. Es kappt keine Kinder — dort
+ * steht aber auch keines: die Kopfzeile beginnt erst clamp(4rem, 8vh, 5.5rem)
+ * unter der Kante, die obersten Pixel der Section sind reine Fläche.
+ *
+ * Ohne prefers-reduced-motion-Klausel, mit Absicht: dort gibt es keinen
+ * clip-path (die Regel oben greift nicht), `none` ist wirkungslos, und der
+ * Radius ist derselbe, den motion-reduce:rounded-t-panel am Element setzt.
+ * Die Breiten-Arme sind wörtlich die aus STACK_QUERY. */
+@media (max-width: 1023.98px),
+  (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
+  .services-section {
+    clip-path: none;
+    border-top-left-radius: var(--radius-panel);
+    border-top-right-radius: var(--radius-panel);
+  }
+
+  @media (min-width: 768px) {
+    .services-section {
+      border-top-left-radius: var(--radius-panel-lg);
+      border-top-right-radius: var(--radius-panel-lg);
+    }
+  }
+}
+
 /* ── Desktop Stage ──────────────────────────────────────────────────── */
 
 .services-stage {
