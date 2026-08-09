@@ -39,26 +39,32 @@
   }
 }
 
-/* ── Im Stapel ohne Schnitt ──────────────────────────────────────────────
+/* ── Im Stapel nichts zwischen Scroller und klebender Bühne ──────────────
  *
- * Quer trägt der clip-path die Einfahrt: die Section kommt als schmaler,
+ * Zwei Eigenschaften am Section-Element, die quer gebraucht werden und im
+ * Stapel nur Kosten sind. Beide liegen im Vorfahrenpfad der klebenden Bühne,
+ * und das ist der Punkt: ein `position: sticky` bleibt nur so lange auf dem
+ * Scroll-Thread, wie zwischen ihm und dem Scroller nichts steht, das pro
+ * Scrollposition neu verrechnet werden muss. Fällt es herunter, wird seine
+ * Lage im Hauptthread gesetzt — einen Frame hinter dem Scroll, den der
+ * Compositor schon ausgeführt hat. Sichtbar ist das als schnelles Zittern der
+ * stehenden Bühne nach oben und unten, genau solange gescrollt wird.
+ *
+ * `clip-path`: quer trägt er die Einfahrt — die Section kommt als schmaler,
  * seitlich eingezogener Balken herein und klappt auf. Im Stapel gibt es diese
- * Bewegung nicht — `inset: 0` am Stapel-Arm von buildEntry lässt die beiden
- * Zahlen ungetweent, der Schnitt steht also dauerhaft auf `inset(0% round …)`
- * und ist nichts als zwei runde Ecken oben.
+ * Bewegung nicht (`inset: 0` am Stapel-Arm von buildEntry lässt die beiden
+ * Zahlen ungetweent), er steht also dauerhaft auf `inset(0% round …)` und ist
+ * nichts als zwei runde Ecken oben. border-radius zeichnet dieselben zwei
+ * Ecken, ohne im Pfad zu stehen. Er kappt keine Kinder — dort steht aber auch
+ * keines: die Kopfzeile beginnt erst clamp(4rem, 8vh, 5.5rem) unter der Kante,
+ * die obersten Pixel der Section sind reine Fläche.
  *
- * Bezahlt wird er trotzdem, und in dieser Section besonders teuer: er sitzt am
- * Section-Element, und darin klebt über 300svh Scrollweg die Bühne der
- * Leistungen. Ein clip-path auf dem Vorfahren eines position:sticky lässt sich
- * nicht als fertige Ebene verschieben — der Schnitt ist gegen die Border-Box
- * der Section definiert, die Bühne wandert darin, und beides muss pro
- * Scrollposition neu gegeneinander verrechnet werden. Zusammen mit dem Hero,
- * der hinter dieser Section weiter gepinnt steht (siehe Hero.tsx), war das der
- * Grund, warum beim Scrollen durch die Leistungen die ganze Fläche ruckelte.
- *
- * border-radius zeichnet dieselben zwei Ecken. Es kappt keine Kinder — dort
- * steht aber auch keines: die Kopfzeile beginnt erst clamp(4rem, 8vh, 5.5rem)
- * unter der Kante, die obersten Pixel der Section sind reine Fläche.
+ * `overflow-x: clip` (Utility am Element): quer hält es die Zeichnung der
+ * Desktop-Bühne im Rahmen — die steht auf `transform: scale(1.45)` und ragt
+ * seitlich aus ihrem Slot. Im Stapel gibt es sie gar nicht,
+ * `.services-pin--desktop` steht dort auf `display: none`. Nachgemessen auf
+ * allen 17 Profilen der Matrix: ohne das Clip wächst der Layout-Viewport
+ * nirgends über die Fensterbreite hinaus.
  *
  * Ohne prefers-reduced-motion-Klausel, mit Absicht: dort gibt es keinen
  * clip-path (die Regel oben greift nicht), `none` ist wirkungslos, und der
@@ -68,6 +74,7 @@
   (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
   .services-section {
     clip-path: none;
+    overflow-x: visible;
     border-top-left-radius: var(--radius-panel);
     border-top-right-radius: var(--radius-panel);
   }
@@ -612,6 +619,18 @@
   (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) and (prefers-reduced-motion: no-preference) {
   .services-stack-track {
     position: relative;
+    /* Riegel gegen die Scroll-Verankerung, nicht gegen einen gemessenen
+       Befund: ändert sich oberhalb der Sichtlinie die Höhe von irgendetwas,
+       verschiebt der Browser von sich aus die Scrollposition, damit der
+       Ankerknoten stehen bleibt. In einer Strecke, an der eine gescrubbte
+       Timeline hängt, ist das eine Rückkopplung — Scroll bewegt die Animation,
+       die Anpassung bewegt den Scroll —, und die liest sich als schnelles
+       Zittern. Hier ist keine Höhenänderung bekannt (der Kapitelwechsel
+       arbeitet ausschliesslich mit opacity, visibility und einem waagerechten
+       transform), aber die Strecke ist 300svh lang und trägt vier lazy
+       geladene Bilder. Der Riegel kostet nichts und nimmt den Fall aus der
+       Rechnung. */
+    overflow-anchor: none;
   }
 
   /* top: 0 und nicht die Klebehöhe der anderen Sections: die Bühne ist
@@ -623,6 +642,27 @@
     position: sticky;
     top: 0;
     height: 100svh;
+    /* Dieselbe Behandlung, die jede andere klebende Box im Projekt hat, und
+       die dieser einen fehlte.
+       Nachgezählt: der Hero trägt `overflow: hidden` an sich selbst, die
+       Über-mich-Bühne auch, die Prozess-Box ebenfalls (dort steht die
+       Begründung ausführlich in process.css), und die Desktop-Bühne der
+       Leistungen liegt auf einer eigenen Ebene — `[transform:translateZ(0)]`
+       plus `[backface-visibility:hidden]` am klebenden div in Services.tsx.
+       Nur diese Bühne hatte weder das eine noch das andere; stattdessen stand
+       über ihr ein Vorfahre, der schneidet (siehe den Block ganz oben).
+       Beides zusammen macht die Box zu einer geschlossenen Ebene, die der
+       Browser als Ganzes verschieben kann, statt sie pro Scrollposition neu
+       gegen ihre Umgebung zu verrechnen.
+       `overflow: hidden` kappt hier nichts: gemessen auf allen zehn
+       Hochkant-Profilen von 320×568 bis 1024×1366 ist scrollHeight exakt die
+       Bühnenhöhe, der grösste Überstand irgendeines Kindes 0px. Die
+       Gitterzeilen `minmax(0, 1fr) auto` sorgen dafür, dass die Bildzeile den
+       Rest aufnimmt — überstehen könnte nur die Copy, und die stand vorher
+       ebenso über, nur unbeschnitten. */
+    overflow: hidden;
+    transform: translateZ(0);
+    backface-visibility: hidden;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     /* Die Beweisführung des Fluss-Zustands, umgedreht: dort ist die Bildstufe
