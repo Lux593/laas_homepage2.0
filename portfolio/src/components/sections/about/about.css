@@ -815,6 +815,40 @@
     grid-column: 1;
     grid-row: 1 / span 2;
     align-self: center;
+
+    /* ── Zwei Schreiber, ein Wert ─────────────────────────────────────────
+     *
+     * Die Deckkraft von Kapitel eins wird von ZWEI Timelines geführt: die
+     * Kamerafahrt blendet es ein, der Kapitelwechsel blendet es wieder aus.
+     * Beide hängen an eigenen ScrollTriggern, und der Wechsel läuft mit
+     * `scrub: 0.5` der Hand nach.
+     *
+     * Schrieben beide dieselbe Eigenschaft, entschiede die Reihenfolge der
+     * Aktualisierungen, wer recht behält — und die steht fest: ScrollTrigger
+     * arbeitet seine Trigger nach Startposition ab, der Wechsel liegt hinter
+     * der Kamerafahrt und schreibt deshalb zuletzt. Innerhalb seiner Strecke
+     * ist das richtig. Davor nicht: dort will er den Wert seines Anfangs
+     * setzen, also volle Deckkraft, während die Kamerafahrt gerade ausblendet.
+     *
+     * Vorwärts fällt das nicht auf — beide wollen dort dasselbe. Rückwärts
+     * schon: beim Herausscrollen läuft der Wechsel noch nach, überschreibt das
+     * Ausblenden der Kamerafahrt und lässt das Porträt in der sich
+     * schliessenden Blende stehen. Nachgemessen bei einem 600ms-Wisch von
+     * Kapitel zwei heraus: 57 Frames mit voller Deckkraft, am Ende Deckkraft
+     * 1.00 bei einer Bandhöhe von 7px — das Foto im geschlossenen Balken.
+     *
+     * Statt eines Wertes also zwei Faktoren, je einer pro Timeline, und das
+     * Produkt daraus. Wer ausserhalb seiner Strecke schreibt, schreibt seine 1
+     * — den neutralen Faktor — und kann den anderen damit gar nicht mehr
+     * übersteuern. Die Reihenfolge der Aktualisierungen ist danach egal, und
+     * vorwärts wie rückwärts kommt derselbe Wert heraus.
+     *
+     * Beide Vorgaben stehen auf 1: bleibt das Skript aus, ist das Produkt 1
+     * und Kapitel eins steht sichtbar da. Den Anfangswert 0 für `--lead-in`
+     * setzt About.tsx im Bewegungskontext, genau wie vorher die Deckkraft. */
+    --lead-in: 1;
+    --lead-out: 1;
+    opacity: calc(var(--lead-in) * var(--lead-out));
   }
 
   .about-annotations {

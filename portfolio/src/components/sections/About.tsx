@@ -277,6 +277,18 @@ export default function About() {
         const chapterTwo = groups.filter(
           (el) => !el.classList.contains("about-lead"),
         );
+
+        // Hochkant führt Kapitel eins seine Deckkraft nicht als eigenen Wert,
+        // sondern als Produkt zweier Faktoren — einer je Timeline. Die
+        // Begründung steht ausführlich in about.css bei .about-lead; kurz: die
+        // Kamerafahrt blendet ein, der Kapitelwechsel blendet aus, und ein
+        // gemeinsamer Wert gehörte immer dem, der zuletzt schreibt.
+        // Der Inline-Wert von oben muss dafür weg, sonst deckt er die
+        // Rechnung im Stylesheet zu.
+        if (isMobile) {
+          gsap.set(chapterOne, { clearProps: "opacity" });
+          gsap.set(chapterOne, { "--lead-in": 0 });
+        }
         /** Gesetzt nur im Hochformat, siehe den Kapitelwechsel weiter unten. */
         let swapTeardown: (() => void) | undefined;
 
@@ -588,7 +600,17 @@ export default function About() {
           // Der Header gehört zum Raum, nicht zum Bildschirm: sobald die Kamera
           // losfährt, zieht er nach oben aus dem Bild. Er ist lange weg, bevor die
           // Copy von unten hereinkommt — Altes raus nach oben, Neues rein von unten.
-          .to(header, { opacity: 0, y: -28, ease: "power2.in", duration: 0.24 }, 0.14)
+          //
+          // fromTo und nicht to, aus demselben Grund wie beim Reveal weiter
+          // unten: ohne den festgeschriebenen Startwert kam der Header nach
+          // einem Refresh beim Zurückscrollen nicht mehr wieder (gemessen:
+          // Deckkraft 0, wo 1 stehen müsste).
+          .fromTo(
+            header,
+            { opacity: 1, y: 0 },
+            { opacity: 0, y: -28, ease: "power2.in", duration: 0.24 },
+            0.14
+          )
           // Schärfeverlagerung: macht aus dem unvermeidlichen Upscale des
           // Rasterbilds eine gewollte Kamerabewegung statt sichtbarer Pixel.
           // Bewusst flach gehalten, damit sie der Blende nicht die Schau stiehlt.
@@ -649,9 +671,35 @@ export default function About() {
           //
           // Hochkant steigt hier nur das ERSTE Kapitel ein — Porträt, Name und
           // Ort. Der Rest kommt im Schwanz hinter dieser Timeline, siehe unten.
-          .to(
+          //
+          // MUSS ein fromTo bleiben, kein to. Der Startwert eines to() steht
+          // nirgends geschrieben — GSAP liest ihn beim ersten Rendern aus dem
+          // Element und wirft ihn bei jedem invalidate() wieder weg;
+          // invalidateOnRefresh steht global als Default (AnimationProvider).
+          // Fällt ein Refresh in einen Moment, in dem die Copy schon steht —
+          // und Refreshes fallen genau dorthin: document.fonts.ready, das
+          // onLoad der Skizze, jeder Resize —, dann liest der Tween 1 als
+          // seinen neuen Anfang ein und läuft von da an von 1 nach 1.
+          //
+          // Vorwärts sieht man davon nichts, die Copy soll dort ja erscheinen.
+          // Rückwärts blendet sie dann NICHT mehr aus: das Porträt stand in
+          // voller Deckkraft im sich schliessenden Balken. Nachgestellt mit
+          // einem Refresh auf Kapitel zwei und anschliessendem Zurückscrollen —
+          // gemessen Deckkraft 1.00 bei einer Bandhöhe von 7px.
+          //
+          // Im fromTo steht der Anfang in den Vars und übersteht das
+          // invalidate(). Die Werte sind dieselben, die gsap.set oben schreibt;
+          // am gezeichneten Bild ändert sich nichts.
+          .fromTo(
             isMobile ? chapterOne : groups,
-            { opacity: 1, y: 0, ease: "power3.out", duration: 0.14, stagger: 0.05 },
+            isMobile ? { "--lead-in": 0, y: 32 } : { opacity: 0, y: 32 },
+            {
+              ...(isMobile ? { "--lead-in": 1 } : { opacity: 1 }),
+              y: 0,
+              ease: "power3.out",
+              duration: 0.14,
+              stagger: 0.05,
+            },
             zoomEnd +
               WIPE_DURATION *
                 (split +
@@ -686,9 +734,27 @@ export default function About() {
           });
 
           swap
-            .to(
+            // Auch hier fromTo statt to, und aus demselben Grund: dieser Tween
+            // und der Reveal der Haupt-Timeline schreiben BEIDE die Deckkraft
+            // desselben Elements. Wer von beiden seinen Anfang aus dem Element
+            // liest, liest also den Zustand, den der andere gerade hinterlassen
+            // hat — und nach einem invalidate() steht dieser Zufallswert dann
+            // als Anfang fest.
+            //
+            // immediateRender: false ist die Bedingung dafür, dass das hier
+            // gefahrlos ist: ein fromTo rendert seinen Anfang sonst sofort beim
+            // Anlegen, und das wäre Deckkraft 1 auf Kapitel eins — sichtbar ab
+            // dem ersten Frame der Seite, lange bevor die Blende aufgeht.
+            .fromTo(
               chapterOne,
-              { opacity: 0, y: -30, ease: "power2.in", duration: 0.34 },
+              { "--lead-out": 1, y: 0 },
+              {
+                "--lead-out": 0,
+                y: -30,
+                ease: "power2.in",
+                duration: 0.34,
+                immediateRender: false,
+              },
               0,
             )
             .fromTo(
@@ -754,6 +820,14 @@ export default function About() {
         return () => {
           ro.disconnect();
           swapTeardown?.();
+          // Die beiden Faktoren von Kapitel eins stehen als rohe Custom
+          // Properties am Element und überleben mm.revert() — wie die vier
+          // Blendenwerte weiter unten. Bleiben sie stehen, hinge das Kapitel
+          // beim Wechsel der Query auf dem letzten Produkt fest.
+          for (const el of chapterOne) {
+            el.style.removeProperty("--lead-in");
+            el.style.removeProperty("--lead-out");
+          }
           logo.style.visibility = "";
           hud.style.visibility = "";
           hud.style.width = "";
