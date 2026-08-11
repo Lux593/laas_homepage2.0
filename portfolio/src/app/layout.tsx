@@ -46,25 +46,27 @@ export const metadata: Metadata = {
     type: "website",
     locale: "de_DE",
     url: SITE_CONFIG.url,
-    title: "Luca Arnoldi — Fullstack Developer",
-    description: "Ich baue digitale Erlebnisse, die faszinieren.",
-    siteName: "Luca Arnoldi",
+    title: "LAAS — Luca Arnoldi App Studio",
+    description: "Herzlich Willkommen auf meiner Homepage.",
+    siteName: "Luca Arnoldi App Studio",
     // Eigenes JPEG statt des Bühnenbilds: Link-Vorschauen laufen über fremde
     // Scraper, die WebP teils nicht lesen und grosse Dateien verwerfen.
     // 1200x630 ist das Format, das LinkedIn, Slack und X erwarten.
+    // Inhalt: die Wortmarke aus laas-logo-full.svg, weiss auf #050505, mittig
+    // mit reichlich Rand — Telegram und Co. runden die Ecken ab.
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "Luca Arnoldi Portfolio",
+        alt: "LAAS — Luca Arnoldi App Studio",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Luca Arnoldi — Fullstack Developer",
-    description: "Ich baue digitale Erlebnisse, die faszinieren.",
+    title: "LAAS — Luca Arnoldi App Studio",
+    description: "Herzlich Willkommen auf meiner Homepage.",
     images: ["/og-image.jpg"],
   },
   robots: {
