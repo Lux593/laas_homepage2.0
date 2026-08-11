@@ -52,8 +52,9 @@ export const metadata: Metadata = {
     // Eigenes JPEG statt des Bühnenbilds: Link-Vorschauen laufen über fremde
     // Scraper, die WebP teils nicht lesen und grosse Dateien verwerfen.
     // 1200x630 ist das Format, das LinkedIn, Slack und X erwarten.
-    // Inhalt: die Wortmarke aus laas-logo-full.svg, weiss auf #050505, mittig
-    // mit reichlich Rand — Telegram und Co. runden die Ecken ab.
+    // Inhalt: die Wortmarke aus laas-logo-full.svg im Marken-Off-White
+    // (#f2ede4, --color-panel) auf #050505, mittig mit reichlich Rand —
+    // Telegram und Co. runden die Ecken ab.
     images: [
       {
         url: "/og-image.jpg",
