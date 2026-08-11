@@ -26,6 +26,14 @@ export default function MagneticButton({
 
     const element = ref.current;
 
+    // Ohne diese Zeile bleibt der Knopf hängen, wo der Zeiger ihn zuletzt
+    // hingezogen hat: `strength: 0` startet den Effekt zwar neu, aber `target`
+    // überlebt in der Ref, und ohne Mausbewegung schreibt sie niemand zurück.
+    // Genau der Fall beim Öffnen des Kontaktformulars — der Knopf steht dann
+    // schief unter dem Tropfen, der aus seiner Mitte kommen soll.
+    target.current.x = 0;
+    target.current.y = 0;
+
     const handleMouseMove = (e: MouseEvent) => {
       const rect = element.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;

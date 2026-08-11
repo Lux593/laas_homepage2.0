@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import TextReveal from "@/components/ui/TextReveal";
-import MagneticButton from "@/components/ui/MagneticButton";
+import ContactDropForm from "@/components/ui/ContactDropForm";
 import { useLightSection } from "@/hooks/useLightSection";
+import { useIsMobile } from "@/hooks/useMediaQuery";
 import { SITE_CONFIG } from "@/lib/constants";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -13,9 +14,38 @@ gsap.registerPlugin(ScrollTrigger);
 export default function GiganticCTA() {
   const sectionRef = useRef<HTMLElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const [contactOpen, setContactOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   // Cream contact card needs dark chrome (logo + menu) while it owns the top.
   useLightSection(sectionRef);
+
+  const onContactOpenChange = useCallback((open: boolean) => {
+    setContactOpen(open);
+  }, []);
+
+  // While the form is open: full-bleed cream (no radius) so About/black above cannot peek.
+  // Important: set on the DOM node directly and keep a class — ScrollTrigger scrub
+  // otherwise re-applies borderRadius: 2rem from the wipe timeline.
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+
+    // Scrollen und ScrollTrigger.refresh gehören ContactDropForm: die Tropfen-
+    // animation weiss als einzige, WANN das Layout steht. Ein zweites
+    // scrollIntoView hier lief Lenis in die Parade, und ein refresh mitten im
+    // Öffnen mass eine Bühne, die noch wuchs.
+    if (contactOpen) {
+      card.classList.add("contact-card--open");
+      gsap.set(card, { borderRadius: 0 });
+      return;
+    }
+
+    card.classList.remove("contact-card--open");
+    gsap.set(card, {
+      borderRadius: isMobile ? "1.5rem 1.5rem 0 0" : "2rem",
+    });
+  }, [contactOpen, isMobile]);
 
   useEffect(() => {
     if (!cardRef.current || !sectionRef.current) return;
@@ -174,7 +204,11 @@ export default function GiganticCTA() {
         // höher als der Bildschirm, wächst die Karte mit und justify-end hat
         // nichts mehr zu verteilen — es kann nichts nach oben aus dem Bild
         // laufen.
-        className="relative min-h-svh flex flex-col justify-end overflow-hidden md:justify-center lg:min-h-screen"
+        className={
+          contactOpen
+            ? "contact-card--open relative min-h-svh flex flex-col justify-end overflow-hidden md:justify-center lg:min-h-screen"
+            : "relative min-h-svh flex flex-col justify-end overflow-hidden md:justify-center lg:min-h-screen"
+        }
         style={{
           backgroundColor: "#f2ede4",
           clipPath: "inset(100% 0 0 0)",
@@ -244,59 +278,54 @@ export default function GiganticCTA() {
               als eine halbe Kuh. Der Knopf gibt unter sm ausserdem etwas
               Innenabstand ab, damit die Gruppe auch auf 320px in den Container
               passt. */}
-          <div className="relative inline-flex items-center justify-center gap-1.5 sm:gap-0">
-            {/* Die Kuh bringt ihre Bewegung selbst mit: ein 2.7-Sekunden-Loop
-                als animiertes WebP (mit Higgsfield aus dem Original-PNG
-                erzeugt, Vor- und Rücklauf aneinandergehängt, damit der Loop
-                keinen Sprung hat). 65 ms pro Bild, an den beiden Umkehrpunkten
-                110 ms — die kurze Pause nimmt dem Richtungswechsel das
-                Mechanische. Die 384er-Bühne ist breiter als die Kuh —
-                der freie Rand ist auf das Cremeweiß der Karte abgestimmt und
-                nach außen weich ausgeblendet, damit kein Rechteck sichtbar
-                wird. Deshalb sind die Breiten hier größer und die Abstände
-                kleiner als beim randlosen PNG vorher.
-                next/image scheidet aus: der Optimizer würde die Animation
-                plattmachen, und das picture-Element braucht ein natives
-                Bild-Tag. */}
-            <span
-              aria-hidden
-              className="pointer-events-none relative w-[clamp(3.25rem,17vw,6.4rem)] shrink-0 select-none sm:absolute sm:right-[calc(100%+0.9rem)] sm:top-1/2 sm:w-[8rem] sm:-translate-y-[48%] md:right-[calc(100%+1.2rem)] md:w-[9.6rem]"
-            >
-              <picture>
-                {/* Reduzierte Bewegung bekommt das Standbild — ohne JS, und
-                    auf derselben Bühne, damit die Kuh nicht verspringt. */}
-                <source
-                  media="(prefers-reduced-motion: reduce)"
-                  srcSet="/cow-easter-egg-still.webp"
-                />
-                <img
-                  src="/cow-easter-egg-anim.webp"
-                  alt=""
-                  width={384}
-                  height={384}
-                  loading="lazy"
-                  decoding="async"
-                  draggable={false}
-                  className="h-auto w-full"
-                />
-              </picture>
-            </span>
-            <MagneticButton>
-              <a
-                href={`mailto:${SITE_CONFIG.email}`}
-                className="inline-flex items-center gap-3 px-8 py-5 text-body-md font-display font-bold tracking-tight rounded-full transition-colors duration-500 ease-out-expo group sm:px-10"
-                style={{
-                  backgroundColor: "#0a0a0a",
-                  color: "#f0ede8",
-                }}
+          <ContactDropForm
+            onOpenChange={onContactOpenChange}
+            leadingAccessory={
+              /* Die Kuh bringt ihre Bewegung selbst mit: ein 2.7-Sekunden-Loop
+                  als animiertes WebP (mit Higgsfield aus dem Original-PNG
+                  erzeugt, Vor- und Rücklauf aneinandergehängt, damit der Loop
+                  keinen Sprung hat). 65 ms pro Bild, an den beiden Umkehrpunkten
+                  110 ms — die kurze Pause nimmt dem Richtungswechsel das
+                  Mechanische. Die 384er-Bühne ist breiter als die Kuh —
+                  der freie Rand ist auf das Cremeweiß der Karte abgestimmt und
+                  nach außen weich ausgeblendet, damit kein Rechteck sichtbar
+                  wird. Deshalb sind die Breiten hier größer und die Abstände
+                  kleiner als beim randlosen PNG vorher.
+                  next/image scheidet aus: der Optimizer würde die Animation
+                  plattmachen, und das picture-Element braucht ein natives
+                  Bild-Tag.
+
+                  Ab sm: absolute links neben dem Button — ohne Layout-Shift.
+                  Unter sm Flex-Kind, damit die Kuh auf schmalen Displays nicht
+                  vom overflow-hidden der Karte abgeschnitten wird.
+
+                  Sie bleibt IMMER im DOM: ContactDropForm greift sie über
+                  data-contact-accessory und animiert den Abgang. Vorher hing
+                  sie an einem Ternary und verschwand hart mit dem Klick. */
+              <span
+                aria-hidden
+                data-contact-accessory
+                className="pointer-events-none relative w-[clamp(3.25rem,17vw,6.4rem)] shrink-0 select-none sm:absolute sm:right-[calc(100%+0.9rem)] sm:top-1/2 sm:w-[8rem] sm:-translate-y-[48%] md:right-[calc(100%+1.2rem)] md:w-[9.6rem]"
               >
-                Projekt starten
-                <span className="inline-block transition-transform duration-500 ease-out-expo group-hover:translate-x-1">
-                  →
-                </span>
-              </a>
-            </MagneticButton>
-          </div>
+                <picture>
+                  <source
+                    media="(prefers-reduced-motion: reduce)"
+                    srcSet="/cow-easter-egg-still.webp"
+                  />
+                  <img
+                    src="/cow-easter-egg-anim.webp"
+                    alt=""
+                    width={384}
+                    height={384}
+                    loading="lazy"
+                    decoding="async"
+                    draggable={false}
+                    className="h-auto w-full"
+                  />
+                </picture>
+              </span>
+            }
+          />
 
           {/* Umbruchfähig und mit engerem Abstand: die drei Namen plus 2×2rem
               Lücke ergaben eine Mindestbreite von 330px, an der die ganze
