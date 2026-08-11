@@ -25,8 +25,6 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   compress: true,
 
-  transpilePackages: ["three"],
-
   images: {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],
@@ -41,19 +39,6 @@ const nextConfig: NextConfig = {
     resolveAlias: {
       tailwindcss: path.join(__dirname, "node_modules/tailwindcss"),
     },
-    rules: {
-      "*.glsl": { loaders: ["raw-loader"], as: "*.js" },
-      "*.vert": { loaders: ["raw-loader"], as: "*.js" },
-      "*.frag": { loaders: ["raw-loader"], as: "*.js" },
-    },
-  },
-
-  webpack: (config) => {
-    config.module.rules.push({
-      test: /\.(glsl|vs|fs|vert|frag)$/,
-      use: ["raw-loader"],
-    });
-    return config;
   },
 
   async headers() {
