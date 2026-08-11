@@ -14,6 +14,30 @@ function apply() {
   document.documentElement.dataset.uiTheme = lightCount > 0 ? "light" : "dark";
 }
 
+/**
+ * Hält die helle Chrome-Fassung, bis die zurückgegebene Funktion läuft — ohne
+ * ScrollTrigger, für Seiten, die von oben bis unten hell sind (die Rechtsseiten
+ * und die 404). Für sie ist Hell ein Zustand und kein Ereignis; useLightSection
+ * bräuchte einen Übergang, den es dort nicht gibt.
+ *
+ * Bewusst über denselben Zähler wie der Hook darunter: eine zweite, eigene
+ * Buchführung würde beim Wechsel zwischen Startseite und Rechtsseite gegen
+ * diese hier arbeiten und die Leiste in der falschen Fassung stehen lassen.
+ */
+export function retainLightChrome() {
+  lightCount += 1;
+  apply();
+  let released = false;
+  return () => {
+    // Doppeltes Freigeben zöge den Zähler dauerhaft ins Minus — genau der
+    // Fehler, gegen den `set()` unten die Coercion hat.
+    if (released) return;
+    released = true;
+    lightCount -= 1;
+    apply();
+  };
+}
+
 type LightSectionOptions = {
   /** ScrollTrigger `end` — defaults to `"bottom top+=40"`. Use to stop light
    *  chrome before a dark overlay (e.g. the About wipe) covers the cream stage. */

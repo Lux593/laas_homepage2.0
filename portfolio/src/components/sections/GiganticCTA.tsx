@@ -7,6 +7,7 @@ import TextReveal from "@/components/ui/TextReveal";
 import MagneticButton from "@/components/ui/MagneticButton";
 import { useLightSection } from "@/hooks/useLightSection";
 import { SITE_CONFIG } from "@/lib/constants";
+import { LEGAL_PAGES } from "@/lib/legal";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -360,12 +361,12 @@ export default function GiganticCTA() {
           <p className="text-caption font-mono" style={{ color: "#9a9a9a" }}>
             © {new Date().getFullYear()} {SITE_CONFIG.name}
           </p>
+          {/* Die Liste stand hier als Literal und ist seit den Rechtsseiten
+              zweimal gebraucht — hier und in ihrer eigenen Fusszeile. Eine
+              Quelle, damit eine vierte Seite nicht an einer der beiden Stellen
+              fehlt. Markup und Klassen sind unverändert. */}
           <div className="flex items-center gap-5 md:gap-8">
-            {[
-              { href: "/agb", label: "AGB" },
-              { href: "/datenschutz", label: "Datenschutz" },
-              { href: "/impressum", label: "Impressum" },
-            ].map((link) => (
+            {LEGAL_PAGES.map((link) => (
               <a
                 key={link.href}
                 href={link.href}

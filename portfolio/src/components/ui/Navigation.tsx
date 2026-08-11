@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import gsap from "gsap";
 import { NAV_ITEMS } from "@/lib/constants";
 
@@ -21,6 +22,18 @@ const HIDE_DELTA_PX = 8;
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
+
+  // Die Leiste steht seit den Rechtsseiten auch auf Unterseiten. Dort zeigen
+  // die reinen Anker aus NAV_ITEMS („#services") ins Leere — es gibt auf
+  // /impressum keine Section mit dieser id, der Klick tut schlicht nichts.
+  //
+  // Auf der Startseite bleiben die hrefs deshalb ZEICHENGLEICH zu vorher, und
+  // nur ausserhalb wird „/#services" bzw. „/" daraus. Das ist kein Geschmack,
+  // sondern Notwendigkeit: „/" auf der Startseite wäre eine Navigation auf
+  // dieselbe URL und würde neu laden, wo „#" heute sanft nach oben rollt.
+  const isHome = usePathname() === "/";
+  const homeHref = isHome ? "#" : "/";
+  const sectionHref = (hash: string) => (isHome ? hash : `/${hash}`);
   /** Der Einflug fährt dieselbe Box — vorher darf nichts anderes daran ziehen. */
   const entryDoneRef = useRef(false);
 
@@ -173,7 +186,7 @@ export default function Navigation() {
               Mobil 18px statt 20px: unter 768px zieht die Wortmarke mit ein,
               ab 768px bleibt md:h-6 unverändert und der Desktop damit auch. */}
           <a
-            href="#"
+            href={homeHref}
             className="pointer-events-auto relative -m-3 flex min-h-[2.75rem] shrink-0 items-center p-3"
           >
             <Image
@@ -223,7 +236,7 @@ export default function Navigation() {
             {NAV_ITEMS.map((item, i) => (
               <motion.a
                 key={item.label}
-                href={item.href}
+                href={sectionHref(item.href)}
                 // 44px Trefferfläche, ohne an der Schrift zu drehen. Die
                 // Zeilenbox allein trägt max(36px, 4.5vw) — 1.5 Zeilenhöhe mal
                 // --text-display-sm, clamp(1.5rem, 3vw, 3rem) — und bleibt
