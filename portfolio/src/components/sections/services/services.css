@@ -641,7 +641,7 @@
   .services-stack-stage {
     position: sticky;
     top: 0;
-    height: 100svh;
+    height: calc(100svh + var(--toolbar-gap));
     /* Dieselbe Behandlung, die jede andere klebende Box im Projekt hat, und
        die dieser einen fehlte.
        Nachgezählt: der Hero trägt `overflow: hidden` an sich selbst, die
@@ -681,8 +681,11 @@
     /* Unten mehr als die 1.5rem des Fluss-Zustands: die Copy steht hier fest
        am Bühnengrund, statt an ihm vorbeizuziehen. Was dort ein Moment war,
        ist hier ein Dauerzustand — auch gegenüber der festen Marke unten
-       links. */
-    padding-bottom: clamp(2.75rem, 7svh, 4.5rem);
+       links. + --toolbar-gap: die Bühne misst 100svh + gap (große iOS-Ansicht),
+       die Copy soll aber auf der kleinen Ansicht (svh) stehen — der gap wird
+       in die Polsterung aufgenommen, damit das Kapitel nicht in die Toolbar-Lücke
+       wandert. Vorbild: about.css .about-content. */
+    padding-bottom: calc(clamp(2.75rem, 7svh, 4.5rem) + var(--toolbar-gap));
   }
 
   /* Alle vier Bildstufen in Zeile 1, alle vier Kapitel in Zeile 2 — jeweils

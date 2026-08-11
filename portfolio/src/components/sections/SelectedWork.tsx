@@ -6,6 +6,7 @@ import ProjectPanel from "@/components/sections/work/ProjectPanel";
 import { useHorizontalPin } from "@/hooks/useHorizontalPin";
 import { useLightSection } from "@/hooks/useLightSection";
 import { useStackReveal } from "@/hooks/useStackReveal";
+import { useStickyCoverHeight } from "@/hooks/useStickyCoverHeight";
 import { PROJECTS } from "@/lib/constants";
 
 const TOTAL = String(PROJECTS.length).padStart(2, "0");
@@ -17,6 +18,14 @@ export default function SelectedWork() {
   // Gegenstück zum horizontalen Pin: unter 1024px stehen die Projekte
   // untereinander und decken sich beim Hereinscrollen einzeln auf.
   useStackReveal(trackRef, { panel: ".work-panel", media: "rise" });
+  // Die deckende Fläche unter dem klebenden Gerät muss mindestens so hoch sein
+  // wie das Gerät selbst, sonst bleibt oben ein Rest stehen und fährt am Ende
+  // der Etage mit hoch. Die Herleitung steht an .work-panel__body in
+  // globals.css, gemessen wird sie hier.
+  useStickyCoverHeight(trackRef, {
+    panel: ".work-panel",
+    media: ".work-panel__media",
+  });
 
   return (
     // Cream lives on the section, not on .work-pin — GSAP's generated pin-spacer

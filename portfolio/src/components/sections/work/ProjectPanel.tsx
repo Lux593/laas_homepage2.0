@@ -50,16 +50,13 @@ export default function ProjectPanel({
               statt der Copy über das voreingestellte min-size:auto Breite zu
               nehmen. */}
           <div className="work-panel__grid grid w-full max-w-full items-center">
-            {/* Das Rasterfeld nimmt die volle Spaltenbreite, das Zeilenmass
-                sitzt eine Ebene tiefer. Gestapelt trägt dieses Feld den Grund,
-                der über den klebenden Rahmen zieht — und der muss mindestens so
-                breit sein wie der Rahmen darunter, sonst schaut das Gerät
-                seitlich unter dem Text hervor. 48ch messen hier 525.3px, der
-                iPad-Rahmen auf 820px Breite aber 724.2px und auf 1024px
-                784.7px: die Fläche hätte links und rechts je 100 bzw. 130px
-                Gerät stehen lassen.
-                Gepinnt ändert sich dadurch nichts: die Spalte ist dort per
-                minmax(40ch,48ch) ohnehin nie breiter als das Mass selbst. */}
+            {/* Rasterfelder nehmen die volle Spaltenbreite, das Zeilenmass sitzt
+                eine Ebene tiefer. Diese Regel ist im Stapel keine Kosmetik:
+                das Feld, das den Grund über den klebenden Rahmen zieht, muss
+                mindestens so breit sein wie der Rahmen darunter, sonst schaut
+                das Gerät seitlich am Text vorbei. Welches Feld das ist, steht
+                weiter unten am Rumpf — hier stand es früher, als es noch
+                .work-panel__copy war. */}
             {/* Zwei Blöcke statt eines Fliesstexts: gestapelt gehören Zähler und
                 Titel ÜBER den Rahmen, Fliesstext und Liste darunter. Die
                 Umsortierung macht globals.css — dort löst `display: contents`
@@ -100,7 +97,19 @@ export default function ProjectPanel({
                 </header>
               </div>
 
-              <div className="work-panel__body max-w-[48ch]">
+              {/* Kein 48ch-Deckel auf dieser Hülle, sondern eine Ebene tiefer
+                  auf der Liste. Der Rumpf ist im Stapel das Feld, das den Grund
+                  über den klebenden Rahmen zieht (globals.css), und ein Grund
+                  deckt nur, so weit er reicht: auf dem iPad Pro 13" hochkant
+                  mass er 525.3px, der Rahmen darunter stand 76px weiter rechts
+                  und schaute neben dem Text hervor. Gemeint war das nie — der
+                  Kommentar oben beschreibt genau diese Bedingung, sie ging nur
+                  verloren, als `display: contents` .work-panel__copy die Box
+                  nahm, auf der sie gestanden hatte.
+                  Auf dem Desktop ändert der Umzug nichts: die Textspalte ist
+                  dort per minmax(40ch,48ch) ohnehin nie breiter als das Mass,
+                  der Deckel war dort schon vorher wirkungslos. */}
+              <div className="work-panel__body">
                 <p
                   data-reveal="copy"
                   className="work-panel__lede mt-3 max-w-[46ch] font-body text-body-md text-[#3a3a3a]"
@@ -108,7 +117,7 @@ export default function ProjectPanel({
                   {project.subtitle}
                 </p>
 
-                <ul className="work-panel__features mt-7 border-t border-[#0a0a0a]/12">
+                <ul className="work-panel__features mt-7 max-w-[48ch] border-t border-[#0a0a0a]/12">
                   {project.features.map((feature, i) => (
                     <li
                       key={feature.title}

@@ -131,6 +131,16 @@
   --container-max: 1440px;
   --container-padding: clamp(1.5rem, 4vw, 4rem);
 
+  /* iOS-Toolbar-Lücke: beim Ein-/Ausfahren der unteren Browserleiste wechselt
+     der sichtbare Viewport zwischen svh (Leiste ausgefahren) und lvh (Leiste
+     eingefahren). Diese Differenz wird von klebenden 100svh-Bühnen nicht
+     abgefangen — der Inhalt wandert oder es entsteht ein Spalt. Als Custom
+     Property (statt direktem calc), damit Playwright sie überschreiben kann:
+     Chromium rechnet svh == lvh und würde den Fehler von sich aus nicht zeigen.
+     Auf Desktop ist lvh == svh, also 0 — keine Veränderung.
+     Vorbild: about.css .about-stage. */
+  --toolbar-gap: calc(100lvh - 100svh);
+
   /* Deckel für die beiden Bühnen-Sections (Hero, Über mich). Beide haben
      keine Textspalte, die sie von innen begrenzt — sie verteilen ihre Teile
      über die Bühne. Ohne Deckel wandern Headline und Zeichnung bzw. die drei
@@ -185,12 +195,6 @@
   --ui-progress-from: #0a0a0a;
   --ui-progress-to: #6a6a6a;
   --ui-focus: #0a0a0a;
-}
-
-/* Contact form open: beat ScrollTrigger's inline borderRadius so About/black
-   above cannot show through the cream card's rounded corners. */
-.contact-card--open {
-  border-radius: 0 !important;
 }
 
 /* ============================================
@@ -321,13 +325,6 @@
 
   .preserve-3d {
     transform-style: preserve-3d;
-  }
-
-  .text-gradient-accent {
-    background: linear-gradient(135deg, #DFBE9F, #C49F7B);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
   }
 
   .glass {
@@ -502,11 +499,28 @@
       display: contents;
     }
 
+    /* Die Etage gibt ihre Unterpolsterung an den Rumpf ab. Warum, steht in der
+       Rechnung an .work-panel__body: was zwischen Rahmen und nächster Etage
+       durchsichtig bleibt, deckt nichts. Die Summe ist dieselbe wie vorher —
+       der Wert steht nur eine Ebene tiefer und trägt jetzt Grund. */
+    .work-panel {
+      padding-bottom: 0;
+    }
+
+    /* Aus demselben Grund keine Rasterlücke mehr: die 2.5rem zwischen Rahmen
+       und Rumpf gehören ab hier dem Rumpf (padding-top unten), die über dem
+       Rahmen dem Kopf (margin-bottom unten). Die Geometrie ist Pixel für Pixel
+       die alte, die deckende Fläche beginnt nur 40px höher. */
+    .work-panel__grid {
+      row-gap: 0;
+    }
+
     /* Kopf über dem Rahmen, Rahmen, Rumpf darunter. Die DOM-Folge ist
        Kopf → Rumpf → Rahmen und bleibt es: sie ist die Leseordnung ohne CSS
        und die Reihenfolge, in der useStackReveal die Marken staffelt. */
     .work-panel__head {
       order: 1;
+      margin-bottom: 2.5rem;
     }
 
     .work-panel__media {
@@ -521,23 +535,60 @@
       order: 3;
     }
 
-    /* Die Copy zieht ÜBER den klebenden Rahmen. Ohne eigenen Grund stünde der
-       dunkle Text auf dem Gerätemockup — genau der Fehler, der im Prozess schon
-       einmal gebaut wurde (dort behauptete ein Kommentar den Grund, den es nie
-       gab). Deshalb hier eine deckende Fläche und keine Behauptung.
-       Der Grund ist exakt der Sectionsgrund (#f2ede4, siehe bg-[#f2ede4] an
-       <section id="work"> und --color-panel im Theme). Ausserhalb der
-       Überdeckung ist er damit unsichtbar; in der Überdeckung liest es sich
-       nicht als vorgeschobene Karte, sondern als Gerät, das unter der Fläche
-       verschwindet.
-       Warum eine Fläche und keine Ausblend-Choreografie: das Kleben selbst
-       läuft auch bei reduzierter Bewegung, GSAP dort nicht. Ein
-       scrollgebundenes Wegblenden liesse die Überdeckung ausgerechnet bei den
-       Nutzern stehen, die sie am wenigsten gebrauchen können. */
+    /* ── Wieviel Rahmen die Fläche überhaupt decken kann ───────────────────
+     *
+     * Der Kleber löst, sobald die UNTERKANTE des Gerätefelds die Unterkante
+     * seines Rasters erreicht — und das Raster endet mit dem Rumpf. In genau
+     * diesem Moment steht die Oberkante des Rumpfs eine Rumpfhöhe über der
+     * Rasterunterkante, die Oberkante des Rahmens eine Feldhöhe. Die beste je
+     * erreichbare Deckung ist damit nicht eine Frage der Choreografie, sondern
+     * eine Subtraktion:
+     *
+     *     offen bleibt = Feldhöhe − Rumpfhöhe
+     *
+     * Gemessen über die ganze Durchfahrt, iPhone 16 / 16 Pro Max / iPad 13"
+     * hochkant, und auf den Zehntelpixel deckungsgleich mit der Rechnung:
+     * die iPad-Mockups (292-337px Feld) verschwanden vollständig, die
+     * hochkanten iPhones (579-628px Feld) liessen 82 / 140 / 185px stehen —
+     * der Rahmen stand am Ende der Etage und fuhr mit hoch, statt unter dem
+     * Text zu verschwinden. Nicht das Endgerät entschied darüber, sondern
+     * welches Mockup im Projekt steckt.
+     *
+     * Drei Zeilen decken die Differenz, in dieser Reihenfolge:
+     *
+     *  1. padding-top schluckt die alte Rasterlücke (2.5rem). Durchsichtige
+     *     Lücke deckt nichts, Polsterung mit Grund deckt — bei identischer
+     *     Geometrie. Kostet keinen Pixel Bauhöhe.
+     *  2. padding-bottom schluckt die Unterpolsterung der Etage (bis 2.5rem),
+     *     aus demselben Grund und ebenfalls umsonst.
+     *  3. min-height füllt den Rest auf: --media-h ist die gemessene
+     *     Border-Box des klebenden Felds, geschrieben von
+     *     hooks/useStickyCoverHeight.ts. Erst dieser Wert macht die Deckung
+     *     unabhängig davon, welches Gerät im Projekt steckt und wie lang seine
+     *     Merkmalliste ist. Die 2px sind Reserve gegen Teilpixel; ohne JS
+     *     greift die 0px-Rückfallebene und es bleibt beim heutigen Verhalten.
+     *     GEGENSTÜCK: hooks/useStickyCoverHeight.ts, aufgerufen in
+     *     sections/SelectedWork.tsx.
+     *
+     * Die Copy zieht ÜBER den klebenden Rahmen. Ohne eigenen Grund stünde der
+     * dunkle Text auf dem Gerätemockup — genau der Fehler, der im Prozess schon
+     * einmal gebaut wurde (dort behauptete ein Kommentar den Grund, den es nie
+     * gab). Deshalb hier eine deckende Fläche und keine Behauptung.
+     * Der Grund ist exakt der Sectionsgrund (#f2ede4, siehe bg-[#f2ede4] an
+     * <section id="work"> und --color-panel im Theme). Ausserhalb der
+     * Überdeckung ist er damit unsichtbar; in der Überdeckung liest es sich
+     * nicht als vorgeschobene Karte, sondern als Gerät, das unter der Fläche
+     * verschwindet.
+     * Warum eine Fläche und keine Ausblend-Choreografie: das Kleben selbst
+     * läuft auch bei reduzierter Bewegung, GSAP dort nicht. Ein
+     * scrollgebundenes Wegblenden liesse die Überdeckung ausgerechnet bei den
+     * Nutzern stehen, die sie am wenigsten gebrauchen können. */
     .work-panel__body {
       position: relative;
       z-index: 10;
-      padding-top: clamp(1.5rem, 4vh, 2.5rem);
+      padding-top: calc(2.5rem + clamp(1.5rem, 4vh, 2.5rem));
+      padding-bottom: clamp(1.25rem, 3.5vh, 2.5rem);
+      min-height: calc(var(--media-h, 0px) + 2px);
       background-color: var(--color-panel);
     }
 

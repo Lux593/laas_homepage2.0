@@ -492,14 +492,14 @@ export default function Hero() {
           verlässliches Bezugsmaß haben, und zieht sich per negativem
           margin-bottom denselben Betrag wieder ab: im Fluss belegt er nichts. */}
       <div
-        className="pointer-events-none relative z-30 h-svh mb-[-100svh] motion-safe:sticky motion-safe:top-0"
+        className="pointer-events-none relative z-30 h-[calc(100svh+var(--toolbar-gap))] -mb-[calc(100svh+var(--toolbar-gap))] motion-safe:sticky motion-safe:top-0"
         style={{ visibility: heroActive ? undefined : "hidden" }}
       >
         {/* Der Hinweis steht jetzt auf dem dunklen Hero, nicht mehr auf Creme:
             helle Tinte statt panel-ink. Er hängt am unteren Bildrand, damit ihn
             die einfahrende Leistungen-Kante nicht mitzieht. */}
         <div
-          className="absolute inset-x-0 bottom-0 flex items-center justify-center"
+          className="absolute inset-x-0 bottom-[var(--toolbar-gap)] flex items-center justify-center"
           style={{ height: `${PEEK}%` }}
         >
           <div ref={cueLayerRef} className="will-change-[transform,opacity]">
@@ -542,7 +542,7 @@ export default function Hero() {
           hindurchscheint, ist der #050505-Grund von <main> — dieselbe Farbe,
           die der Hero dort hat. */}
       <section
-        className="relative motion-safe:sticky motion-safe:top-0 h-svh flex flex-col items-center justify-center overflow-hidden bg-[#050505] pb-[28svh] md:pb-[32svh]"
+        className="relative motion-safe:sticky motion-safe:top-0 h-[calc(100svh+var(--toolbar-gap))] flex flex-col items-center justify-center overflow-hidden bg-[#050505] pb-[calc(28svh+var(--toolbar-gap))] md:pb-[calc(32svh+var(--toolbar-gap))]"
         id="hero"
         style={{ visibility: heroActive ? undefined : "hidden" }}
       >
