@@ -30,8 +30,17 @@ export function useLightSection(
   options?: LightSectionOptions
 ) {
   // Inline `end` lambdas must not recreate the ScrollTrigger every render.
+  //
+  // Nachgefuehrt wird im Effect, nicht im Render — waehrend des Renders in ein
+  // Ref zu schreiben ist eine unreine Nebenwirkung. Der Effect steht bewusst
+  // VOR dem Haupteffect, damit beim Mount erst der Wert steht und dann der
+  // ScrollTrigger entsteht. Die Startbelegung aus `useRef` deckt denselben
+  // Mount ohnehin ab, und `resolveEnd` laeuft erst bei einem ScrollTrigger-
+  // Refresh, also lange nachdem die Effects durch sind.
   const endRef = useRef(options?.end);
-  endRef.current = options?.end;
+  useEffect(() => {
+    endRef.current = options?.end;
+  });
 
   useEffect(() => {
     const el = ref.current;

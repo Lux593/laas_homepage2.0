@@ -1,8 +1,8 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Database, Cpu, CheckCircle2 } from "lucide-react";
-import { useEffect, useState, useRef } from "react";
+import { Database, Cpu, CheckCircle2, type LucideIcon } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const COLORS = {
   primary: "#C49F7B",
@@ -14,8 +14,10 @@ const BAR_DURATION = 1.2;
 
 function WorkflowScene() {
   const [activeStep, setActiveStep] = useState(0);
-  const [reachedStep, setReachedStep] = useState(0);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  /** Fuer welchen Schritt der Balkenlauf bereits abgelaufen ist. Traegt die
+   *  Schrittnummer statt eines Flags, damit der Wert sich beim Weiterschalten
+   *  von selbst entwertet und nicht zurueckgesetzt werden muss. */
+  const [settledFor, setSettledFor] = useState(-1);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -24,23 +26,22 @@ function WorkflowScene() {
     return () => clearInterval(interval);
   }, []);
 
+  // Nur die Zwischenschritte warten auf den Balken. Schritt 0 (Rueckstellung)
+  // und Schritt 3 (Abschluss) schalten sofort — die stehen unten im Render.
   useEffect(() => {
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-    if (activeStep === 0) {
-      setReachedStep(0);
-    } else if (activeStep === 3) {
-      setReachedStep(3);
-    } else {
-      timeoutRef.current = setTimeout(() => {
-        setReachedStep(activeStep);
-      }, BAR_DURATION * 1000);
-    }
-
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
+    if (activeStep !== 1 && activeStep !== 2) return;
+    const id = setTimeout(() => setSettledFor(activeStep), BAR_DURATION * 1000);
+    return () => clearTimeout(id);
   }, [activeStep]);
+
+  // Abgeleitet statt gespeichert: waehrend der Balken laeuft, steht die
+  // Hervorhebung noch einen Schritt zurueck.
+  const reachedStep =
+    activeStep === 0 || activeStep === 3
+      ? activeStep
+      : settledFor === activeStep
+        ? activeStep
+        : activeStep - 1;
 
   const progress =
     activeStep === 0 ? 0 : activeStep === 1 ? 50 : activeStep === 2 ? 100 : 100;
@@ -103,7 +104,7 @@ function WorkflowNode({
   isCompleted,
   color,
 }: {
-  icon: any;
+  icon: LucideIcon;
   label: string;
   step: number;
   isActive: boolean;

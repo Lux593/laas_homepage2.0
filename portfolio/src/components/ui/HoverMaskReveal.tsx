@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useCallback, useState, useSyncExternalStore } from "react";
+import { useRef, useEffect, useCallback, useSyncExternalStore } from "react";
 
 interface HoverMaskRevealProps {
   imageBase: string;
@@ -579,8 +579,15 @@ export default function HoverMaskReveal({
     () => false,
   );
 
+  // Die Simulationsparameter liest die rAF-Schleife bei jedem Frame aus diesem
+  // Ref. Sie duerfen die Schleife nicht neu aufsetzen — deshalb ein Ref und
+  // keine Effect-Abhaengigkeit. Nachgefuehrt wird im Effect statt im Render:
+  // waehrend des Renders zu schreiben ist eine unreine Nebenwirkung, und die
+  // Schleife laeuft ohnehin erst, nachdem die Effects durchgelaufen sind.
   const propsRef = useRef({ splatRadius, blur, circleBoost, curl, velocityDissipation, shrinkTime, pressureIterations });
-  propsRef.current = { splatRadius, blur, circleBoost, curl, velocityDissipation, shrinkTime, pressureIterations };
+  useEffect(() => {
+    propsRef.current = { splatRadius, blur, circleBoost, curl, velocityDissipation, shrinkTime, pressureIterations };
+  }, [splatRadius, blur, circleBoost, curl, velocityDissipation, shrinkTime, pressureIterations]);
 
   useEffect(() => {
     if (isMobile) return;

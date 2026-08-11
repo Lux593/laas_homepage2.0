@@ -3,6 +3,11 @@ import { Instrument_Serif, DM_Sans } from "next/font/google";
 import SmoothScroll from "@/components/providers/SmoothScroll";
 import AnimationProvider from "@/components/providers/AnimationProvider";
 import GrainOverlay from "@/components/ui/GrainOverlay";
+// Der Preloader ist abgeschaltet, nicht abgeschafft: die Einbindung steht weiter
+// unten auskommentiert, und Hero.tsx rechnet in seinem Auftritts-Timing damit,
+// dass er zurueckkommen kann. Der Import bleibt stehen, damit das Wiedereinschalten
+// eine Zeile bleibt statt zwei.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import Preloader from "@/components/ui/Preloader";
 
 import { SITE_CONFIG } from "@/lib/constants";
