@@ -33,18 +33,6 @@ export function useIsMobile() {
   return useMediaQuery("(max-width: 767.98px)");
 }
 
-export function useIsTablet() {
-  return useMediaQuery("(min-width: 768px) and (max-width: 1023.98px)");
-}
-
-export function useIsDesktop() {
-  return useMediaQuery("(min-width: 1024px)");
-}
-
-export function usePrefersReducedMotion() {
-  return useMediaQuery("(prefers-reduced-motion: reduce)");
-}
-
 export function useSupportsHover() {
   return useMediaQuery("(hover: hover)");
 }

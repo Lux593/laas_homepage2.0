@@ -101,7 +101,8 @@ export default function Hero() {
     // Seite eine Section tiefer dasselbe Gerät als gestapelt behandelt —
     // gemessen: zwei parallel animierte `filter` auf 820×1180.
     const narrow = window.matchMedia(STACK_LAYOUT_QUERY).matches;
-    // Kurzer Beat nach Paint — früher 2.2s für den Preloader, der aktuell aus ist.
+    // Kurzer Beat nach Paint. Stand früher auf 2.2s, um einen Preloader
+    // abzuwarten — den gibt es nicht mehr, der Auftritt beginnt direkt.
     const tl = gsap.timeline({ delay: 0.4 });
 
     // Zuerst geht die Lampe an. Die Maske läuft von oben nach unten, also

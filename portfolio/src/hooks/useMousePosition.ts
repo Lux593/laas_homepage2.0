@@ -2,7 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { lerp } from "@/lib/utils";
-import type { MousePosition } from "@/types";
+
+/** Zeigerposition in Pixeln plus auf [-1, 1] normalisiert, bezogen auf die
+ *  Fenstermitte. Steht hier statt in einem eigenen Typen-Barrel: dieser Hook
+ *  ist der einzige Ort, der sie erzeugt. */
+export interface MousePosition {
+  x: number;
+  y: number;
+  normalizedX: number;
+  normalizedY: number;
+}
 
 const INITIAL_POSITION: MousePosition = {
   x: 0,
