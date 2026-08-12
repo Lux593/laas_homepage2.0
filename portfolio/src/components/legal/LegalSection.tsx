@@ -11,8 +11,9 @@ export interface LegalSectionData {
  *
  * Die Nummer steht ÜBER dem Titel und nicht daneben: die Textspalte ist auf
  * 68ch Lesebreite gedeckelt, eine hängende Nummernspalte würde davon abbeissen.
- * Die Marke selbst — zweistellig, Mono, in Versalabstand — ist dieselbe, die
- * „Leistungen" (SERVICES[].mark) und die Projektzählung schon tragen.
+ * Die Marke selbst — zweistellig, Display, tabular-nums — ist dieselbe, die
+ * „Leistungen" und die Projektzählung schon tragen. Display statt Mono: die
+ * Mono-Null trägt einen Schrägstrich und fällt aus der Zahlenreihe.
  *
  * Vergeben wird sie von LegalPage aus der Reihenfolge, nicht von Hand: ein
  * nachträglich eingeschobener Abschnitt hätte sonst fünfzehn Nummern und
@@ -38,7 +39,7 @@ export default function LegalSection({
       // also genau die Breiten ab, die die jeweils andere auslässt.
       className="mt-12 scroll-mt-32 border-t border-[#0a0a0a]/10 pt-8 md:mt-16 md:pt-10"
     >
-      <span className="block font-mono text-caption tracking-[0.2em] text-[#9a9a9a]">
+      <span className="block font-display text-caption font-bold tracking-tighter tabular-nums text-[#9a9a9a]">
         {mark}
       </span>
       <h2 className="mt-3 font-display text-[clamp(1.25rem,2.2vw,1.75rem)] font-bold leading-tight tracking-tight text-[#0a0a0a]">

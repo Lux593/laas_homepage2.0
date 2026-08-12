@@ -579,11 +579,11 @@ export default function Hero() {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             ref={illuRef}
-            src="/hero-desk.webp"
+            src="/hero-desk.webp?v=inbox-4"
             alt=""
             width={1270}
             height={490}
-            className="mb-[11svh] w-[min(960px,91vw)] max-h-[32svh] md:max-h-[37svh] object-contain select-none opacity-0"
+            className="mb-[11svh] w-[min(1040px,94vw)] max-h-[35svh] md:max-h-[40svh] object-contain select-none opacity-0"
             style={{
               ["--wipe" as string]: -25,
               WebkitMaskImage:

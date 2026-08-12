@@ -246,11 +246,11 @@ export default function GiganticCTA() {
               Innenabstand ab, damit die Gruppe auch auf 320px in den Container
               passt. */}
           <div className="relative inline-flex items-center justify-center gap-1.5 sm:gap-0">
-            {/* Die Kuh bringt ihre Bewegung selbst mit: ein 2.7-Sekunden-Loop
+            {/* Die Kuh bringt ihre Bewegung selbst mit: ein 2.0-Sekunden-Loop
                 als animiertes WebP (mit Higgsfield aus dem Original-PNG
                 erzeugt, Vor- und Rücklauf aneinandergehängt, damit der Loop
-                keinen Sprung hat). 65 ms pro Bild, an den beiden Umkehrpunkten
-                110 ms — die kurze Pause nimmt dem Richtungswechsel das
+                keinen Sprung hat). 48 ms pro Bild, an den beiden Umkehrpunkten
+                82 ms — die kurze Pause nimmt dem Richtungswechsel das
                 Mechanische. Die 384er-Bühne ist breiter als die Kuh —
                 der freie Rand ist auf das Cremeweiß der Karte abgestimmt und
                 nach außen weich ausgeblendet, damit kein Rechteck sichtbar

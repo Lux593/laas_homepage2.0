@@ -12,24 +12,25 @@
    Lampe maßstabsgetreu darüber. */
 
 .hero-lamp {
-  /* Kasten des <img>: w-[min(960px,91vw)] in Hero.tsx */
-  --desk-box: min(960px, 91vw);
+  /* Kasten des Desk-Bilds: w-[min(1040px,94vw)] in Hero.tsx */
+  --desk-box: min(1040px, 94vw);
 
   /* Sobald max-h greift, skaliert object-contain die 1270×490 herunter und
      zentriert sie in ihrem Kasten — die Zeichnung ist dann schmaler als er.
-     1270/490 = 2.5918, also 32svh × 2.5918 = 82.94svh. */
-  --desk-w: min(var(--desk-box), 82.94svh);
+     1270/490 = 2.5918, also 35svh × 2.5918 = 90.71svh. */
+  --desk-w: min(var(--desk-box), 90.71svh);
   --desk-h: calc(var(--desk-w) / 2.5918);
 
   /* Oberkante der Zeichnung, gemessen von der Unterkante der Section: das
      <img> steht per items-end mit mb-[11svh] über der Balkenkante. */
   --desk-top: calc(11svh + var(--desk-h));
 
-  /* Gesamtgröße der Lampe. 1 wäre der Maßstab des Canva-Blatts, bezogen auf
-     die Breite der Zeichnung. Kleiner heißt: zierlichere Birne UND schmalerer
-     Kegel, weil der Öffnungswinkel derselbe bleibt. Auf dem Handy bleibt sie
-     größer — die Zeichnung ist dort ohnehin schmal, und bei 0.76 wäre das
+  /* Lampengröße entkoppelt von der Desk-Zeichnung: bleibt auf dem früheren
+     Desk-Maß (960px / 32svh), auch wenn die Zeichnung größer wird.
+     --lamp-scale: 1 wäre der Maßstab des Canva-Blatts. Auf dem Handy bleibt
+     sie größer — die Zeichnung ist dort ohnehin schmal, und bei 0.76 wäre das
      Glas nur noch gut 15px breit und läse sich als Fussel. */
+  --lamp-w: min(960px, 91vw, 82.94svh);
   --lamp-scale: 0.95;
 
   /* Höhe des Glases über der Oberkante der Zeichnung.
@@ -85,8 +86,11 @@
 
 @media (min-width: 768px) {
   .hero-lamp {
-    /* md:max-h-[37svh] → 37svh × 2.5918 = 95.9svh */
-    --desk-w: min(var(--desk-box), 95.9svh);
+    /* md:max-h-[40svh] → 40svh × 2.5918 = 103.67svh */
+    --desk-w: min(var(--desk-box), 103.67svh);
+    /* Früheres md-Desk-Maß (37svh × 2.5918 = 95.9svh), damit die Lampe
+       nicht mit der größeren Zeichnung mitwächst. */
+    --lamp-w: min(960px, 91vw, 95.9svh);
     --lamp-scale: 0.76;
   }
 }
@@ -101,15 +105,16 @@
 
   /* Grundlage ist die Oberkante der Zeichnung, plus --lamp-hang. Davon
      abgezogen wird, wie weit das Glas in der Grafik über deren Unterkante
-     sitzt (31.857% der Zeichnungsbreite, mitskaliert) — damit landet das Glas
+     sitzt (31.857% von --lamp-w, mitskaliert) — damit landet das Glas
      genau auf der gewünschten Höhe, egal wie groß die Lampe ist. */
   bottom: calc(
-    var(--desk-top) + var(--lamp-hang) - 0.31857 * var(--desk-w) *
+    var(--desk-top) + var(--lamp-hang) - 0.31857 * var(--lamp-w) *
       var(--lamp-scale)
   );
 
-  /* 1587/1271 = 1.24863: so viel breiter als die Zeichnung ist die Grafik. */
-  width: calc(var(--desk-w) * 1.24863 * var(--lamp-scale));
+  /* 1587/1271 = 1.24863: so viel breiter als die Zeichnung ist die Grafik.
+     Bezogen auf --lamp-w, nicht auf die ggf. größere Desk-Zeichnung. */
+  width: calc(var(--lamp-w) * 1.24863 * var(--lamp-scale));
   height: auto;
   max-width: none;
 

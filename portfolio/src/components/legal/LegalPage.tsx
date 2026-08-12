@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
 import LegalSection, {
@@ -17,10 +18,11 @@ const mark = (index: number) => String(index + 1).padStart(2, "0");
 /**
  * Die geteilte Hülle aller Rechtsseiten und der Fehlerseite.
  *
- * Client-Component, weil sie zwei Client-Dinge braucht: useLightChrome (die
- * feste Leiste muss über der Cremefläche dunkel schreiben) und TextReveal
- * (GSAP). Die Routen-Dateien darüber bleiben Server-Components und behalten
- * damit ihre `metadata` — die SEO-Angaben werden serverseitig gerendert.
+ * Client-Component, weil sie Client-Dinge braucht: useLightChrome (die feste
+ * Leiste muss über der Cremefläche dunkel schreiben), TextReveal (GSAP) und
+ * den Scroll-Spy fürs Inhaltsverzeichnis. Die Routen-Dateien darüber bleiben
+ * Server-Components und behalten damit ihre `metadata` — die SEO-Angaben
+ * werden serverseitig gerendert.
  */
 export default function LegalPage({
   eyebrow = "Rechtliches",
@@ -48,6 +50,62 @@ export default function LegalPage({
   useLightChrome();
   const pathname = usePathname();
   const hasIndex = Boolean(sections && sections.length > 2);
+  const [activeId, setActiveId] = useState<string | null>(
+    sections?.[0]?.id ?? null,
+  );
+
+  // Welches Kapitel gerade unter der festen Leiste liegt — steuert die
+  // Hervorhebung im sticky Verzeichnis. Die Leselinie liegt auf halber
+  // Viewport-Höhe: eine obere Linie (wie 160px) wird von kurzen Schlusskapiteln
+  // oft nie erreicht, weil die Seite nicht weit genug scrollt — dann springt
+  // die Markierung vom vorvorletzten direkt auf den letzten Punkt. Auf der
+  // Mitte kreuzt jede Überschrift die Linie, sobald sie im Lesefeld steht.
+  useEffect(() => {
+    if (!hasIndex || !sections?.length) return;
+
+    type ScrollDriver = {
+      on: (event: string, cb: () => void) => void;
+      off: (event: string, cb: () => void) => void;
+    };
+
+    const update = () => {
+      const line = window.innerHeight / 2;
+      let current = sections[0].id;
+      for (const section of sections) {
+        const el = document.getElementById(section.id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top <= line) current = section.id;
+      }
+
+      // Ganz am Anschlag: ein sehr kurzes letztes Kapitel kann seine Überschrift
+      // nicht bis zur Mitte hochschaffen. Erst dann, nicht vorher, gewinnt es
+      // fest — sonst würde der vorletzte Punkt übersprungen.
+      const lastId = sections[sections.length - 1].id;
+      const maxScroll = Math.max(
+        0,
+        document.documentElement.scrollHeight - window.innerHeight,
+      );
+      if (current !== lastId && window.scrollY >= maxScroll - 1) {
+        current = lastId;
+      }
+
+      setActiveId(current);
+    };
+
+    update();
+
+    // Lenis ab 768px; darunter (und bei reduced-motion) nur native Scroll.
+    const lenis = (window as unknown as { __lenis?: ScrollDriver }).__lenis;
+    lenis?.on("scroll", update);
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+
+    return () => {
+      lenis?.off("scroll", update);
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [hasIndex, sections]);
 
   return (
     // Der Grund liegt am <main> und nicht an einem inneren Kasten: die Seite
@@ -188,19 +246,33 @@ export default function LegalPage({
                 Inhalt
               </span>
               <ol className="mt-5 space-y-1">
-                {sections.map((section, i) => (
-                  <li key={section.id}>
-                    <a
-                      href={`#${section.id}`}
-                      className="group flex gap-3 py-1 text-body-sm leading-snug text-[#6a6a6a] transition-colors duration-300 hover:text-[#0a0a0a]"
-                    >
-                      <span className="pt-[0.15em] font-mono text-caption text-[#b8afa2] transition-colors duration-300 group-hover:text-[#A07850]">
-                        {mark(i)}
-                      </span>
-                      {section.title}
-                    </a>
-                  </li>
-                ))}
+                {sections.map((section, i) => {
+                  const isActive = activeId === section.id;
+                  return (
+                    <li key={section.id}>
+                      <a
+                        href={`#${section.id}`}
+                        aria-current={isActive ? "location" : undefined}
+                        className={
+                          isActive
+                            ? "group flex gap-3 py-1 text-body-sm font-semibold leading-snug text-[#0a0a0a] transition-colors duration-300"
+                            : "group flex gap-3 py-1 text-body-sm leading-snug text-[#8a8278] transition-colors duration-300 hover:text-[#0a0a0a]"
+                        }
+                      >
+                        <span
+                          className={
+                            isActive
+                              ? "pt-[0.15em] font-display text-caption font-bold tracking-tighter tabular-nums text-[#A07850] transition-colors duration-300"
+                              : "pt-[0.15em] font-display text-caption font-bold tracking-tighter tabular-nums text-[#c4bbb0] transition-colors duration-300 group-hover:text-[#A07850]"
+                          }
+                        >
+                          {mark(i)}
+                        </span>
+                        {section.title}
+                      </a>
+                    </li>
+                  );
+                })}
               </ol>
             </nav>
           )}

@@ -9,7 +9,7 @@ export const SITE_CONFIG = {
   tagline: "Code, die sich lebendig anfühlt",
   /** Live-Domain — Basis für metadataBase, OG-Tags, Sitemap und JSON-LD. */
   url: "https://laas.website",
-  email: "lucaarnoldi1993@gmail.com",
+  email: "hello@laas.website",
   socials: {
     github: "https://github.com/Lux593",
     linkedin: "https://www.linkedin.com/in/luca-arnoldi-2893521ba/",
