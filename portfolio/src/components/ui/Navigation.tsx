@@ -227,7 +227,10 @@ export default function Navigation() {
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
-            className="fixed inset-0 z-[calc(var(--z-nav)-1)] bg-bg-primary/98 backdrop-blur-xl flex flex-col items-center justify-center gap-8 text-center"
+            // text-text-primary explizit: auf Rechtsseiten sitzt Navigation in
+            // <main class="… text-[#0a0a0a]"> und würde sonst schwarz-auf-schwarz
+            // erben — Einträge erst beim Hover (accent) sichtbar.
+            className="fixed inset-0 z-[calc(var(--z-nav)-1)] bg-bg-primary/98 backdrop-blur-xl flex flex-col items-center justify-center gap-8 text-center text-text-primary"
             initial={{ clipPath: "circle(0% at calc(100% - 2.25rem) 2.75rem)" }}
             animate={{ clipPath: "circle(150% at 50% 50%)" }}
             exit={{ clipPath: "circle(0% at calc(100% - 2.25rem) 2.75rem)" }}

@@ -170,15 +170,18 @@
   }
 }
 
-/* Layer wrappers start dark; GSAP fades them in. Reduced motion shows all. */
+/* Layer wrappers start dark; GSAP fades them in. Reduced motion shows all.
+   Cord/Rays dürfen NICHT auf opacity:1 + CSS-mask allein stehen: mask-image
+   auf SVG-<g> wird in Safari/WebKit oft ignoriert — dann sind Kabel und
+   Strahlenkranz vom ersten Frame an voll sichtbar. Opacity ist der
+   zuverlässige Deckel; Hang/Spin-Masken bleiben progressive enhancement. */
 .hero-lamp__art [data-lamp-layer] {
   opacity: 0;
 }
 
-/* Kabel: Top-Down-Wipe statt Opacity. --hang ist die Masken-Unterkante in %.
+/* Kabel: Opacity-Fade + optional Top-Down-Wipe. --hang = Masken-Unterkante in %.
    -20 = komplett verdeckt (weicher Rand liegt oberhalb), 130 = voll offen. */
 .hero-lamp__art [data-lamp-layer="cord"] {
-  opacity: 1;
   --hang: -20;
   -webkit-mask-image: linear-gradient(
     180deg,
@@ -192,12 +195,11 @@
   );
 }
 
-/* Strahlenkranz: Conic-Sweep um die Birne. --spin in Grad (0→360).
+/* Strahlenkranz: Opacity-Fade + optional Conic-Sweep. --spin in Grad (0→360).
    Start ~11:50 (−5deg), gegen den Uhrzeigersinn: 11 → 10 → 9 → … → 12.
    Der Keil wächst rückwärts über (360 - spin)…360.
    steps(26) in GSAP matcht die ~26 Striche. */
 .hero-lamp__art [data-lamp-layer="rays"] {
-  opacity: 1;
   --spin: 0;
   -webkit-mask-image: conic-gradient(
     from -5deg at 50% 50%,

@@ -130,13 +130,19 @@ export default function Hero() {
         gsap.set(illuRef.current, { "--lit": 160, opacity: 1 });
       }
     } else {
-      // Kabel: Top-Down-Wipe über --hang. Am SVG-<g> steuert GSAP CSS-Vars
-      // unzuverlässig — deshalb Proxy + setProperty (wie am Desk --lit).
+      // Kabel: Opacity ist der Deckel (mask-image auf SVG-<g> ist unzuverlässig).
+      // --hang-Wipe parallel, wo die Maske greift — Proxy + setProperty, weil
+      // GSAP CSS-Vars am <g> sonst nicht setzt (wie am Desk --lit).
       if (layers.cord) {
         const cord = layers.cord;
         const hang = { value: -20 };
         cord.style.setProperty("--hang", "-20");
-        tl.set(cord, { opacity: 1 }, 0);
+        tl.fromTo(
+          cord,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.95, ease: "sine.out" },
+          0,
+        );
         tl.to(
           hang,
           {
@@ -158,12 +164,18 @@ export default function Hero() {
           0.4,
         );
       }
-      // Strahlen: Conic-Sweep, steps(26) ≈ ein Strich nach dem anderen.
+      // Strahlen: Opacity-Fade + Conic-Sweep (steps(26) ≈ ein Strich nach dem
+      // anderen). Opacity zuerst — sonst bleiben die Striche in Safari sofort an.
       if (layers.rays) {
         const rays = layers.rays;
         const spin = { value: 0 };
         rays.style.setProperty("--spin", "0");
-        tl.set(rays, { opacity: 1 }, 0.55);
+        tl.fromTo(
+          rays,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.42, ease: "sine.out" },
+          0.55,
+        );
         tl.to(
           spin,
           {

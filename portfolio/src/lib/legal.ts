@@ -49,7 +49,7 @@ export const LEGAL = {
      * `false` → die USt-IdNr. oben wird ausgewiesen.
      * `null`  → Platzhalter; die Frage ist offen.
      */
-    smallBusiness: null as boolean | null,
+    smallBusiness: true as boolean | null,
   },
 
   /** Zuständige Datenschutz-Aufsichtsbehörde am Sitz des Anbieters. */
@@ -87,7 +87,7 @@ export const LEGAL = {
    * Datum soll sich ändern, wenn die Texte sich ändern — nicht bei jedem
    * Aufruf. Beim Nachfüllen der Platzhalter mit hochziehen.
    */
-  updated: "11. August 2026",
+  updated: "12. August 2026",
 };
 
 /** Fusszeile der Rechtsseiten und der Kontaktkarte — eine Reihenfolge, eine Quelle. */
