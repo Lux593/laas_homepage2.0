@@ -47,7 +47,7 @@ export default function SelectedWork() {
           <div className="flex items-end justify-between gap-8">
             <div className="min-w-0">
               <span className="mb-3 block font-mono text-caption uppercase tracking-[0.2em] text-[#6a6a6a]">
-                Was ich bisher gemacht habe
+                Eine Auswahl meiner Arbeit
               </span>
               {/* start well before the pin engages — inside the pinned range a
                   play-once trigger would never fire and the headline would stay hidden */}

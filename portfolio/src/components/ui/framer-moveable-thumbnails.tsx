@@ -110,6 +110,11 @@ interface FramerMoveableThumbnailsProps {
   screenInset?: number;
   /** Skip the Next image optimizer (avoids stale resized crops while iterating assets). */
   unoptimized?: boolean;
+  /**
+   * Soft-blur a band at the top of the cutout (0–0.15 of height) to hide OS
+   * status-bar chrome without cropping media.
+   */
+  screenBlurTop?: number;
 }
 
 /** Positive-safe modulo — JS `%` keeps the sign of the dividend. */
@@ -117,12 +122,222 @@ function wrap(i: number, len: number) {
   return ((i % len) + len) % len;
 }
 
-export default function FramerMoveableThumbnails({
+/** Fixed overlay on the cutout — stays put while the carousel reel slides. */
+function CutoutTopBlur({ amount }: { amount: number }) {
+  const pct = Math.min(Math.max(amount, 0), 0.15);
+  if (pct <= 0) return null;
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-x-0 top-0 z-[1]"
+      style={{
+        height: `${pct * 100}%`,
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        // Short band: stay opaque over the status chrome, fade only the last bit.
+        maskImage: "linear-gradient(to bottom, #000 65%, transparent)",
+        WebkitMaskImage: "linear-gradient(to bottom, #000 65%, transparent)",
+      }}
+    />
+  );
+}
+
+function GallerySlideMedia({
+  item,
+  imageFit,
+  unoptimized,
+  priority,
+  active,
+  isSpare,
+}: {
+  item: ProjectGalleryItem;
+  imageFit: string;
+  unoptimized: boolean;
+  priority: boolean;
+  /** True when this middle-copy slide is the settled/current one. */
+  active: boolean;
+  isSpare: boolean;
+}) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const isVideo = item.type === "video";
+  const objectPosition = imageFit.includes("object-top") ? "top" : undefined;
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !isVideo) return;
+
+    // React does not reliably sync the `muted` attribute to the DOM property;
+    // without the property set, autoplay policies reject play() and the cutout
+    // stays on the poster / empty screenColor.
+    video.muted = true;
+    video.defaultMuted = true;
+    video.playsInline = true;
+
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduce || !active) {
+      video.pause();
+      return;
+    }
+
+    const tryPlay = () => {
+      void video.play().catch(() => {});
+    };
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) tryPlay();
+        else video.pause();
+      },
+      // Low threshold: in the pinned horizontal track a panel can sit mostly
+      // on-screen while the absolute cutout only clips a thin strip.
+      { threshold: 0.01, rootMargin: "20% 0px" }
+    );
+    io.observe(video);
+    video.addEventListener("loadeddata", tryPlay);
+    tryPlay();
+    return () => {
+      io.disconnect();
+      video.removeEventListener("loadeddata", tryPlay);
+      video.pause();
+    };
+  }, [active, isVideo, item.url]);
+
+  // Spare reel copies only need a still — mounting the clip three times would
+  // decode an ~4 MB loop for wrap-around padding the user never watches.
+  if (isVideo && isSpare && item.poster) {
+    return (
+      <Image
+        src={item.poster}
+        alt=""
+        fill
+        sizes="(max-width: 1024px) 92vw, 50vw"
+        className={`${imageFit} select-none pointer-events-none`}
+        style={{ objectPosition }}
+        draggable={false}
+        priority={false}
+        unoptimized={unoptimized}
+      />
+    );
+  }
+
+  if (isVideo) {
+    return (
+      <video
+        ref={videoRef}
+        className={`absolute inset-0 h-full w-full ${imageFit} select-none pointer-events-none`}
+        style={{ objectPosition }}
+        muted
+        autoPlay
+        loop
+        playsInline
+        preload={active ? "auto" : "metadata"}
+        poster={item.poster}
+        aria-label={item.title}
+        aria-hidden={isSpare || undefined}
+      >
+        <source src={item.url} type="video/mp4" />
+      </video>
+    );
+  }
+
+  return (
+    <Image
+      src={item.url}
+      alt={isSpare ? "" : item.title}
+      fill
+      sizes="(max-width: 1024px) 92vw, 50vw"
+      className={`${imageFit} select-none pointer-events-none`}
+      style={{ objectPosition }}
+      draggable={false}
+      priority={priority}
+      unoptimized={unoptimized}
+    />
+  );
+}
+
+/**
+ * One media item in the cutout: no carousel, no nav. Used for looping video
+ * previews (and any future single-screenshot projects) so we don't triple-mount
+ * an 8 MB clip just to keep the reel wrap-around happy.
+ */
+function SingleCutoutMedia({
+  item,
+  frame = "ipad",
+  fit,
+  screenColor = "#0a0a0a",
+  screenInset = 0,
+  screenBlurTop = 0,
+  unoptimized = false,
+}: FramerMoveableThumbnailsProps & { item: ProjectGalleryItem }) {
+  const device = FRAMES[frame];
+  const imageFit = fit ? SCREEN_FIT[fit] : device.fit;
+  const insetPct = Math.min(Math.max(screenInset, 0), 0.4) * 100;
+
+  return (
+    <div className="mx-auto w-fit max-w-full">
+      <div className={`device-well device-well--${frame}`}>
+        <div
+          className={`relative ${device.box}`}
+          style={{ aspectRatio: device.aspect }}
+        >
+          <div
+            className="absolute overflow-hidden"
+            style={{
+              ...device.screen,
+              backgroundColor: screenColor,
+              borderRadius: device.radius,
+            }}
+          >
+            <div
+              className="relative h-full w-full"
+              style={insetPct ? { padding: `${insetPct}%` } : undefined}
+            >
+              <div className="relative h-full w-full">
+                <GallerySlideMedia
+                  item={item}
+                  imageFit={imageFit}
+                  unoptimized={unoptimized}
+                  priority
+                  active
+                  isSpare={false}
+                />
+              </div>
+            </div>
+            <CutoutTopBlur amount={screenBlurTop} />
+          </div>
+
+          <Image
+            src={device.src}
+            alt=""
+            fill
+            sizes="(max-width: 1024px) 92vw, 50vw"
+            className="pointer-events-none select-none object-contain"
+            aria-hidden
+            priority={false}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function FramerMoveableThumbnails(
+  props: FramerMoveableThumbnailsProps
+) {
+  if (props.items.length === 0) return null;
+  if (props.items.length === 1) {
+    return <SingleCutoutMedia {...props} item={props.items[0]} />;
+  }
+  return <CarouselCutoutMedia {...props} />;
+}
+
+function CarouselCutoutMedia({
   items,
   frame = "ipad",
   fit,
   screenColor = "#0a0a0a",
   screenInset = 0,
+  screenBlurTop = 0,
   unoptimized = false,
 }: FramerMoveableThumbnailsProps) {
   // Unbounded on purpose: it counts steps taken, not which slide is showing.
@@ -273,8 +488,6 @@ export default function FramerMoveableThumbnails({
     return () => ro.disconnect();
   }, [x, slotX, measureWidth]);
 
-  if (len === 0) return null;
-
   // Where the reel is parked right now. dragConstraints are absolute in the
   // element's own transform space — not relative to where the finger went down —
   // so they have to follow the resting slot. Pinned to ±one screen width around
@@ -362,6 +575,9 @@ export default function FramerMoveableThumbnails({
                 // pictures again, purely there to cover the wrap, so leaving them
                 // labelled would read every screenshot out three times.
                 const isSpare = i < len || i >= len * 2;
+                const itemIndex = i % len;
+                const active =
+                  !isSpare && wrap(index, len) === itemIndex;
                 return (
                 <div
                   key={`${item.id}-${i}`}
@@ -378,22 +594,20 @@ export default function FramerMoveableThumbnails({
                   }}
                 >
                   <div className="relative h-full w-full">
-                    <Image
-                      src={item.url}
-                      alt={isSpare ? "" : item.title}
-                      fill
-                      sizes="(max-width: 1024px) 92vw, 50vw"
-                      className={`${imageFit} select-none pointer-events-none`}
-                      style={{ objectPosition: imageFit.includes("object-top") ? "top" : undefined }}
-                      draggable={false}
-                      priority={!isSpare && i === len}
+                    <GallerySlideMedia
+                      item={item}
+                      imageFit={imageFit}
                       unoptimized={unoptimized}
+                      priority={!isSpare && i === len}
+                      active={active}
+                      isSpare={isSpare}
                     />
                   </div>
                 </div>
                 );
               })}
             </motion.div>
+            <CutoutTopBlur amount={screenBlurTop} />
           </div>
 
           <Image

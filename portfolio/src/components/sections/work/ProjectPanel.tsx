@@ -167,6 +167,7 @@ export default function ProjectPanel({
                   fit={project.fit}
                   screenColor={project.screenColor}
                   screenInset={project.screenInset}
+                  screenBlurTop={project.screenBlurTop}
                   unoptimized={project.unoptimized}
                 />
               </div>

@@ -11,9 +11,25 @@
    rechnen nach, wo das <img> der Zeichnung im Hero landet, und hängen die
    Lampe maßstabsgetreu darüber. */
 
+/* Gemeinsame Boden- und Copy-Maße für Text, Zeichnung und Lampe.
+   Auf dem Handy liegen sie 7svh höher; der Scroll-Hinweis bleibt außen
+   am unteren Bildrand und hängt nicht an diesen Variablen. */
+#hero {
+  --desk-mb: 18svh;
+  --hero-copy-pad: 35svh;
+}
+
+@media (min-width: 768px) {
+  #hero {
+    --desk-mb: 11svh;
+    --hero-copy-pad: 32svh;
+  }
+}
+
 .hero-lamp {
-  /* Kasten des Desk-Bilds: w-[min(1040px,94vw)] in Hero.tsx */
-  --desk-box: min(1040px, 94vw);
+  /* Kasten des Desk-Bilds — Handy etwas breiter als der Viewport,
+     ab md wieder w-[min(1040px,94vw)] wie in Hero.tsx. */
+  --desk-box: min(1040px, 106vw);
 
   /* Sobald max-h greift, skaliert object-contain die 1270×490 herunter und
      zentriert sie in ihrem Kasten — die Zeichnung ist dann schmaler als er.
@@ -22,8 +38,8 @@
   --desk-h: calc(var(--desk-w) / 2.5918);
 
   /* Oberkante der Zeichnung, gemessen von der Unterkante der Section: das
-     <img> steht per items-end mit mb-[11svh] über der Balkenkante. */
-  --desk-top: calc(11svh + var(--desk-h));
+     <img> steht per items-end mit mb-[var(--desk-mb)] über der Balkenkante. */
+  --desk-top: calc(var(--desk-mb) + var(--desk-h));
 
   /* Lampengröße entkoppelt von der Desk-Zeichnung: bleibt auf dem früheren
      Desk-Maß (960px / 32svh), auch wenn die Zeichnung größer wird.
@@ -39,17 +55,18 @@
      hochkant, der Hero quer: bei üblichen Laptop-Breiten (~1300–1600px) ist
      die Headline relativ zur Viewport-Breite am größten und die Birne läge
      mitten im Wort "Luca". Deshalb hier ein Maß in svh — es wächst mit dem
-     freien Raum statt mit der Zeichnung und bleibt so überall unter der Copy. */
-  --lamp-hang: 9svh;
+     freien Raum statt mit der Zeichnung und bleibt so überall unter der Copy.
+
+     Handy: etwas tiefer (näher an der Zeichnung), ohne --desk-mb anzutasten. */
+  --lamp-hang: 5.5svh;
 
   position: absolute;
   inset: 0;
 
-  /* Dieselbe Bühne wie die Zeichnungs-Ebene in Hero.tsx: gedeckelt und
-     mittig. Muss deckungsgleich bleiben — das right: 8% unten ist 8% DIESER
-     Box und muss auf dasselbe Maß kommen wie deren padding-right. Bei
-     left/right: 0 plus fester Breite teilt margin-inline: auto den Rest
-     gleichmäßig auf, die Box steht also zentriert. */
+  /* Dieselbe Bühne wie .hero-illu: gedeckelt und mittig. Muss deckungsgleich
+     bleiben — `right` der Lampe und padding-right der Zeichnung teilen sich
+     den Wert (Handy 50%/0, ab md 8%+Kastenmitte / 8%). Bei left/right: 0 plus
+     fester Breite teilt margin-inline: auto den Rest gleichmäßig auf. */
   width: min(100%, var(--stage-max));
   margin-inline: auto;
 
@@ -68,9 +85,9 @@
      Beide Marken hängen an der Zeichnung, nicht an der Viewport-Höhe: sonst
      wäre der Kegel auf dem Handy, wo die Zeichnung klein ist, schon zu Ende,
      bevor er sie überhaupt erreicht. Gemessen wird von der Unterkante der
-     Section, die Zeichnung steht dort mit mb-[11svh]. */
-  --lamp-dim: calc(11svh + 0.75 * var(--desk-h)); /* 25% in die Zeichnung */
-  --lamp-end: calc(11svh + 0.32 * var(--desk-h)); /* 68% — hier ist er weg */
+     Section, die Zeichnung steht dort mit mb-[var(--desk-mb)]. */
+  --lamp-dim: calc(var(--desk-mb) + 0.75 * var(--desk-h)); /* 25% in die Zeichnung */
+  --lamp-end: calc(var(--desk-mb) + 0.32 * var(--desk-h)); /* 68% — hier ist er weg */
 
   -webkit-mask-image: linear-gradient(
     180deg,
@@ -84,24 +101,40 @@
   );
 }
 
+/* Zeichnungs-Ebene: auf dem Handy mittig, ab md rechtsbündig mit 8%-Einzug —
+   derselbe Wert wie `right` der Lampe unten. Ohne den Wechsel sitzt die
+   94vw-breite Zeichnung bei justify-end + 8% links der Viewport-Mitte. */
+.hero-illu {
+  padding-right: 0;
+}
+
 @media (min-width: 768px) {
+  .hero-illu {
+    padding-right: calc(0.08 * min(100%, var(--stage-max)));
+  }
+
   .hero-lamp {
+    --desk-box: min(1040px, 94vw);
     /* md:max-h-[40svh] → 40svh × 2.5918 = 103.67svh */
     --desk-w: min(var(--desk-box), 103.67svh);
     /* Früheres md-Desk-Maß (37svh × 2.5918 = 95.9svh), damit die Lampe
        nicht mit der größeren Zeichnung mitwächst. */
     --lamp-w: min(960px, 91vw, 95.9svh);
     --lamp-scale: 0.76;
+    --lamp-hang: 9svh;
   }
 }
 
 .hero-lamp__art {
   position: absolute;
+  display: block;
+  overflow: visible;
 
-  /* Rechte Kante des Zeichnungs-Kastens (paddingRight: 8%), plus dessen halbe
-     Breite = Mitte der Zeichnung. object-contain zentriert das Bild im Kasten,
+  /* Handy: Mitte der Bühne = Mitte der zentrierten Zeichnung.
+     Ab md: rechte Kante des Zeichnungs-Kastens (padding-right: 8%), plus
+     dessen halbe Breite. object-contain zentriert das Bild im Kasten,
      Kastenmitte ist also Bildmitte — unabhängig davon, ob max-h greift. */
-  right: calc(8% + var(--desk-box) / 2);
+  right: 50%;
 
   /* Grundlage ist die Oberkante der Zeichnung, plus --lamp-hang. Davon
      abgezogen wird, wie weit das Glas in der Grafik über deren Unterkante
@@ -131,8 +164,71 @@
   will-change: transform;
 }
 
+@media (min-width: 768px) {
+  .hero-lamp__art {
+    right: calc(8% + var(--desk-box) / 2);
+  }
+}
+
+/* Layer wrappers start dark; GSAP fades them in. Reduced motion shows all. */
+.hero-lamp__art [data-lamp-layer] {
+  opacity: 0;
+}
+
+/* Kabel: Top-Down-Wipe statt Opacity. --hang ist die Masken-Unterkante in %.
+   -20 = komplett verdeckt (weicher Rand liegt oberhalb), 130 = voll offen. */
+.hero-lamp__art [data-lamp-layer="cord"] {
+  opacity: 1;
+  --hang: -20;
+  -webkit-mask-image: linear-gradient(
+    180deg,
+    #000 calc(var(--hang) * 1%),
+    transparent calc((var(--hang) + 16) * 1%)
+  );
+  mask-image: linear-gradient(
+    180deg,
+    #000 calc(var(--hang) * 1%),
+    transparent calc((var(--hang) + 16) * 1%)
+  );
+}
+
+/* Strahlenkranz: Conic-Sweep um die Birne. --spin in Grad (0→360).
+   Start ~11:50 (−5deg), gegen den Uhrzeigersinn: 11 → 10 → 9 → … → 12.
+   Der Keil wächst rückwärts über (360 - spin)…360.
+   steps(26) in GSAP matcht die ~26 Striche. */
+.hero-lamp__art [data-lamp-layer="rays"] {
+  opacity: 1;
+  --spin: 0;
+  -webkit-mask-image: conic-gradient(
+    from -5deg at 50% 50%,
+    transparent 0deg,
+    transparent calc((360 - var(--spin)) * 1deg),
+    #000 calc((360 - var(--spin)) * 1deg),
+    #000 360deg
+  );
+  mask-image: conic-gradient(
+    from -5deg at 50% 50%,
+    transparent 0deg,
+    transparent calc((360 - var(--spin)) * 1deg),
+    #000 calc((360 - var(--spin)) * 1deg),
+    #000 360deg
+  );
+}
+
 @media (prefers-reduced-motion: reduce) {
   .hero-lamp__art {
     will-change: auto;
+  }
+
+  .hero-lamp__art [data-lamp-layer] {
+    opacity: 1;
+  }
+
+  .hero-lamp__art [data-lamp-layer="cord"] {
+    --hang: 130;
+  }
+
+  .hero-lamp__art [data-lamp-layer="rays"] {
+    --spin: 360;
   }
 }

@@ -6,6 +6,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useMousePosition } from "@/hooks/useMousePosition";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { PIN_QUERY, STACK_QUERY } from "@/lib/breakpoints";
+import HeroLamp, { getLampLayers } from "./hero/HeroLamp";
 import "./hero/hero.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -63,7 +64,7 @@ export default function Hero() {
   const scrollIndicatorRef = useRef<HTMLDivElement>(null);
   const arrowRef = useRef<SVGSVGElement>(null);
   const illuRef = useRef<HTMLImageElement>(null);
-  const lampRef = useRef<HTMLImageElement>(null);
+  const lampRef = useRef<SVGSVGElement>(null);
 
   /** Die beiden endlosen Tweens des Auftritts. Sie laufen nicht von selbst
    *  aus — deshalb müssen sie angehalten werden, sobald der Hero verdeckt ist,
@@ -105,58 +106,100 @@ export default function Hero() {
     // abzuwarten — den gibt es nicht mehr, der Auftritt beginnt direkt.
     const tl = gsap.timeline({ delay: 0.4 });
 
-    // Zuerst geht die Lampe an. Die Maske läuft von oben nach unten, also
-    // erst das Kabel herunter, dann das Glas, dann der Kegel. `--glow` ist
-    // ihre Unterkante in Prozent.
-    //
-    // -20 statt -8: bei -8 endet der weiche Rand der Maske erst bei 6%, die
-    // obersten Prozent der Grafik blieben also sichtbar und das Kabelende
-    // stand schon vor dem Start im Bild. Ab -20 liegt die Maske vollständig
-    // über der Grafik — die Lampe ist wirklich aus.
-    if (lampRef.current) {
-      const lamp = lampRef.current;
+    // Lampe als Inline-SVG: Kabel → Gehäuse → Halo → Kegel → Desk.
+    // Wrapper-Opacities 0→1; die gebackenen Werte innen (Kegel .028, Rays .7)
+    // bleiben — sonst würde der Kegel ~35× zu hell.
+    // Bewusst ohne Flicker-Loop an der Birne (liest sich als Fehler).
+    const layers = getLampLayers(lampRef.current);
+    const lampLayers = [
+      layers.cord,
+      layers.housing,
+      layers.rays,
+      layers.cone,
+    ].filter((el): el is SVGGElement => !!el);
 
-      if (reduced) {
-        gsap.set(lamp, { "--glow": 130, opacity: 1 });
-      } else {
-        // Deckkraft an, sobald die Timeline anläuft. Sie ist zu dem Zeitpunkt
-        // noch komplett wegmaskiert (--glow: -20) — sichtbar wird dadurch
-        // nichts. Warum trotzdem: siehe opacity-0 am <img> weiter unten.
-        tl.set(lamp, { opacity: 1 }, 0);
-
-        // Bewusst ohne Zucken der Birne: das Glas ist zu dem Zeitpunkt schon
-        // sichtbar, ein Dip danach liest sich als Fehler statt als Einschalten.
-        tl.fromTo(
-          lamp,
-          { "--glow": -20 },
-          { "--glow": 130, duration: 1.2, ease: "power2.out" },
+    if (reduced) {
+      if (lampLayers.length) gsap.set(lampLayers, { opacity: 1 });
+      if (layers.cord) {
+        layers.cord.style.setProperty("--hang", "130");
+      }
+      if (layers.rays) {
+        layers.rays.style.setProperty("--spin", "360");
+      }
+      if (illuRef.current) {
+        gsap.set(illuRef.current, { "--lit": 160, opacity: 1 });
+      }
+    } else {
+      // Kabel: Top-Down-Wipe über --hang. Am SVG-<g> steuert GSAP CSS-Vars
+      // unzuverlässig — deshalb Proxy + setProperty (wie am Desk --lit).
+      if (layers.cord) {
+        const cord = layers.cord;
+        const hang = { value: -20 };
+        cord.style.setProperty("--hang", "-20");
+        tl.set(cord, { opacity: 1 }, 0);
+        tl.to(
+          hang,
+          {
+            value: 130,
+            duration: 0.95,
+            ease: "sine.out",
+            onUpdate: () => {
+              cord.style.setProperty("--hang", String(hang.value));
+            },
+          },
           0,
         );
       }
-    }
+      if (layers.housing) {
+        tl.fromTo(
+          layers.housing,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.75, ease: "sine.out" },
+          0.4,
+        );
+      }
+      // Strahlen: Conic-Sweep, steps(26) ≈ ein Strich nach dem anderen.
+      if (layers.rays) {
+        const rays = layers.rays;
+        const spin = { value: 0 };
+        rays.style.setProperty("--spin", "0");
+        tl.set(rays, { opacity: 1 }, 0.55);
+        tl.to(
+          spin,
+          {
+            value: 360,
+            duration: 0.42,
+            ease: "steps(26)",
+            onUpdate: () => {
+              rays.style.setProperty("--spin", String(spin.value));
+            },
+          },
+          0.55,
+        );
+      }
+      if (layers.cone) {
+        tl.fromTo(
+          layers.cone,
+          { opacity: 0 },
+          { opacity: 1, duration: 0.55, ease: "sine.out" },
+          0.75,
+        );
+      }
 
-    // Kurz nach der Lampe: bei 0.2 ist der Kegel schon sichtbar, die
-    // Zeichnung folgt knapp dahinter und wirkt von ihm freigelegt.
-    //
-    // Gleicher Top-down-Wipe wie die Lampe: die Maske läuft von oben nach
-    // unten, als würde der Lichtkegel die Zeichnung freilegen. `--wipe` ist
-    // die Unterkante der Maske in Prozent; -25 heißt komplett verdeckt,
-    // 120 komplett offen.
-    if (illuRef.current) {
-      if (reduced) {
-        gsap.set(illuRef.current, { "--wipe": 120, opacity: 1 });
-      } else {
-        tl.set(illuRef.current, { opacity: 1 }, 0.2);
+      // Desk als Lichtpool: radiale Maske vom oberen Bildrand (Lampenpunkt)
+      // nach außen — nicht als linearer Top-Down-Wipe.
+      if (illuRef.current) {
+        tl.set(illuRef.current, { opacity: 1 }, 0.85);
         tl.fromTo(
           illuRef.current,
-          { "--wipe": -25 },
-          { "--wipe": 120, duration: 1.4, ease: "power2.out" },
-          0.2,
+          { "--lit": 0 },
+          { "--lit": 160, duration: 1.35, ease: "sine.out" },
+          0.85,
         );
       }
     }
 
-    // Absolute Positionen statt "-=": der Wipe oben ist länger als die
+    // Absolute Positionen statt "-=": der Desk-Wipe ist länger als die
     // Textzeilen und würde die relative Kette sonst nach hinten schieben.
     // 0 / 0.4 / 0.8 sind exakt die Zeitpunkte der vorherigen "-="-Kette.
     // Im gestapelten Layout fällt der Blur weg. `filter` ist die teuerste animierbare
@@ -228,7 +271,7 @@ export default function Hero() {
         value: 2,
         duration: 2.8,
         ease: "power2.out",
-        delay: 1.2,
+        delay: 1.6,
       });
 
       swayRef.current = gsap.to(sway, {
@@ -236,7 +279,7 @@ export default function Hero() {
         duration: 8,
         ease: "none",
         repeat: -1,
-        delay: 1.2,
+        delay: 1.6,
         onUpdate: () => {
           gsap.set(lamp, { rotation: Math.sin(sway.phase) * amp.value });
         },
@@ -247,6 +290,9 @@ export default function Hero() {
       tl.kill();
       if (arrow) gsap.killTweensOf(arrow);
       if (lamp) gsap.killTweensOf(lamp);
+      for (const layer of Object.values(getLampLayers(lamp))) {
+        if (layer) gsap.killTweensOf(layer);
+      }
       gsap.killTweensOf(sway);
       gsap.killTweensOf(amp);
       swayRef.current = null;
@@ -543,7 +589,7 @@ export default function Hero() {
           hindurchscheint, ist der #050505-Grund von <main> — dieselbe Farbe,
           die der Hero dort hat. */}
       <section
-        className="relative motion-safe:sticky motion-safe:top-0 h-[calc(100svh+var(--toolbar-gap))] flex flex-col items-center justify-center overflow-hidden bg-[#050505] pb-[calc(28svh+var(--toolbar-gap))] md:pb-[calc(32svh+var(--toolbar-gap))]"
+        className="relative motion-safe:sticky motion-safe:top-0 h-[calc(100svh+var(--toolbar-gap))] flex flex-col items-center justify-center overflow-hidden bg-[#050505] pb-[calc(var(--hero-copy-pad)+var(--toolbar-gap))]"
         id="hero"
         style={{ visibility: heroActive ? undefined : "hidden" }}
       >
@@ -552,14 +598,12 @@ export default function Hero() {
             opacity inline, und React würde ein gleichnamiges style-Prop bei jedem
             Re-Render (rotierendes Wort alle 3 s) zurückschreiben wollen.
 
-            Das padding-right sind 8% der Bühne, nicht des Fensters — dieselbe
-            Rechnung wie bei CONTENT_INSET oben. Es muss auf denselben Wert
-            kommen wie das right: 8% der Lampe in hero.css, sonst hängt sie
-            nicht mehr mittig über der Zeichnung. */}
+            padding-right und die md-Rechtsbündigung leben in hero.css
+            (.hero-illu), gekoppelt an right der Lampe — auf dem Handy
+            zentriert, ab md 8% Einzug von rechts. */}
         <div
           ref={illuLayerRef}
-          className="absolute inset-0 z-0 mx-auto w-[min(100%,var(--stage-max))] flex items-end justify-end opacity-80 mix-blend-screen pointer-events-none will-change-[transform,opacity]"
-          style={{ paddingRight: "calc(0.08 * min(100%, var(--stage-max)))" }}
+          className="hero-illu absolute inset-0 z-0 mx-auto w-[min(100%,var(--stage-max))] flex items-end justify-center md:justify-end opacity-80 mix-blend-screen pointer-events-none will-change-[transform,opacity]"
         >
           {/* Weiße Strichzeichnung auf reinem Schwarz. mix-blend-screen auf der
               Ebene darüber löscht das Schwarz gegen den #050505-Grund aus —
@@ -567,15 +611,11 @@ export default function Hero() {
               mb hält sie über der Balkenkante, max-h verhindert, dass sie auf
               flachen Fenstern in die Headline wächst.
 
-              opacity-0 ist der Startzustand, nicht der Wipe. Verdeckt ist die
-              Zeichnung eigentlich schon durch die Maske (--wipe: -25). Nur
-              hängt die Maske am Compositor: in einer Aufnahme des Seitenaufbaus
-              stand die Zeichnung für ein paar Frames komplett im Bild, bevor
-              die Maske griff — genau das "kurz alles sichtbar, dann weg". Die
-              Deckkraft wird auf Style-Ebene ausgewertet und kann diesen Frame
-              nicht verpassen. Die Timeline schaltet sie zum Wipe-Start auf 1,
-              wo die Maske ohnehin noch alles verdeckt — sichtbar ändert sich
-              dadurch nichts. */}
+              opacity-0 ist der Startzustand, nicht der Reveal. Verdeckt ist die
+              Zeichnung durch die radiale Lichtmaske (--lit: 0). Nur hängt die
+              Maske am Compositor: ohne Deckkraft-0 stand die Zeichnung für ein
+              paar Frames komplett im Bild, bevor die Maske griff. Die Timeline
+              schaltet opacity zum Reveal-Start auf 1, wo --lit noch 0 ist. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             ref={illuRef}
@@ -583,42 +623,29 @@ export default function Hero() {
             alt=""
             width={1270}
             height={490}
-            className="mb-[11svh] w-[min(1040px,94vw)] max-h-[35svh] md:max-h-[40svh] object-contain select-none opacity-0"
+            className="mb-[var(--desk-mb)] w-[min(1040px,106vw)] md:w-[min(1040px,94vw)] max-h-[35svh] md:max-h-[40svh] object-contain select-none opacity-0"
             style={{
-              ["--wipe" as string]: -25,
+              // Lichtpool von der Lampe: Ellipse am oberen Bildrand (dort
+              // trifft der Kegel die Zeichnung), wächst mit --lit nach außen.
+              ["--lit" as string]: 0,
               WebkitMaskImage:
-                "linear-gradient(180deg, #000 calc(var(--wipe) * 1%), transparent calc((var(--wipe) + 16) * 1%))",
+                "radial-gradient(ellipse 110% 95% at 50% 0%, #000 0%, #000 calc(var(--lit) * 1%), transparent calc((var(--lit) + 32) * 1%))",
               maskImage:
-                "linear-gradient(180deg, #000 calc(var(--wipe) * 1%), transparent calc((var(--wipe) + 16) * 1%))",
+                "radial-gradient(ellipse 110% 95% at 50% 0%, #000 0%, #000 calc(var(--lit) * 1%), transparent calc((var(--lit) + 32) * 1%))",
             }}
           />
         </div>
 
-        {/* Hängelampe — Vektor 1:1 aus dem Canva-Blatt, Maße und Anschluss an
-            die Zeichnung stehen in hero.css. Eigene Ebene über der Zeichnung
-            (wie in Canva), aber unter der Copy (z-10): so läuft das Kabel
-            hinter der Headline durch statt über sie. */}
+        {/* Hängelampe — Inline-SVG mit Layern (Kabel / Gehäuse / Halo / Kegel),
+            Maße und Anschluss an die Zeichnung in hero.css. Eigene Ebene über
+            der Zeichnung, unter der Copy (z-10): Kabel läuft hinter der
+            Headline durch. */}
         <div
           ref={lampLayerRef}
           className="hero-lamp z-0 will-change-[transform,opacity]"
           aria-hidden
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            ref={lampRef}
-            src="/hero-lamp.svg"
-            alt=""
-            width={1587}
-            height={1755}
-            className="hero-lamp__art select-none opacity-0"
-            style={{
-              ["--glow" as string]: -20,
-              WebkitMaskImage:
-                "linear-gradient(180deg, #000 calc(var(--glow) * 1%), transparent calc((var(--glow) + 14) * 1%))",
-              maskImage:
-                "linear-gradient(180deg, #000 calc(var(--glow) * 1%), transparent calc((var(--glow) + 14) * 1%))",
-            }}
-          />
+          <HeroLamp ref={lampRef} className="hero-lamp__art select-none" />
         </div>
 
         {/* Main Content — linker Einzug bündig zur einfahrenden Panel-Kante.
@@ -661,7 +688,10 @@ export default function Hero() {
               className="will-change-[transform,opacity,filter]"
             >
               <div ref={line2Ref} className="mt-3 opacity-0">
-                <span className="block text-[6.5vw] md:text-display-md font-display font-light leading-[1.3] text-text-secondary">
+                <span
+                  className="block text-[6.5vw] md:text-display-md font-display font-light leading-[1.3]"
+                  style={{ color: "#b8ae9e" }}
+                >
                   Mein Fokus
                 </span>
                 {/* Line 3 - rotating word */}

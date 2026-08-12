@@ -25,3 +25,5 @@ portfolio/.shots/
 portfolio/.verify-*/
 portfolio/.baseline-frozen/
 portfolio/.after-frozen/
+.worktrees/
+.superpowers/

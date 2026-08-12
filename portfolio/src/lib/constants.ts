@@ -166,6 +166,10 @@ export interface ProjectGalleryItem {
   id: number;
   url: string;
   title: string;
+  /** Defaults to image. Use `video` for a looping cutout clip (muted). */
+  type?: "image" | "video";
+  /** Poster / fallback still for video slides (shown on spare reel copies). */
+  poster?: string;
 }
 
 export interface Project {
@@ -191,6 +195,12 @@ export interface Project {
   screenColor?: string;
   /** Inset screenshots inside the cutout (0–0.4) so they read smaller. */
   screenInset?: number;
+  /**
+   * Soft-blur a band at the top of the cutout (0–0.15 of cutout height) to
+   * hide OS status-bar chrome without cropping the screenshot.
+   * iPad frames only — do not set on `device: "iphone"` projects.
+   */
+  screenBlurTop?: number;
   /** Bypass Next image optimizer for this project's gallery. */
   unoptimized?: boolean;
 }
@@ -206,12 +216,12 @@ export const PROJECTS: Project[] = [
     description:
       "End-to-End-Verleihsystem für Skiausrüstung: von der Online-Anmeldung über Ausrüstungserfassung und Kasse bis zur Administration.",
     details:
-      "Für Intersport Gemo habe ich ein digitales Wintersport-Verleihsystem gebaut, das Kundenanmeldung, Shop-Workflow und Backoffice in einer Oberfläche verbindet — für Tages- und Saisonverleih.",
+      "Für Intersport Gemo habe ich ein digitales Wintersport-Verleihsystem gebaut, das Kundenanmeldung, Shop-Workflow und Backoffice in einer Oberfläche verbindet. Tages- und Saisonverleih laufen darüber.",
     features: [
       {
         title: "Digitale Kundenanmeldung",
         description:
-          "Tagesverleih-Formular mit Kontaktdaten und Ausweis-Upload — Gäste melden sich selbst an, bevor sie in den Shop kommen.",
+          "Tagesverleih-Formular mit Kontaktdaten und Ausweis-Upload. Gäste melden sich selbst an, bevor sie in den Shop kommen.",
       },
       {
         title: "Neue Anmeldungen im Shop",
@@ -221,12 +231,12 @@ export const PROJECTS: Project[] = [
       {
         title: "Kasse & Zahlungsstatus",
         description:
-          "Unbezahlte und abgeschlossene Leihen im Blick — klar getrennt, damit nichts an der Kasse untergeht.",
+          "Unbezahlte und abgeschlossene Leihen im Blick, klar getrennt, damit nichts an der Kasse untergeht.",
       },
       {
         title: "Administration & Stammdaten",
         description:
-          "Produkte, Kategorien, User-Rollen und Umsatz-Statistiken zentral steuern — ohne Extra-Tools daneben.",
+          "Produkte, Kategorien, User-Rollen und Umsatz-Statistiken zentral steuern, ohne Extra-Tools daneben.",
       },
     ],
     gallery: [
@@ -240,9 +250,8 @@ export const PROJECTS: Project[] = [
     color: "#7A8FA0",
     device: "iphone",
     // Hochformat-Captures (1206x2622 ≈ 2.174) im iPhone-Ausschnitt (2.139):
-    // cover schneidet nur ~1.6% Höhe weg. Von oben decken, damit die iOS-
-    // Statusleiste und der blaue Header stehen bleiben und unten der leere
-    // Rest wegfällt.
+    // cover schneidet nur ~1.6% Höhe weg. Von oben decken, damit der blaue
+    // Header stehen bleibt und unten der leere Rest wegfällt.
     fit: "cover-top",
     screenColor: "#F2F6FC",
     unoptimized: true,
@@ -255,7 +264,7 @@ export const PROJECTS: Project[] = [
     year: "2024 – heute",
     tech: ["React", "Next.js", "Python", "OpenAI", "PostgreSQL"],
     description:
-      "Maßgeschneiderte Web-App für Tagesgeschäft, Planung und Automatisierung – mit KI-gestützten Prozessen.",
+      "Maßgeschneiderte Web-App für Tagesgeschäft, Planung und Automatisierung, inklusive KI-gestützter Prozesse.",
     details:
       "Für den Power Shop habe ich eine umfassende Management-Plattform entwickelt, die sämtliche operative Abläufe digitalisiert und optimiert.",
     features: [
@@ -277,7 +286,7 @@ export const PROJECTS: Project[] = [
       {
         title: "KI-Prozesse & Funktionen",
         description:
-          "Implementierung intelligenter Funktionen auf Basis von KI – von automatisierten Auswertungen bis zur smarten Entscheidungsunterstützung.",
+          "Intelligente Funktionen auf Basis von KI, von automatisierten Auswertungen bis zur smarten Entscheidungsunterstützung.",
       },
     ],
     gallery: [
@@ -286,7 +295,13 @@ export const PROJECTS: Project[] = [
       // prueft die Quelldatei in der Zeit nicht nach — ein In-Place-Austausch
       // unter gleichem Namen hat alte Renditionen weiterleben lassen. Neue URL
       // = neuer Cache-Key in Next, im hcdn und im Browser.
-      { id: 1, url: "/vorschaubilder/powershop-app1.webp", title: "Mitarbeiter-Anmeldung" },
+      {
+        id: 1,
+        url: "/vorschaubilder/powershop-app-loop.mp4",
+        title: "Mitarbeiter-Anmeldung",
+        type: "video",
+        poster: "/vorschaubilder/powershop-app1.webp",
+      },
       { id: 2, url: "/vorschaubilder/powershop-app2.webp", title: "Dashboard" },
       { id: 3, url: "/vorschaubilder/powershop-app3.webp", title: "Service Center" },
       { id: 4, url: "/vorschaubilder/powershop-app4.webp", title: "Probefahrt erfassen" },
@@ -294,6 +309,9 @@ export const PROJECTS: Project[] = [
       { id: 6, url: "/vorschaubilder/powershop-app6.webp", title: "Workflow-Automatisierungen" },
     ],
     color: "#C49F7B",
+    // iPadOS-Statusleiste in den Captures weich ausblenden — Crop würde das
+    // Seitenverhältnis ändern und bei object-contain schwarze Balken erzeugen.
+    screenBlurTop: 0.042,
   },
   {
     id: "powershop-madness",
@@ -303,7 +321,7 @@ export const PROJECTS: Project[] = [
     year: "2025",
     tech: ["Unity", "C#", "Mobile"],
     description:
-      "Ein mobiles Arcade-Game rund um den Power Shop – schnelle Sessions, markante Optik und spielerische Markenwelt.",
+      "Ein mobiles Arcade-Game rund um den Power Shop: schnelle Sessions, markante Optik und spielerische Markenwelt.",
     details:
       "Power Shop Madness übersetzt die Markenwelt in ein kurzweiliges Mobile Game mit klaren Levels und starker Visual Language.",
     features: [
@@ -315,7 +333,7 @@ export const PROJECTS: Project[] = [
       {
         title: "Markenwelt im Spiel",
         description:
-          "Visuelle und thematische Anbindung an den Power Shop – erkennbar, ohne den Flow zu stören.",
+          "Visuelle und thematische Anbindung an den Power Shop. Erkennbar, ohne den Flow zu stören.",
       },
       {
         title: "Mobile-First UX",
@@ -325,7 +343,7 @@ export const PROJECTS: Project[] = [
       {
         title: "Verfügbarkeit",
         description:
-          "Für alle Geräte konzipiert – einheitliche Spielerfahrung auf Smartphone und Tablet.",
+          "Für alle Geräte konzipiert, mit einheitlicher Spielerfahrung auf Smartphone und Tablet.",
       },
     ],
     gallery: [
@@ -360,7 +378,7 @@ export const PROJECTS: Project[] = [
       {
         title: "Benutzer- & Rollenverwaltung",
         description:
-          "Portaluser nach Rolle oder Kunde verwalten – vom Super-Administrator bis zum Fahrer.",
+          "Portaluser nach Rolle oder Kunde verwalten, vom Super-Administrator bis zum Fahrer.",
       },
       {
         title: "Fahrer- & Stammdatenpflege",
@@ -374,7 +392,13 @@ export const PROJECTS: Project[] = [
       },
     ],
     gallery: [
-      { id: 1, url: "/vorschaubilder/motools-app1.webp", title: "Anmeldung" },
+      {
+        id: 1,
+        url: "/vorschaubilder/motools-app-loop.mp4",
+        title: "Anmeldung",
+        type: "video",
+        poster: "/vorschaubilder/motools-app1.webp",
+      },
       { id: 2, url: "/vorschaubilder/motools-app2.webp", title: "Startseite mit Schnellzugriffen" },
       { id: 3, url: "/vorschaubilder/motools-app3.webp", title: "Fehler-Tracking der GPS-Boxen" },
       { id: 4, url: "/vorschaubilder/motools-app4.webp", title: "Benutzerverwaltung nach Rolle" },
@@ -382,6 +406,7 @@ export const PROJECTS: Project[] = [
       { id: 6, url: "/vorschaubilder/motools-app6.webp", title: "Ideen-Management" },
     ],
     color: "#8A9A8B",
+    screenBlurTop: 0.042,
   },
   {
     id: "wedding-app",
@@ -391,29 +416,29 @@ export const PROJECTS: Project[] = [
     year: "2025 – 2026",
     tech: ["React", "Next.js", "Supabase", "TypeScript"],
     description:
-      "Eine elegante Gäste-App für Hochzeiten – von RSVP über Outfit-Guides bis zu lokalen Tipps und FAQ, alles an einem Ort.",
+      "Eine elegante Gäste-App für Hochzeiten: von RSVP über Outfit-Guides bis zu lokalen Tipps und FAQ, alles an einem Ort.",
     details:
-      "Die Wedding Organizer App bündelt alle Informationen für die Gäste einer mehrtägigen Hochzeit: RSVP, Ablauf, Outfits, Anreise und FAQ – mehrsprachig und mobil optimiert.",
+      "Die Wedding Organizer App bündelt alle Informationen für die Gäste einer mehrtägigen Hochzeit: RSVP, Ablauf, Outfits, Anreise und FAQ. Mehrsprachig und mobil optimiert.",
     features: [
       {
         title: "RSVP & Gäste-Rückmeldung",
         description:
-          "Teilnahme, Tage und Kontaktdaten digital erfassen – klar, persönlich und ohne Papierchaos.",
+          "Teilnahme, Tage und Kontaktdaten digital erfassen. Klar, persönlich und ohne Papierchaos.",
       },
       {
         title: "Outfit-Guide pro Event",
         description:
-          "Stilvorschläge für jeden Anlass im Hochzeitsprogramm – inkl. Shopping-Tipps und Dresscode-Hinweisen.",
+          "Stilvorschläge für jeden Anlass im Hochzeitsprogramm, inkl. Shopping-Tipps und Dresscode-Hinweisen.",
       },
       {
         title: "Anreise & Local Tips",
         description:
-          "Empfehlungen zu Restaurants, Cafés und Shopping vor Ort – direkt mit Maps-Links.",
+          "Empfehlungen zu Restaurants, Cafés und Shopping vor Ort, direkt mit Maps-Links.",
       },
       {
         title: "FAQ & Infos auf einen Blick",
         description:
-          "Dresscode, Ankunft, Transport und weitere Fragen – als übersichtliches Akkordeon.",
+          "Dresscode, Ankunft, Transport und weitere Fragen als übersichtliches Akkordeon.",
       },
     ],
     gallery: [
@@ -426,6 +451,53 @@ export const PROJECTS: Project[] = [
     color: "#B8897A",
     device: "iphone",
     unoptimized: true,
+  },
+  {
+    id: "individuelle-website",
+    title: "INDIVIDUELLE\nWEBSITE",
+    subtitle: "Maßgeschneiderte Website statt Template",
+    category: "Website / Design",
+    year: "2025",
+    tech: ["Next.js", "React", "TypeScript", "Design"],
+    description:
+      "Eine individuelle Website mit klarer Markenstimme, ruhiger Struktur und einer Umsetzung, die sich nach dem Inhalt richtet, nicht nach einem Baukasten.",
+    details:
+      "Individuelle Websites entstehen aus Marke, Angebot und Zielgruppe. Design und Code greifen ineinander, damit die Seite auf dem Desktop stark wirkt und auf dem Handy selbstverständlich bleibt.",
+    features: [
+      {
+        title: "Eigenes Design, kein Template",
+        description:
+          "Visuelle Sprache und Layout wachsen aus Marke und Inhalt. Erkennbar, ohne Baukasten-Feeling.",
+      },
+      {
+        title: "Klare Botschaft zuerst",
+        description:
+          "Eine starke Einstiegsseite, die sofort sagt, wer du bist und warum jemand bleiben soll.",
+      },
+      {
+        title: "Ruhige Bedienung",
+        description:
+          "Wenige, gezielte Abschnitte und CTAs. Lesbar am Desktop, selbstverständlich auf dem Handy.",
+      },
+      {
+        title: "Design und Code aus einem Guss",
+        description:
+          "Vom Look bis zur Live-Seite alles aus einer Hand, ohne Bruch zwischen Entwurf und Umsetzung.",
+      },
+    ],
+    gallery: [
+      {
+        id: 1,
+        url: "/vorschaubilder/qimo-ipad-loop.mp4",
+        title: "Website-Durchlauf",
+        type: "video",
+        poster: "/vorschaubilder/qimo-ipad-loop.webp",
+      },
+    ],
+    color: "#6E8A9A",
+    device: "ipad",
+    fit: "cover",
+    screenColor: "#F2EEE8",
   },
 ];
 
@@ -464,7 +536,7 @@ export const PROCESS_STEPS: ProcessStep[] = [
       {
         title: "Was du mitbringst",
         description:
-          "Kontext aus deinem Alltag. Mehr brauchst du erstmal nicht — ein Walkthrough oder eine Liste nerviger Schritte reicht.",
+          "Kontext aus deinem Alltag. Mehr brauchst du erstmal nicht. Ein Walkthrough oder eine Liste nerviger Schritte reicht.",
       },
     ],
   },
@@ -485,7 +557,7 @@ export const PROCESS_STEPS: ProcessStep[] = [
       {
         title: "Ansatz wählen",
         description:
-          "App, Workflow, Integration oder eine Kombination. Technik folgt dem Alltag — nicht umgekehrt.",
+          "App, Workflow, Integration oder eine Kombination. Technik folgt dem Alltag, nicht umgekehrt.",
       },
       {
         title: "Plan aufsetzen",
@@ -516,7 +588,7 @@ export const PROCESS_STEPS: ProcessStep[] = [
       {
         title: "Live bringen",
         description:
-          "Deploy, Feinschliff und Übergabe, die du wirklich nutzen kannst — arbeitsfähig, kein reiner Prototyp.",
+          "Deploy, Feinschliff und Übergabe, die du wirklich nutzen kannst. Arbeitsfähig, kein reiner Prototyp.",
       },
     ],
   },
@@ -542,7 +614,7 @@ export const PROCESS_STEPS: ProcessStep[] = [
       {
         title: "Wachsendes System",
         description:
-          "Mit jedem Durchlauf wird dein Setup schlauer und ruhiger. Der Loop ist Absicht — kein Zeichen für Scheitern.",
+          "Mit jedem Durchlauf wird dein Setup schlauer und ruhiger. Der Loop ist Absicht, kein Zeichen für Scheitern.",
       },
     ],
   },
@@ -599,7 +671,7 @@ export const SERVICES: Service[] = [
     mark: "4",
     title: "Website Design",
     description:
-      "Markante Websites mit klarer Botschaft und ruhiger Bedienung. Design und Umsetzung aus einem Guss — kein Template-Feeling.",
+      "Markante Websites mit klarer Botschaft und ruhiger Bedienung. Design und Umsetzung aus einem Guss, kein Template-Feeling.",
     visual: "/services/mobile-leistung4.png",
   },
 ];
