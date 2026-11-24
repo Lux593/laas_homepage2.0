@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 
 import LegalSection, {
   type LegalSectionData,
@@ -10,9 +9,11 @@ import Navigation from "@/components/ui/Navigation";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import TextReveal from "@/components/ui/TextReveal";
 import { useLightChrome } from "@/hooks/useLightChrome";
-import { LEGAL, LEGAL_PAGES } from "@/lib/legal";
+import { type Locale, localizePath } from "@/lib/i18n/locales";
+import type { LegalChrome, LegalLink, NavCopy } from "@/lib/i18n/types";
+import type { LegalSlug } from "@/lib/legal";
 
-/** 01, 02, … — dieselbe zweistellige Marke wie in SERVICES und im Projektzähler. */
+/** 01, 02, … — dieselbe zweistellige Marke wie in SERVICE_ASSETS und im Projektzähler. */
 const mark = (index: number) => String(index + 1).padStart(2, "0");
 
 /**
@@ -22,16 +23,40 @@ const mark = (index: number) => String(index + 1).padStart(2, "0");
  * Leiste muss über der Cremefläche dunkel schreiben), TextReveal (GSAP) und
  * den Scroll-Spy fürs Inhaltsverzeichnis. Die Routen-Dateien darüber bleiben
  * Server-Components und behalten damit ihre `metadata` — die SEO-Angaben
- * werden serverseitig gerendert.
+ * werden serverseitig gerendert. Ihre Texte bekommt sie fertig von LegalShell.
  */
 export default function LegalPage({
-  eyebrow = "Rechtliches",
+  locale,
+  current,
+  alternateHref,
+  nav,
+  chrome,
+  legalLinks,
+  updated,
+  eyebrow = chrome.eyebrow,
   title,
   lede,
   showUpdated = true,
   sections,
   children,
 }: {
+  locale: Locale;
+  /**
+   * Welche Rechtsseite das ist — sie fällt aus der Fusszeile, die auf die
+   * Geschwister zeigt. `null` auf der Fehlerseite: dort zeigt die Fusszeile
+   * alle drei. Kommt als Prop statt aus dem Pfad im Browser, weil der Proxy
+   * die deutschen Pfade intern umschreibt (siehe Navigation.tsx).
+   */
+  current: LegalSlug | null;
+  /** Dieselbe Seite in der anderen Sprache (für den Sprachschalter). */
+  alternateHref: string;
+  nav: NavCopy;
+  chrome: LegalChrome;
+  /** Alle drei Rechtslinks, Pfade schon in der Sprache der Seite. */
+  legalLinks: LegalLink[];
+  /** Standdatum, fertig formatiert. */
+  updated: string;
+  /** Fehlt er, steht `chrome.eyebrow` („Rechtliches"). */
   eyebrow?: string;
   title: string;
   lede: string;
@@ -48,7 +73,6 @@ export default function LegalPage({
   children?: React.ReactNode;
 }) {
   useLightChrome();
-  const pathname = usePathname();
   const hasIndex = Boolean(sections && sections.length > 2);
   const [activeId, setActiveId] = useState<string | null>(
     sections?.[0]?.id ?? null,
@@ -118,7 +142,12 @@ export default function LegalPage({
       className="relative min-h-svh bg-[#f2ede4] text-[#0a0a0a]"
     >
       <ScrollProgress />
-      <Navigation />
+      <Navigation
+        locale={locale}
+        isHome={false}
+        alternateHref={alternateHref}
+        copy={nav}
+      />
 
       {/* Oberer Abstand deckt die feste Leiste in beiden Ausbaustufen: sie misst
           mobil 64px und ab lg 112px (siehe Navigation.tsx). */}
@@ -166,8 +195,42 @@ export default function LegalPage({
 
             {showUpdated && (
               <p className="mt-8 font-mono text-caption text-[#9a9a9a]">
-                Stand: {LEGAL.updated}
+                {chrome.updatedLabel} {updated}
               </p>
+            )}
+
+            {/* Nur auf übersetzten Rechtsseiten (das deutsche Wörterbuch hat
+                keinen Hinweis, die Fehlerseite kein Dokument): verbindlich ist
+                die deutsche Fassung, und der Weg dorthin steht vor dem ersten
+                Kapitel, nicht erst in der Fusszeile. Bronze wie die
+                Fill-Marken, Schrift aber dunkel — der Satz muss auf der
+                Cremefläche lesbar sein, nicht nur auffallen. */}
+            {chrome.translationNotice && current && (
+              <div
+                role="note"
+                className="mt-8 border-l-2 border-[#A07850] bg-[#A07850]/10 py-4 pr-4 pl-5 md:py-5 md:pr-6 md:pl-6"
+              >
+                <p className="text-body-sm font-semibold leading-relaxed text-[#0a0a0a]">
+                  {chrome.translationNotice.text}
+                </p>
+                <a
+                  href={localizePath(`/${current}`, "de")}
+                  hrefLang="de"
+                  className="group mt-2 inline-flex items-center gap-2 font-mono text-caption uppercase tracking-widest text-[#3a3a3a] transition-colors duration-300 hover:text-[#0a0a0a] pointer-coarse:min-h-11"
+                >
+                  {/* Unterstrichen wird nur die Beschriftung: am Flex-Link
+                      selbst ginge die Linie auch unter den Pfeil. */}
+                  <span className="underline decoration-[#A07850]/60 underline-offset-4 transition-colors duration-300 group-hover:decoration-[#0a0a0a]">
+                    {chrome.translationNotice.linkLabel}
+                  </span>
+                  <span
+                    aria-hidden
+                    className="inline-block transition-transform duration-500 ease-out-expo group-hover:translate-x-1"
+                  >
+                    →
+                  </span>
+                </a>
+              </div>
             )}
 
             {sections?.map((section, i) => (
@@ -196,12 +259,8 @@ export default function LegalPage({
                 sauber neu auf und kostet auf drei selten besuchten Seiten
                 nichts. */}
             <div className="mt-20 flex flex-col gap-5 border-t border-[#0a0a0a]/10 pt-8 md:flex-row md:items-center md:justify-between">
-              {/* eslint-disable-next-line @next/next/no-html-link-for-pages --
-                  Die Regel kennt den Grund darüber nicht: next/link würde hier
-                  gerade NICHT das Richtige tun, weil die Startseite einen
-                  frischen Lenis- und ScrollTrigger-Zustand braucht. */}
               <a
-                href="/"
+                href={localizePath("/", locale)}
                 className="group inline-flex items-center gap-2 font-mono text-caption uppercase tracking-widest text-[#6a6a6a] transition-colors duration-300 hover:text-[#0a0a0a] pointer-coarse:min-h-11"
               >
                 <span
@@ -210,24 +269,24 @@ export default function LegalPage({
                 >
                   ←
                 </span>
-                Zur Startseite
+                {chrome.backHome}
               </a>
 
               <nav
-                aria-label="Weitere rechtliche Hinweise"
+                aria-label={chrome.moreLegal}
                 className="flex flex-wrap items-center gap-x-5 gap-y-1 md:gap-x-8"
               >
-                {LEGAL_PAGES.filter((page) => page.href !== pathname).map(
-                  (page) => (
+                {legalLinks
+                  .filter((link) => link.slug !== current)
+                  .map((link) => (
                     <a
-                      key={page.href}
-                      href={page.href}
+                      key={link.slug}
+                      href={link.href}
                       className="inline-flex items-center font-mono text-caption uppercase tracking-widest text-[#9a9a9a] transition-colors duration-300 hover:text-[#0a0a0a] pointer-coarse:min-h-11"
                     >
-                      {page.label}
+                      {link.label}
                     </a>
-                  ),
-                )}
+                  ))}
               </nav>
             </div>
           </div>
@@ -239,11 +298,11 @@ export default function LegalPage({
               erst ab einer Breite Platz hat. */}
           {hasIndex && sections && (
             <nav
-              aria-label="Inhalt dieses Dokuments"
+              aria-label={chrome.tocLabel}
               className="hidden lg:sticky lg:top-[clamp(8rem,20vh,11rem)] lg:block lg:self-start"
             >
               <span className="block font-mono text-caption uppercase tracking-[0.2em] text-[#9a9a9a]">
-                Inhalt
+                {chrome.tocHeading}
               </span>
               <ol className="mt-5 space-y-1">
                 {sections.map((section, i) => {

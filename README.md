@@ -1,7 +1,7 @@
 # Luca Arnoldi App Studio — Website
 
-One-Pager-Portfolio, Deutsch, Dark Theme. Sieben Sections in dieser Reihenfolge
-(`portfolio/src/app/page.tsx`):
+One-Pager-Portfolio, Deutsch und Englisch, Dark Theme. Sieben Sections in dieser
+Reihenfolge (`portfolio/src/components/home/HomePage.tsx`):
 
 Hero → Leistungen → Prozess → Projekte → Kunden → Über mich → CTA
 
@@ -12,11 +12,17 @@ nicht auf der Website — er wird nur mitgeklont und macht den Deploy grösser.
 
 ```
 portfolio/          Next.js-App (Quelle der Wahrheit)
-  src/app/          Layout, Seite, globals.css, sitemap
-  src/components/   sections/ (die sieben) · ui/ · providers/
-  src/lib/          constants.ts, breakpoints.ts
+  src/app/          [lang]/ (Layout, Startseite, Rechtsseiten), global-not-found.tsx,
+                    globals.css, sitemap
+  src/components/   home/ (Startseite) · sections/ (die sieben) · ui/ · layout/ ·
+                    legal/ · providers/
+  src/content/      legal/ (Rechtstexte je Sprache)
+  src/lib/          constants.ts, breakpoints.ts, site-metadata.ts, i18n/ (Sprachen,
+                    Wörterbücher, SEO-Helfer)
+  src/proxy.ts      Sprache aus dem Pfad: ohne /en intern auf /de
   public/           Bilder, Videos, Icons → ausgeliefert unter /…
-  scripts/          Build-Stempel und Gerätematrix-Runner
+  scripts/          Build-Stempel, Gerätematrix-Runner, check-i18n.mjs,
+                    find-inline-copy.mjs
 framer/             Framer-Plugin-Port von HoverMaskReveal (eigenständig)
 ```
 
@@ -70,6 +76,50 @@ selbst; sonst sieht live alt aus, während der Build längst neu ist.
 
 Bilder nie in-place überschreiben — der Image-Optimizer liefert sonst stunden­lang
 die alte Rendition. Neues Motiv, neuer Dateiname.
+
+## Sprachen
+
+Deutsch liegt unter `/`, Englisch unter `/en` (`/en/impressum`, `/en/agb` …).
+Die Slugs sind in beiden Sprachen gleich. Der DE/EN-Schalter sitzt im
+Vollbild-Menü unter „Kontakt“. Es gibt keine Spracherkennung und kein Cookie:
+Die Sprache steckt allein in der URL.
+
+- **Copy:** `portfolio/src/lib/i18n/dictionaries/` (`de.ts`, `en.ts`)
+- **Rechtstexte:** `portfolio/src/content/legal/` (`*.de.tsx`, `*.en.tsx`).
+  Rechtlich bindend ist nur die deutsche Fassung; die EN-Seiten zeigen dazu
+  einen Hinweis.
+
+Prüfen (aus `portfolio/`). Die `check:i18n`-Befehle laufen gegen einen
+laufenden Server (`pnpm build && pnpm start`):
+
+```bash
+pnpm test                                 # Unit-Tests
+pnpm check:copy src/components src/app    # Text, der noch im JSX statt im Wörterbuch steht
+pnpm check:i18n routing                   # Status, Weiterleitungen, lang je Pfad
+pnpm check:i18n copy                      # deutsche Wörter auf EN-Seiten
+pnpm check:i18n seo                       # canonical, hreflang, og:locale, og:url, Sitemap
+pnpm check:i18n compare                   # DE-Text gegen die lokale Baseline (.i18n-baseline/, nicht im Repo)
+```
+
+Die Baseline für `compare` ist lokal und git-ignoriert. Sie muss ein Snapshot
+des deutschen Stands **vor** i18n sein (`pnpm check:i18n snapshot` gegen einen
+Build ohne die i18n-Änderungen). Auf einem frischen Klon fehlt sie, `compare`
+meldet dann „Baseline fehlt“. Ein Snapshot vom i18n-Stand selbst vergleicht
+die Seite nur mit sich und sagt nichts.
+
+Nach jedem Deploy, sobald der Cache geleert ist (siehe Deploy):
+`BASE_URL=https://laas.website pnpm check:i18n routing`.
+
+Gut zu wissen:
+
+- **404:** `app/global-not-found.tsx`, eingeschaltet über
+  `experimental.globalNotFound` in `portfolio/next.config.ts`. Nach jedem
+  Next-Upgrade `pnpm check:i18n routing` laufen lassen.
+- **Bekannte Grenze:** `/en/…` mit Dateiendung (`/en/x.php`) und `/EN`
+  bekommen die deutsche 404. Der Proxy-Matcher überspringt Pfade mit Endung,
+  und `EN` ist keine Sprache.
+- **`pnpm test`** braucht ein Node, das TypeScript nativ ausführt (Node 22
+  laut `.nvmrc`). `engines` erlaubt ab 20.9, dort laufen die Tests nicht.
 
 ## Breakpoint-Regel
 

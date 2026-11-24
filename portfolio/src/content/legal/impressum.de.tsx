@@ -1,16 +1,7 @@
-import type { Metadata } from "next";
-
 import { Fill, ProviderAddress } from "@/components/legal/Fill";
-import LegalPage from "@/components/legal/LegalPage";
 import type { LegalSectionData } from "@/components/legal/LegalSection";
+import type { LegalDoc } from "@/content/legal";
 import { LEGAL } from "@/lib/legal";
-
-export const metadata: Metadata = {
-  title: "Impressum — Luca Arnoldi App Solutions",
-  description:
-    "Anbieterkennzeichnung nach § 5 DDG: Anbieter, Kontakt, Umsatzsteuer und Verantwortlichkeit für die Inhalte dieser Website.",
-  alternates: { canonical: "/impressum" },
-};
 
 const { provider } = LEGAL;
 
@@ -159,12 +150,11 @@ const SECTIONS: LegalSectionData[] = [
   },
 ];
 
-export default function ImpressumPage() {
-  return (
-    <LegalPage
-      title="IMPRESSUM"
-      lede="Angaben nach § 5 des Digitale-Dienste-Gesetzes (DDG) und § 18 Abs. 2 des Medienstaatsvertrags (MStV)."
-      sections={SECTIONS}
-    />
-  );
-}
+export const impressumDe: LegalDoc = {
+  metaTitle: "Impressum — Luca Arnoldi App Solutions",
+  metaDescription:
+    "Anbieterkennzeichnung nach § 5 DDG: Anbieter, Kontakt, Umsatzsteuer und Verantwortlichkeit für die Inhalte dieser Website.",
+  title: "IMPRESSUM",
+  lede: "Angaben nach § 5 des Digitale-Dienste-Gesetzes (DDG) und § 18 Abs. 2 des Medienstaatsvertrags (MStV).",
+  sections: SECTIONS,
+};

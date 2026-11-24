@@ -1,24 +1,10 @@
-import type { Metadata } from "next";
-
 import { Fill, ProviderAddress } from "@/components/legal/Fill";
-import LegalPage from "@/components/legal/LegalPage";
-import { LegalList } from "@/components/legal/LegalSection";
+import { LegalList, LegalTerm as Term } from "@/components/legal/LegalSection";
 import type { LegalSectionData } from "@/components/legal/LegalSection";
+import type { LegalDoc } from "@/content/legal";
 import { LEGAL } from "@/lib/legal";
 
-export const metadata: Metadata = {
-  title: "AGB — Luca Arnoldi App Solutions",
-  description:
-    "Allgemeine Geschäftsbedingungen für Softwareentwicklung, Prozessautomatisierung, KI-Integration und Webdesign.",
-  alternates: { canonical: "/agb" },
-};
-
 const { provider, terms } = LEGAL;
-
-/** Hervorhebung im Fliesstext — die Widerrufsbelehrung gliedert sich darüber. */
-function Term({ children }: { children: React.ReactNode }) {
-  return <strong className="font-semibold text-[#0a0a0a]">{children}</strong>;
-}
 
 const SECTIONS: LegalSectionData[] = [
   {
@@ -139,13 +125,13 @@ const SECTIONS: LegalSectionData[] = [
         <p>
           Bei Projekten ab einem Volumen, das im Angebot benannt ist, wird eine
           Anzahlung von{" "}
-          <Fill value={terms.deposit} label="Anzahlung bei Projektbeginn" /> bei
+          <Fill value={terms.deposit.de} label="Anzahlung bei Projektbeginn" /> bei
           Auftragserteilung fällig. Der Restbetrag wird nach Abnahme in Rechnung
           gestellt. Laufende Leistungen werden monatlich abgerechnet.
         </p>
         <p>
           Rechnungen sind ohne Abzug innerhalb von{" "}
-          <Fill value={terms.paymentDays} label="Zahlungsziel" /> ab
+          <Fill value={terms.paymentDays.de} label="Zahlungsziel" /> ab
           Rechnungsdatum zur Zahlung fällig. Alle Preise verstehen sich
           zuzüglich der jeweils geltenden gesetzlichen Umsatzsteuer, soweit
           diese auszuweisen ist.
@@ -187,7 +173,7 @@ const SECTIONS: LegalSectionData[] = [
           Bei Werkleistungen zeigt der Auftragnehmer die Fertigstellung an und
           stellt das Ergebnis zur Prüfung bereit. Der Auftraggeber prüft es
           innerhalb von{" "}
-          <Fill value={terms.acceptanceDays} label="Prüffrist in Werktagen" />{" "}
+          <Fill value={terms.acceptanceDays.de} label="Prüffrist in Werktagen" />{" "}
           und erklärt die Abnahme in Textform oder benennt die Mängel, die ihr
           entgegenstehen.
         </p>
@@ -269,7 +255,7 @@ const SECTIONS: LegalSectionData[] = [
           Gegenüber Unternehmern beträgt die Verjährungsfrist für
           Mängelansprüche{" "}
           <Fill
-            value={terms.warrantyPeriod}
+            value={terms.warrantyPeriod.de}
             label="Gewährleistungsfrist gegenüber Unternehmern"
           />{" "}
           ab Abnahme. Gegenüber Verbrauchern gilt die gesetzliche Frist
@@ -358,7 +344,7 @@ const SECTIONS: LegalSectionData[] = [
         <p>
           Laufende Verträge über Wartung, Betreuung oder Support können von
           beiden Seiten mit einer Frist von{" "}
-          <Fill value={terms.noticePeriod} label="Kündigungsfrist" /> zum
+          <Fill value={terms.noticePeriod.de} label="Kündigungsfrist" /> zum
           Monatsende gekündigt werden. Das Recht zur ausserordentlichen
           Kündigung aus wichtigem Grund bleibt unberührt.
         </p>
@@ -461,12 +447,11 @@ const SECTIONS: LegalSectionData[] = [
   },
 ];
 
-export default function AGBPage() {
-  return (
-    <LegalPage
-      title="AGB"
-      lede="Allgemeine Geschäftsbedingungen für Softwareentwicklung, Prozessautomatisierung, KI-Integration und Webdesign. Sie gelten für alle Verträge, die auf dieser Grundlage geschlossen werden."
-      sections={SECTIONS}
-    />
-  );
-}
+export const agbDe: LegalDoc = {
+  metaTitle: "AGB — Luca Arnoldi App Solutions",
+  metaDescription:
+    "Allgemeine Geschäftsbedingungen für Softwareentwicklung, Prozessautomatisierung, KI-Integration und Webdesign.",
+  title: "AGB",
+  lede: "Allgemeine Geschäftsbedingungen für Softwareentwicklung, Prozessautomatisierung, KI-Integration und Webdesign. Sie gelten für alle Verträge, die auf dieser Grundlage geschlossen werden.",
+  sections: SECTIONS,
+};

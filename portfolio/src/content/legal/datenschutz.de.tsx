@@ -1,26 +1,10 @@
-import type { Metadata } from "next";
-
 import { Fill, ProviderAddress } from "@/components/legal/Fill";
-import LegalPage from "@/components/legal/LegalPage";
-import { LegalList } from "@/components/legal/LegalSection";
+import { LegalList, LegalTerm as Term } from "@/components/legal/LegalSection";
 import type { LegalSectionData } from "@/components/legal/LegalSection";
+import type { LegalDoc } from "@/content/legal";
 import { LEGAL } from "@/lib/legal";
 
-export const metadata: Metadata = {
-  title: "Datenschutzerklärung — Luca Arnoldi App Solutions",
-  description:
-    "Informationen nach Art. 13 DSGVO: welche Daten beim Besuch dieser Website verarbeitet werden, auf welcher Rechtsgrundlage und welche Rechte du hast.",
-  alternates: { canonical: "/datenschutz" },
-};
-
 const { provider, authority, hosting } = LEGAL;
-
-/** Hervorhebung im Fliesstext — die Rechte-Liste lebt davon. */
-function Term({ children }: { children: React.ReactNode }) {
-  return (
-    <strong className="font-semibold text-[#0a0a0a]">{children}</strong>
-  );
-}
 
 const SECTIONS: LegalSectionData[] = [
   {
@@ -71,7 +55,7 @@ const SECTIONS: LegalSectionData[] = [
           auf dessen Servern verarbeitet.
         </p>
         <p>
-          {hosting.name}, {hosting.address}
+          {hosting.name}, {hosting.address.de}
         </p>
         <p>
           Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO.
@@ -311,12 +295,11 @@ const SECTIONS: LegalSectionData[] = [
   },
 ];
 
-export default function DatenschutzPage() {
-  return (
-    <LegalPage
-      title="DATENSCHUTZ"
-      lede="Informationen nach Art. 13 der Datenschutz-Grundverordnung: welche personenbezogenen Daten beim Besuch dieser Website verarbeitet werden, wozu, auf welcher Rechtsgrundlage — und welche Rechte du dagegen hast."
-      sections={SECTIONS}
-    />
-  );
-}
+export const datenschutzDe: LegalDoc = {
+  metaTitle: "Datenschutzerklärung — Luca Arnoldi App Solutions",
+  metaDescription:
+    "Informationen nach Art. 13 DSGVO: welche Daten beim Besuch dieser Website verarbeitet werden, auf welcher Rechtsgrundlage und welche Rechte du hast.",
+  title: "DATENSCHUTZ",
+  lede: "Informationen nach Art. 13 der Datenschutz-Grundverordnung: welche personenbezogenen Daten beim Besuch dieser Website verarbeitet werden, wozu, auf welcher Rechtsgrundlage — und welche Rechte du dagegen hast.",
+  sections: SECTIONS,
+};

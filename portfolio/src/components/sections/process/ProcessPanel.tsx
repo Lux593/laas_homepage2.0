@@ -15,10 +15,15 @@ export default function ProcessPanel({
   step,
   index,
   total,
+  mediaLabel,
+  cycleLabels,
 }: {
   step: ProcessStep;
   index: number;
   total: number;
+  /** Vorlage für den Namen des Clips, siehe ProcessMedia. */
+  mediaLabel: string;
+  cycleLabels: string[];
 }) {
   return (
     <article className="process-panel relative flex flex-col justify-start">
@@ -50,7 +55,13 @@ export default function ProcessPanel({
             </div>
 
             <div className="process-panel__media relative z-0 w-full shrink-0 justify-self-center">
-              <ProcessMedia step={step} index={index} total={total} />
+              <ProcessMedia
+                step={step}
+                index={index}
+                total={total}
+                label={mediaLabel}
+                cycleLabels={cycleLabels}
+              />
             </div>
           </div>
         </div>

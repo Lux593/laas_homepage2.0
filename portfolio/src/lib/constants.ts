@@ -3,10 +3,17 @@ import type {
   ScreenFit,
 } from "@/components/ui/framer-moveable-thumbnails";
 
+/*
+ * Nur Sprachneutrales: IDs, Asset-Pfade, Farben, Tech-, Firmen- und
+ * Markennamen. Jeder Text, der übersetzt wird, steht in
+ * lib/i18n/dictionaries; lib/i18n/content.ts führt beides über die IDs zu den
+ * Typen weiter unten zusammen.
+ *
+ * Die Reihenfolge der Asset-Listen ist die Anzeigereihenfolge.
+ */
+
 export const SITE_CONFIG = {
   name: "Luca Arnoldi App Studio",
-  title: "Fullstack Developer & Digital Experience Engineer",
-  tagline: "Code, die sich lebendig anfühlt",
   /** Live-Domain — Basis für metadataBase, OG-Tags, Sitemap und JSON-LD. */
   url: "https://laas.website",
   email: "hello@laas.website",
@@ -17,77 +24,86 @@ export const SITE_CONFIG = {
   },
 } as const;
 
-/** Anrede und Name stehen getrennt, weil sie in der Iris zwei Typo-Grade sind:
- *  die Anrede klein über dem Namen im Displaygrad. */
+/* -------------------------------------------------------------------------- */
+/* IDs                                                                        */
+/* -------------------------------------------------------------------------- */
+
+/* Die Wörterbücher führen ihre Listen als Record über diese IDs. Damit
+   erzwingt TypeScript, dass jede ID in jeder Sprache Text hat. */
+
+export type ServiceId = "software" | "automation" | "ai" | "website";
+export type ProcessStepId = "idea" | "plan" | "build" | "cycle";
+export type ProjectId =
+  | "wintersport-verleih"
+  | "powershop-service"
+  | "powershop-madness"
+  | "motools-service"
+  | "wedding-app"
+  | "individuelle-website";
+export type ClientId =
+  | "powershop"
+  | "intersport"
+  | "mobileobjects"
+  | "private"
+  | "ashprojects"
+  | "lacilentana";
+export type RoleId = "feldschloesschen" | "mobileobjects" | "laas";
+export type NavHash = "#services" | "#process" | "#work" | "#about" | "#contact";
+
+/** Section-Anker der Startseite in Menü-Reihenfolge — in beiden Sprachen gleich. */
+export const NAV_HASHES: readonly NavHash[] = [
+  "#services",
+  "#process",
+  "#work",
+  "#about",
+  "#contact",
+];
+
+/* -------------------------------------------------------------------------- */
+/* Über mich                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/** Name und Ort der Intro. Die Anrede davor steht im Wörterbuch
+ *  (`about.greeting`): sie ist in der Iris ein eigener Typo-Grad, klein über
+ *  dem Namen im Displaygrad. */
 export const ABOUT_INTRO = {
-  greeting: "Hey, ich bin",
   name: "Luca Arnoldi",
-  /** Zwei Zeilen — Umbruch nach „Technik,". */
-  subtitle: [
-    "Ich interessiere mich für Technik,",
-    "KI und das ganze verrückte Zeug.",
-  ],
   location: "79576 Weil am Rhein",
 } as const;
 
-export interface AboutRole {
+export interface AboutRoleAsset {
+  id: RoleId;
   company: string;
-  position: string;
   /**
    * Optionales Porträt für genau diese Rolle. Steht hier ein Pfad, wechselt die
    * Platte in „Über mich", sobald die Annotation gehovert oder fokussiert wird
    * — ein Gesicht, drei Leben. Fehlt der Pfad, bleibt ABOUT_PORTRAIT stehen;
-   * die Section funktioniert vollständig mit einem einzigen Foto.
+   * die Section funktioniert vollständig mit einem einzigen Foto. Der Alt-Text
+   * dazu gehört dann ins Wörterbuch.
    */
   image?: string;
-  /** Nur nötig, wenn `image` gesetzt ist: was auf dem Foto zu sehen ist. */
-  imageAlt?: string;
+}
+
+export interface AboutRole extends AboutRoleAsset {
+  position: string;
 }
 
 /** B&W-Porträt links im About-Streifen. Freigestellt ist es nicht — der weiße
  *  Studiogrund verschmilzt per `mix-blend-mode: multiply` mit der Cremeplatte,
- *  genau wie die Bauzeichnung in „Leistungen" im Cremegrund verschwindet. */
+ *  genau wie die Bauzeichnung in „Leistungen" im Cremegrund verschwindet.
+ *  Der Alt-Text steht im Wörterbuch (`about.portraitAlt`). */
 export const ABOUT_PORTRAIT = {
   src: "/personal_pic.jpg",
   width: 1206,
   height: 953,
-  alt: "Luca Arnoldi",
 } as const;
 
 /** Beruflicher Werdegang — mittlere Spalte im About-Streifen. */
-export const ABOUT_ROLES: AboutRole[] = [
-  {
-    company: "Feldschlösschen Getränke AG",
-    position: "Teamleiter Logistic System & Process Development",
-  },
-  {
-    company: "mobileObjects GmbH",
-    position: "Full Stack Developer (Teilzeit)",
-  },
-  {
-    company: "LAAS – Luca Arnoldi App Solutions",
-    position: "Selbstständig",
-  },
+export const ABOUT_ROLE_ASSETS: readonly AboutRoleAsset[] = [
+  { id: "feldschloesschen", company: "Feldschlösschen Getränke AG" },
+  { id: "mobileobjects", company: "mobileObjects GmbH" },
+  { id: "laas", company: "LAAS – Luca Arnoldi App Solutions" },
 ];
-
-/** Section-Header + linke Spalte der Leistungen-Aufteilung. */
-export const SERVICES_INTRO = {
-  eyebrow: "Was ich anbiete",
-  headline: "LEISTUNGEN",
-  /** Große Aussage — bleibt als aria-Label / Fallback-Text für die Landschaft. */
-  statement: "Wenn Standardtools nicht reichen, baue ich dir den Weg.",
-  support:
-    "Software, die passt. Websites, die sitzen. Prozesse, die laufen. KI, die wirklich hilft: klar, direkt, ohne Theater.",
-  /**
-   * Zwei Handskizzen desselben Arbeitsplatzes, zugestellt und geräumt. Die
-   * geräumte ist aus der zugestellten heraus gezeichnet, damit Tischplatte
-   * und Bodenlinie aufeinander liegen — die Ziehkante darf keinen Sprung im
-   * Tisch zeigen. Papier ist reines Weiß: so lässt das multiply der Section
-   * ihr Creme unberührt und die Zeichnung liegt ohne Blatt darauf.
-   */
-  visualBefore: "/services/arbeitsplatz-chaos-v2.webp",
-  visualAfter: "/services/arbeitsplatz-aufgeraeumt-v2.webp",
-} as const;
 
 export interface AboutTool {
   name: string;
@@ -105,8 +121,12 @@ export const ABOUT_TOOLS: AboutTool[] = [
   { name: "YouTube", icon: "/youtube-icon.svg", url: "https://www.youtube.com" },
 ];
 
-export interface ClientTickerItem {
-  name: string;
+/* -------------------------------------------------------------------------- */
+/* Kunden                                                                     */
+/* -------------------------------------------------------------------------- */
+
+export interface ClientAsset {
+  id: ClientId;
   /** Vorhandenes Kunden-Logo; fehlt → Platzhalter vor dem Namen. */
   icon?: string;
   /**
@@ -118,38 +138,42 @@ export interface ClientTickerItem {
   slotClass?: string;
 }
 
+export interface ClientTickerItem extends ClientAsset {
+  name: string;
+}
+
 /** Kunden-Ticker zwischen Projekte und Über mich. */
-export const CLIENTS: ClientTickerItem[] = [
+export const CLIENT_ASSETS: readonly ClientAsset[] = [
   {
-    name: "Harley Davidson Powershop",
+    id: "powershop",
     icon: "/power-shop-icon.svg",
   },
   {
-    name: "Intersport Gemo",
+    id: "intersport",
     icon: "/intersport-icon.svg",
     // Flaches Wordmark: breiter, etwas niedrigerer Slot.
     slotClass: "h-8 w-[10.5rem] md:h-10 md:w-[13rem]",
     iconClass: "object-contain",
   },
   {
-    name: "Mobile Objects",
+    id: "mobileobjects",
     icon: "/mobileobjects-icon.svg",
     // Nur Markenzeichen (m + Ring); Wordmark flackerte im Marquee.
     slotClass: "h-11 w-[5rem] md:h-[3.25rem] md:w-[5.75rem]",
     iconClass: "object-contain",
   },
   {
-    name: "Für Privatpersonen",
+    id: "private",
     icon: "/privatpersonen-icon.svg",
     iconClass: "object-contain",
   },
   {
-    name: "Ash Projects",
+    id: "ashprojects",
     icon: "/ashprojects-icon.svg",
     iconClass: "object-contain",
   },
   {
-    name: "La Cilentana Pastamanufaktur",
+    id: "lacilentana",
     icon: "/lacilentana-icon.svg",
     // Querformat-Logo: etwas breiterer Slot, volle Marke sichtbar.
     slotClass: "w-[4.75rem] md:w-[5.25rem]",
@@ -157,32 +181,32 @@ export const CLIENTS: ClientTickerItem[] = [
   },
 ];
 
+/* -------------------------------------------------------------------------- */
+/* Projekte                                                                   */
+/* -------------------------------------------------------------------------- */
+
 export interface ProjectFeature {
   title: string;
   description: string;
 }
 
-export interface ProjectGalleryItem {
+export interface ProjectGalleryAsset {
   id: number;
   url: string;
-  title: string;
   /** Defaults to image. Use `video` for a looping cutout clip (muted). */
   type?: "image" | "video";
   /** Poster / fallback still for video slides (shown on spare reel copies). */
   poster?: string;
 }
 
-export interface Project {
-  id: string;
+export interface ProjectGalleryItem extends ProjectGalleryAsset {
   title: string;
-  subtitle: string;
-  category: string;
-  year: string;
+}
+
+export interface ProjectAsset {
+  id: ProjectId;
   tech: string[];
-  description: string;
-  details: string;
-  features: ProjectFeature[];
-  gallery: ProjectGalleryItem[];
+  gallery: ProjectGalleryAsset[];
   color: string;
   /** Device mockup the gallery screenshots are shown in. Defaults to "ipad". */
   device?: DeviceFrame;
@@ -205,47 +229,24 @@ export interface Project {
   unoptimized?: boolean;
 }
 
-export const PROJECTS: Project[] = [
+export interface Project extends Omit<ProjectAsset, "gallery"> {
+  title: string;
+  subtitle: string;
+  features: ProjectFeature[];
+  gallery: ProjectGalleryItem[];
+}
+
+export const PROJECT_ASSETS: readonly ProjectAsset[] = [
   {
     id: "wintersport-verleih",
-    title: "WINTERSPORT\nVERLEIH SYSTEM",
-    subtitle: "Verleihsystem für Intersport Gemo",
-    category: "Fullstack / Web-App",
-    year: "2025 – heute",
     tech: ["React", "Next.js", "TypeScript", "Supabase"],
-    description:
-      "End-to-End-Verleihsystem für Skiausrüstung: von der Online-Anmeldung über Ausrüstungserfassung und Kasse bis zur Administration.",
-    details:
-      "Für Intersport Gemo habe ich ein digitales Wintersport-Verleihsystem gebaut, das Kundenanmeldung, Shop-Workflow und Backoffice in einer Oberfläche verbindet. Tages- und Saisonverleih laufen darüber.",
-    features: [
-      {
-        title: "Digitale Kundenanmeldung",
-        description:
-          "Tagesverleih-Formular mit Kontaktdaten und Ausweis-Upload. Gäste melden sich selbst an, bevor sie in den Shop kommen.",
-      },
-      {
-        title: "Neue Anmeldungen im Shop",
-        description:
-          "Inbox für unbearbeitete Anmeldungen: Team sieht Kontaktdaten, Verleihart und startet direkt die Ausrüstungserfassung.",
-      },
-      {
-        title: "Kasse & Zahlungsstatus",
-        description:
-          "Unbezahlte und abgeschlossene Leihen im Blick, klar getrennt, damit nichts an der Kasse untergeht.",
-      },
-      {
-        title: "Administration & Stammdaten",
-        description:
-          "Produkte, Kategorien, User-Rollen und Umsatz-Statistiken zentral steuern, ohne Extra-Tools daneben.",
-      },
-    ],
     gallery: [
-      { id: 1, url: "/vorschaubilder/gemo-app1.webp", title: "Verleihtyp wählen" },
-      { id: 2, url: "/vorschaubilder/gemo-app2.webp", title: "Kundendaten erfassen" },
-      { id: 3, url: "/vorschaubilder/gemo-app3.webp", title: "Neue Anmeldungen" },
-      { id: 4, url: "/vorschaubilder/gemo-app4.webp", title: "Ausrüstung & Mietdauer" },
-      { id: 5, url: "/vorschaubilder/gemo-app5.webp", title: "Verleih-Management" },
-      { id: 6, url: "/vorschaubilder/gemo-app6.webp", title: "Statistiken & Umsatz" },
+      { id: 1, url: "/vorschaubilder/gemo-app1.webp" },
+      { id: 2, url: "/vorschaubilder/gemo-app2.webp" },
+      { id: 3, url: "/vorschaubilder/gemo-app3.webp" },
+      { id: 4, url: "/vorschaubilder/gemo-app4.webp" },
+      { id: 5, url: "/vorschaubilder/gemo-app5.webp" },
+      { id: 6, url: "/vorschaubilder/gemo-app6.webp" },
     ],
     color: "#7A8FA0",
     device: "iphone",
@@ -258,37 +259,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "powershop-service",
-    title: "POWER SHOP\nSERVICE APP",
-    subtitle: "Operations & Management Web-App",
-    category: "Fullstack / Web-App",
-    year: "2024 – heute",
     tech: ["React", "Next.js", "Python", "OpenAI", "PostgreSQL"],
-    description:
-      "Maßgeschneiderte Web-App für Tagesgeschäft, Planung und Automatisierung, inklusive KI-gestützter Prozesse.",
-    details:
-      "Für den Power Shop habe ich eine umfassende Management-Plattform entwickelt, die sämtliche operative Abläufe digitalisiert und optimiert.",
-    features: [
-      {
-        title: "Tagesgeschäft-Management",
-        description:
-          "Zentrale Oberfläche zur Steuerung des täglichen Geschäftsbetriebs mit Echtzeit-Übersichten und Aufgabenverwaltung.",
-      },
-      {
-        title: "Mitarbeiter- & Eventplanung",
-        description:
-          "Integrierte Planung für Schichten, Verfügbarkeiten und Events mit automatischer Konflikterkennung.",
-      },
-      {
-        title: "Workflow-Automatisierungen",
-        description:
-          "Automatisierte Geschäftsprozesse, die repetitive Aufgaben eliminieren und den operativen Alltag beschleunigen.",
-      },
-      {
-        title: "KI-Prozesse & Funktionen",
-        description:
-          "Intelligente Funktionen auf Basis von KI, von automatisierten Auswertungen bis zur smarten Entscheidungsunterstützung.",
-      },
-    ],
     gallery: [
       // Dateinamen bewusst neu vergeben (vorher powershop1-5.webp). Der
       // Image-Optimizer cached nach (URL, Breite, Qualitaet) mit 4h TTL und
@@ -298,15 +269,14 @@ export const PROJECTS: Project[] = [
       {
         id: 1,
         url: "/vorschaubilder/powershop-app-loop.mp4",
-        title: "Mitarbeiter-Anmeldung",
         type: "video",
         poster: "/vorschaubilder/powershop-app1.webp",
       },
-      { id: 2, url: "/vorschaubilder/powershop-app2.webp", title: "Dashboard" },
-      { id: 3, url: "/vorschaubilder/powershop-app3.webp", title: "Service Center" },
-      { id: 4, url: "/vorschaubilder/powershop-app4.webp", title: "Probefahrt erfassen" },
-      { id: 5, url: "/vorschaubilder/powershop-app5.webp", title: "Urlaubs- & Abwesenheitsplanung" },
-      { id: 6, url: "/vorschaubilder/powershop-app6.webp", title: "Workflow-Automatisierungen" },
+      { id: 2, url: "/vorschaubilder/powershop-app2.webp" },
+      { id: 3, url: "/vorschaubilder/powershop-app3.webp" },
+      { id: 4, url: "/vorschaubilder/powershop-app4.webp" },
+      { id: 5, url: "/vorschaubilder/powershop-app5.webp" },
+      { id: 6, url: "/vorschaubilder/powershop-app6.webp" },
     ],
     color: "#C49F7B",
     // iPadOS-Statusleiste in den Captures weich ausblenden — Crop würde das
@@ -315,138 +285,45 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "powershop-madness",
-    title: "POWER SHOP\nMADNESS",
-    subtitle: "Arcade Mobile Game",
-    category: "Mobile / Game",
-    year: "2025",
     tech: ["Unity", "C#", "Mobile"],
-    description:
-      "Ein mobiles Arcade-Game rund um den Power Shop: schnelle Sessions, markante Optik und spielerische Markenwelt.",
-    details:
-      "Power Shop Madness übersetzt die Markenwelt in ein kurzweiliges Mobile Game mit klaren Levels und starker Visual Language.",
-    features: [
-      {
-        title: "Arcade-Gameplay",
-        description:
-          "Kurze, intensive Sessions mit steigendem Tempo und klaren Highscore-Momenten.",
-      },
-      {
-        title: "Markenwelt im Spiel",
-        description:
-          "Visuelle und thematische Anbindung an den Power Shop. Erkennbar, ohne den Flow zu stören.",
-      },
-      {
-        title: "Mobile-First UX",
-        description:
-          "Touch-optimierte Steuerung und Interfaces, die auf dem Smartphone sofort verständlich sind.",
-      },
-      {
-        title: "Verfügbarkeit",
-        description:
-          "Für alle Geräte konzipiert, mit einheitlicher Spielerfahrung auf Smartphone und Tablet.",
-      },
-    ],
     gallery: [
-      { id: 1, url: "/vorschaubilder/mobilegame1.webp", title: "Game Screen 01" },
-      { id: 2, url: "/vorschaubilder/mobilegame2.webp", title: "Game Screen 02" },
-      { id: 3, url: "/vorschaubilder/mobilegame3.webp", title: "Game Screen 03" },
-      { id: 4, url: "/vorschaubilder/mobilegame4.webp", title: "Game Screen 04" },
-      { id: 5, url: "/vorschaubilder/mobilegame5.webp", title: "Game Screen 05" },
+      { id: 1, url: "/vorschaubilder/mobilegame1.webp" },
+      { id: 2, url: "/vorschaubilder/mobilegame2.webp" },
+      { id: 3, url: "/vorschaubilder/mobilegame3.webp" },
+      { id: 4, url: "/vorschaubilder/mobilegame4.webp" },
+      { id: 5, url: "/vorschaubilder/mobilegame5.webp" },
     ],
     color: "#DFBE9F",
     device: "iphone",
   },
   {
     id: "motools-service",
-    title: "moTools\nSERVICE APP",
-    subtitle: "Interne Tool-Plattform für Logistik & Telematik",
-    category: "Fullstack / Web-App",
-    year: "2025 – heute",
     tech: ["Next.js", "React", "TypeScript", "Supabase", "OpenAI"],
-    description:
-      "Interne Plattform, die Telematik-Support, Stammdaten und Teamabstimmung an einer Stelle bündelt.",
-    details:
-      "Für mobileObjects habe ich eine interne Tool-Plattform gebaut, die den Support rund um die GPS-Telematik, die Verwaltung von Portalusern und Fahrern sowie die Abstimmung im Team in einer Oberfläche zusammenführt.",
-    // Beschreibungen auf zwei Zeilen getrimmt (84–90 Zeichen), damit die
-    // Feature-Liste dieselbe Höhe hat wie bei den übrigen Projekten.
-    features: [
-      {
-        title: "Telematik-Werkzeuge",
-        description:
-          "Vorgänge rund um Fahrzeuge und GPS-Boxen per VIN finden, bearbeiten und abschließen.",
-      },
-      {
-        title: "Benutzer- & Rollenverwaltung",
-        description:
-          "Portaluser nach Rolle oder Kunde verwalten, vom Super-Administrator bis zum Fahrer.",
-      },
-      {
-        title: "Fahrer- & Stammdatenpflege",
-        description:
-          "Geführte Formulare legen Fahrer samt Kundenzuordnung und Zugangsdaten in einem Schritt an.",
-      },
-      {
-        title: "Team-Board & Ideenabstimmung",
-        description:
-          "Notizen, Schnellzugriffe und Merch-Vorschläge, über die das Team direkt abstimmen kann.",
-      },
-    ],
     gallery: [
       {
         id: 1,
         url: "/vorschaubilder/motools-app-loop.mp4",
-        title: "Anmeldung",
         type: "video",
         poster: "/vorschaubilder/motools-app1.webp",
       },
-      { id: 2, url: "/vorschaubilder/motools-app2.webp", title: "Startseite mit Schnellzugriffen" },
-      { id: 3, url: "/vorschaubilder/motools-app3.webp", title: "Fehler-Tracking der GPS-Boxen" },
-      { id: 4, url: "/vorschaubilder/motools-app4.webp", title: "Benutzerverwaltung nach Rolle" },
-      { id: 5, url: "/vorschaubilder/motools-app5.webp", title: "Fahrer anlegen" },
-      { id: 6, url: "/vorschaubilder/motools-app6.webp", title: "Ideen-Management" },
+      { id: 2, url: "/vorschaubilder/motools-app2.webp" },
+      { id: 3, url: "/vorschaubilder/motools-app3.webp" },
+      { id: 4, url: "/vorschaubilder/motools-app4.webp" },
+      { id: 5, url: "/vorschaubilder/motools-app5.webp" },
+      { id: 6, url: "/vorschaubilder/motools-app6.webp" },
     ],
     color: "#8A9A8B",
     screenBlurTop: 0.042,
   },
   {
     id: "wedding-app",
-    title: "WEDDING\nORGANIZER APP",
-    subtitle: "RSVP, Guides & Infos für Hochzeitsgäste",
-    category: "Mobile / Web-App",
-    year: "2025 – 2026",
     tech: ["React", "Next.js", "Supabase", "TypeScript"],
-    description:
-      "Eine elegante Gäste-App für Hochzeiten: von RSVP über Outfit-Guides bis zu lokalen Tipps und FAQ, alles an einem Ort.",
-    details:
-      "Die Wedding Organizer App bündelt alle Informationen für die Gäste einer mehrtägigen Hochzeit: RSVP, Ablauf, Outfits, Anreise und FAQ. Mehrsprachig und mobil optimiert.",
-    features: [
-      {
-        title: "RSVP & Gäste-Rückmeldung",
-        description:
-          "Teilnahme, Tage und Kontaktdaten digital erfassen. Klar, persönlich und ohne Papierchaos.",
-      },
-      {
-        title: "Outfit-Guide pro Event",
-        description:
-          "Stilvorschläge für jeden Anlass im Hochzeitsprogramm, inkl. Shopping-Tipps und Dresscode-Hinweisen.",
-      },
-      {
-        title: "Anreise & Local Tips",
-        description:
-          "Empfehlungen zu Restaurants, Cafés und Shopping vor Ort, direkt mit Maps-Links.",
-      },
-      {
-        title: "FAQ & Infos auf einen Blick",
-        description:
-          "Dresscode, Ankunft, Transport und weitere Fragen als übersichtliches Akkordeon.",
-      },
-    ],
     gallery: [
-      { id: 1, url: "/vorschaubilder/wedding1.webp", title: "Countdown" },
-      { id: 2, url: "/vorschaubilder/wedding2.webp", title: "RSVP Screen" },
-      { id: 3, url: "/vorschaubilder/wedding3.webp", title: "Local Tips" },
-      { id: 4, url: "/vorschaubilder/wedding4.webp", title: "Outfits Guide" },
-      { id: 5, url: "/vorschaubilder/wedding5.webp", title: "Location" },
+      { id: 1, url: "/vorschaubilder/wedding1.webp" },
+      { id: 2, url: "/vorschaubilder/wedding2.webp" },
+      { id: 3, url: "/vorschaubilder/wedding3.webp" },
+      { id: 4, url: "/vorschaubilder/wedding4.webp" },
+      { id: 5, url: "/vorschaubilder/wedding5.webp" },
     ],
     color: "#B8897A",
     device: "iphone",
@@ -454,42 +331,11 @@ export const PROJECTS: Project[] = [
   },
   {
     id: "individuelle-website",
-    title: "INDIVIDUELLE\nWEBSITE",
-    subtitle: "Maßgeschneiderte Website statt Template",
-    category: "Website / Design",
-    year: "2025",
     tech: ["Next.js", "React", "TypeScript", "Design"],
-    description:
-      "Eine individuelle Website mit klarer Markenstimme, ruhiger Struktur und einer Umsetzung, die sich nach dem Inhalt richtet, nicht nach einem Baukasten.",
-    details:
-      "Individuelle Websites entstehen aus Marke, Angebot und Zielgruppe. Design und Code greifen ineinander, damit die Seite auf dem Desktop stark wirkt und auf dem Handy selbstverständlich bleibt.",
-    features: [
-      {
-        title: "Eigenes Design, kein Template",
-        description:
-          "Visuelle Sprache und Layout wachsen aus Marke und Inhalt. Erkennbar, ohne Baukasten-Feeling.",
-      },
-      {
-        title: "Klare Botschaft zuerst",
-        description:
-          "Eine starke Einstiegsseite, die sofort sagt, wer du bist und warum jemand bleiben soll.",
-      },
-      {
-        title: "Ruhige Bedienung",
-        description:
-          "Wenige, gezielte Abschnitte und CTAs. Lesbar am Desktop, selbstverständlich auf dem Handy.",
-      },
-      {
-        title: "Design und Code aus einem Guss",
-        description:
-          "Vom Look bis zur Live-Seite alles aus einer Hand, ohne Bruch zwischen Entwurf und Umsetzung.",
-      },
-    ],
     gallery: [
       {
         id: 1,
         url: "/vorschaubilder/qimo-ipad-loop.mp4",
-        title: "Website-Durchlauf",
         type: "video",
         poster: "/vorschaubilder/qimo-ipad-loop.webp",
       },
@@ -501,131 +347,69 @@ export const PROJECTS: Project[] = [
   },
 ];
 
-export interface ProcessStep {
-  id: string;
-  title: string;
-  subtitle: string;
-  description: string;
-  points: { title: string; description: string }[];
+/* -------------------------------------------------------------------------- */
+/* Prozess                                                                    */
+/* -------------------------------------------------------------------------- */
+
+export interface ProcessStepAsset {
+  id: ProcessStepId;
   /** Looping comic clip (muted). Optional until all steps have assets. */
   video?: string;
   /** Poster / reduced-motion fallback for the clip. */
   poster?: string;
 }
 
-export const PROCESS_STEPS: ProcessStep[] = [
+export interface ProcessStep extends ProcessStepAsset {
+  title: string;
+  subtitle: string;
+  description: string;
+  points: { title: string; description: string }[];
+}
+
+export const PROCESS_ASSETS: readonly ProcessStepAsset[] = [
   {
     id: "idea",
-    title: "DEINE IDEE ODER DEIN PROBLEM",
-    subtitle: "Der Ausgangspunkt",
-    description:
-      "Du kommst mit einer Idee, einem Engpass oder einem Prozess, der dich bremst. Genau dort starten wir.",
     video: "/process/step-01-idea.mp4",
     poster: "/process/step-01-idea-poster.webp",
-    points: [
-      {
-        title: "Was dich bremst",
-        description:
-          "Manuelle Arbeit, fehlende Tools oder eine Idee ohne Form. Oft steckt dahinter kein Großprojekt, sondern ein wiederkehrender Reibungspunkt.",
-      },
-      {
-        title: "Was du brauchst",
-        description:
-          "Klarheit, ob Software, Automatisierung oder beides hilft. Wir trennen Symptom von Ursache, bevor etwas gebaut wird.",
-      },
-      {
-        title: "Was du mitbringst",
-        description:
-          "Kontext aus deinem Alltag. Mehr brauchst du erstmal nicht. Ein Walkthrough oder eine Liste nerviger Schritte reicht.",
-      },
-    ],
   },
   {
     id: "plan",
-    title: "BESPRECHEN &\nPLANEN",
-    subtitle: "Gemeinsam den Weg festlegen",
-    description:
-      "Wir klären Ziel, Umfang und Prioritäten. Du weißt danach, was gebaut wird, warum, und in welcher Reihenfolge.",
     video: "/process/step-02-plan.mp4",
     poster: "/process/step-02-plan.webp",
-    points: [
-      {
-        title: "Umfang klären",
-        description:
-          "Was muss rein, was kann warten, was ist Nice-to-have. So bleibt der erste Wurf fokussiert und finanzierbar.",
-      },
-      {
-        title: "Ansatz wählen",
-        description:
-          "App, Workflow, Integration oder eine Kombination. Technik folgt dem Alltag, nicht umgekehrt.",
-      },
-      {
-        title: "Plan aufsetzen",
-        description:
-          "Konkrete Schritte, Timeline und klare nächste Actions. Du siehst, was wann passiert und was von dir gebraucht wird.",
-      },
-    ],
   },
   {
     id: "build",
-    title: "AUTOMATISIERUNG & SOFTWARE",
-    subtitle: "Bauen, vernetzen, live nehmen",
-    description:
-      "Ich baue die maßgeschneiderte Lösung: Automatisierungen, Apps und Interfaces, die sich in deinen Alltag einfügen.",
     video: "/process/step-03-build.mp4",
     poster: "/process/step-03-build.webp",
-    points: [
-      {
-        title: "Automatisieren",
-        description:
-          "Wiederkehrende Aufgaben laufen ohne Copy-Paste. Systeme sprechen miteinander, statt dass du Daten hin- und herschiebst.",
-      },
-      {
-        title: "Software bauen",
-        description:
-          "Native- und Web-Apps mit klarer UI und stabilem Stack. Gebaut für deinen Prozess, nicht für Feature-Listen.",
-      },
-      {
-        title: "Live bringen",
-        description:
-          "Deploy, Feinschliff und Übergabe, die du wirklich nutzen kannst. Arbeitsfähig, kein reiner Prototyp.",
-      },
-    ],
   },
   {
     id: "cycle",
-    title: "VON VORNE\nANFANGEN",
-    subtitle: "Der Loop geht weiter",
-    description:
-      "Neue Idee, neues Problem, nächster Hebel. Was läuft, wird verbessert. Was fehlt, wird als Nächstes gebaut.",
     video: "/process/step-04-loop.mp4",
     poster: "/process/step-04-loop.webp",
-    points: [
-      {
-        title: "Feedback nutzen",
-        description:
-          "Was im Alltag hakt, wird der nächste Baustein. Echtes Nutzungsverhalten schlägt Annahmen aus dem Kickoff.",
-      },
-      {
-        title: "Weiter verbessern",
-        description:
-          "Kleine Verbesserungen statt einmal und fertig. Jede Runde macht das Setup ruhiger und robuster.",
-      },
-      {
-        title: "Wachsendes System",
-        description:
-          "Mit jedem Durchlauf wird dein Setup schlauer und ruhiger. Der Loop ist Absicht, kein Zeichen für Scheitern.",
-      },
-    ],
   },
 ];
 
-export interface Service {
-  id: string;
+/* -------------------------------------------------------------------------- */
+/* Leistungen                                                                 */
+/* -------------------------------------------------------------------------- */
+
+/** Visual der Leistungen-Aufteilung (linke Spalte auf dem Desktop). */
+export const SERVICES_LANDSCAPE = {
+  /**
+   * Zwei Handskizzen desselben Arbeitsplatzes, zugestellt und geräumt. Die
+   * geräumte ist aus der zugestellten heraus gezeichnet, damit Tischplatte
+   * und Bodenlinie aufeinander liegen — die Ziehkante darf keinen Sprung im
+   * Tisch zeigen. Papier ist reines Weiß: so lässt das multiply der Section
+   * ihr Creme unberührt und die Zeichnung liegt ohne Blatt darauf.
+   */
+  visualBefore: "/services/arbeitsplatz-chaos-v2.webp",
+  visualAfter: "/services/arbeitsplatz-aufgeraeumt-v2.webp",
+} as const;
+
+export interface ServiceAsset {
+  id: ServiceId;
   /** Marker in der Kreismarke — 1 / 2 / 3 / 4 */
   mark: string;
-  title: string;
-  description: string;
   /**
    * Die Räumungsstufe der Arbeitsplatz-Zeichnung, die zu diesem Kapitel gehört.
    *
@@ -640,46 +424,15 @@ export interface Service {
   visual: string;
 }
 
-/** Angebot (Was) — bewusst getrennt von PROCESS_STEPS (Wie wir zusammenarbeiten). */
-export const SERVICES: Service[] = [
-  {
-    id: "software",
-    mark: "1",
-    title: "Individuelle Software",
-    description:
-      "Maßgeschneiderte Web-Apps und Interfaces, die zu deinem Alltag passen. Statt Standardsoftware, die du verbiegen musst.",
-    visual: "/services/mobile-leistung1.png",
-  },
-  {
-    id: "automation",
-    mark: "2",
-    title: "Prozess Automationen",
-    description:
-      "Wiederkehrende Abläufe digitalisieren, verbinden und entlasten. Weniger Copy-Paste, mehr ruhiger Betrieb.",
-    visual: "/services/mobile-leistung2.png",
-  },
-  {
-    id: "ai",
-    mark: "3",
-    title: "KI Integrationen",
-    description:
-      "KI dort einbauen, wo sie echten Hebel hat: in bestehende Produkte und Workflows, nicht als Spielerei.",
-    visual: "/services/mobile-leistung3.png",
-  },
-  {
-    id: "website",
-    mark: "4",
-    title: "Website Design",
-    description:
-      "Markante Websites mit klarer Botschaft und ruhiger Bedienung. Design und Umsetzung aus einem Guss, kein Template-Feeling.",
-    visual: "/services/mobile-leistung4.png",
-  },
-];
+export interface Service extends ServiceAsset {
+  title: string;
+  description: string;
+}
 
-export const NAV_ITEMS = [
-  { label: "Leistungen", href: "#services" },
-  { label: "Prozess", href: "#process" },
-  { label: "Projekte", href: "#work" },
-  { label: "Über mich", href: "#about" },
-  { label: "Kontakt", href: "#contact" },
-] as const;
+/** Angebot (Was) — bewusst getrennt von PROCESS_ASSETS (Wie wir zusammenarbeiten). */
+export const SERVICE_ASSETS: readonly ServiceAsset[] = [
+  { id: "software", mark: "1", visual: "/services/mobile-leistung1.png" },
+  { id: "automation", mark: "2", visual: "/services/mobile-leistung2.png" },
+  { id: "ai", mark: "3", visual: "/services/mobile-leistung3.png" },
+  { id: "website", mark: "4", visual: "/services/mobile-leistung4.png" },
+];

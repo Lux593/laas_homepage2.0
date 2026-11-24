@@ -1,4 +1,4 @@
-import { CLIENTS, type ClientTickerItem } from "@/lib/constants";
+import type { ClientTickerItem } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 /** Einheitlicher Abstand zwischen den Kunden-Gruppen (Icon + Name). */
@@ -39,13 +39,19 @@ function ClientMark({ client }: { client: ClientTickerItem }) {
   );
 }
 
-function ClientSequence({ hidden }: { hidden?: boolean }) {
+function ClientSequence({
+  clients,
+  hidden,
+}: {
+  clients: ClientTickerItem[];
+  hidden?: boolean;
+}) {
   return (
     <ul
       className={`flex shrink-0 items-center ${ITEM_GAP} px-20 md:px-24`}
       aria-hidden={hidden || undefined}
     >
-      {CLIENTS.map((client) => (
+      {clients.map((client) => (
         <li key={client.name} className="flex shrink-0 items-center">
           <ClientMark client={client} />
         </li>
@@ -58,15 +64,21 @@ function ClientSequence({ hidden }: { hidden?: boolean }) {
  * Harter schwarzer Balken mit endlosem Kunden-Ticker.
  * Sitzt als dunkle Naht zwischen Cream-Projekte und Cream-Über-mich.
  */
-export default function Clients() {
+export default function Clients({
+  label,
+  clients,
+}: {
+  label: string;
+  clients: ClientTickerItem[];
+}) {
   return (
     <section
-      aria-label="Ausgewählte Kunden"
+      aria-label={label}
       className="relative z-10 overflow-hidden bg-[#050505] py-9 md:py-11"
     >
       <div className="flex w-max motion-safe:animate-[marquee_50s_linear_infinite] motion-reduce:animate-none">
-        <ClientSequence />
-        <ClientSequence hidden />
+        <ClientSequence clients={clients} />
+        <ClientSequence clients={clients} hidden />
       </div>
     </section>
   );

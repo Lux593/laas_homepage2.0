@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import Image from "next/image";
 import type { ProcessStep } from "@/lib/constants";
+import { format } from "@/lib/i18n/format";
 import ProcessCycle from "@/components/sections/process/ProcessCycle";
 
 /**
@@ -13,10 +14,16 @@ export default function ProcessMedia({
   step,
   index,
   total,
+  label,
+  cycleLabels,
 }: {
   step: ProcessStep;
   index: number;
   total: number;
+  /** Vorlage mit `{subtitle}` für den zugänglichen Namen des Clips. */
+  label: string;
+  /** Knoten der Kreismarke, falls dem Schritt das Standbild fehlt. */
+  cycleLabels: string[];
 }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hasLoop = Boolean(step.video && step.poster);
@@ -54,7 +61,14 @@ export default function ProcessMedia({
   }, [hasLoop, step.video]);
 
   if (!hasPoster || !step.poster) {
-    return <ProcessCycle step={step} index={index} total={total} />;
+    return (
+      <ProcessCycle
+        step={step}
+        index={index}
+        total={total}
+        labels={cycleLabels}
+      />
+    );
   }
 
   return (
@@ -90,7 +104,7 @@ export default function ProcessMedia({
             // Erster Schritt: früh laden, damit beim Pin-Eintritt nicht kurz
             // ein veraltetes/anderes Poster durchscheint. Rest bleibt lazy.
             preload={index === 0 ? "auto" : "none"}
-            aria-label={`${step.subtitle}: kurze Comic-Animation`}
+            aria-label={format(label, { subtitle: step.subtitle })}
           >
             <source src={step.video} type="video/mp4" />
           </video>

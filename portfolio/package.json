@@ -15,7 +15,10 @@
     "dev": "next dev",
     "build": "node scripts/stamp-build.mjs && next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test \"src/**/*.test.ts\"",
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "check:copy": "node scripts/find-inline-copy.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",

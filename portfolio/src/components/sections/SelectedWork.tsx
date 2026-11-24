@@ -7,13 +7,20 @@ import { useHorizontalPin } from "@/hooks/useHorizontalPin";
 import { useLightSection } from "@/hooks/useLightSection";
 import { useStackReveal } from "@/hooks/useStackReveal";
 import { useStickyCoverHeight } from "@/hooks/useStickyCoverHeight";
-import { PROJECTS } from "@/lib/constants";
+import { PROJECT_ASSETS, type Project } from "@/lib/constants";
+import type { Dictionary } from "@/lib/i18n/types";
 
-const TOTAL = String(PROJECTS.length).padStart(2, "0");
+const TOTAL = String(PROJECT_ASSETS.length).padStart(2, "0");
 
-export default function SelectedWork() {
+export default function SelectedWork({
+  copy,
+  projects,
+}: {
+  copy: Omit<Dictionary["work"], "projects">;
+  projects: Project[];
+}) {
   const sectionRef = useRef<HTMLElement>(null);
-  const { pinRef, trackRef, counterRef } = useHorizontalPin(PROJECTS.length);
+  const { pinRef, trackRef, counterRef } = useHorizontalPin(projects.length);
   useLightSection(sectionRef);
   // Gegenstück zum horizontalen Pin: unter 1024px stehen die Projekte
   // untereinander und decken sich beim Hereinscrollen einzeln auf.
@@ -47,7 +54,7 @@ export default function SelectedWork() {
           <div className="flex items-end justify-between gap-8">
             <div className="min-w-0">
               <span className="mb-3 block font-mono text-caption uppercase tracking-[0.2em] text-[#6a6a6a]">
-                Eine Auswahl meiner Arbeit
+                {copy.eyebrow}
               </span>
               {/* start well before the pin engages — inside the pinned range a
                   play-once trigger would never fire and the headline would stay hidden */}
@@ -57,7 +64,7 @@ export default function SelectedWork() {
                 start="top 95%"
                 className="font-display text-[clamp(1.9rem,4vw,3.5rem)] font-bold leading-[0.95] tracking-tighter text-[#0a0a0a]"
               >
-                PROJEKTE
+                {copy.headline}
               </TextReveal>
             </div>
 
@@ -81,12 +88,13 @@ export default function SelectedWork() {
         </header>
 
         <div ref={trackRef} className="work-track min-w-0 will-change-transform">
-          {PROJECTS.map((project, index) => (
+          {projects.map((project, index) => (
             <ProjectPanel
               key={project.id}
               project={project}
               index={index}
-              total={PROJECTS.length}
+              total={projects.length}
+              galleryLabels={copy.gallery}
             />
           ))}
         </div>

@@ -7,14 +7,19 @@ import ProcessMedia from "@/components/sections/process/ProcessMedia";
 import ProcessPanel from "@/components/sections/process/ProcessPanel";
 import { useProcessPin } from "@/hooks/useProcessPin";
 import { useStackReveal } from "@/hooks/useStackReveal";
-import { PROCESS_STEPS } from "@/lib/constants";
+import { PROCESS_ASSETS, type ProcessStep } from "@/lib/constants";
+import type { Dictionary } from "@/lib/i18n/types";
 import "./process/process.css";
 
-const TOTAL = String(PROCESS_STEPS.length).padStart(2, "0");
+const TOTAL = String(PROCESS_ASSETS.length).padStart(2, "0");
+
+type ProcessSectionCopy = Omit<Dictionary["process"], "steps">;
 
 function ProcessHeader({
+  copy,
   counterRef,
 }: {
+  copy: ProcessSectionCopy;
   counterRef?: RefObject<HTMLSpanElement | null>;
 }) {
   return (
@@ -22,7 +27,7 @@ function ProcessHeader({
       <div className="flex items-end justify-between gap-8">
         <div className="min-w-0">
           <span className="mb-3 block font-mono text-caption uppercase tracking-[0.2em] text-[#f2ede4]/60">
-            So arbeiten wir zusammen
+            {copy.eyebrow}
           </span>
           <TextReveal
             as="h2"
@@ -30,7 +35,7 @@ function ProcessHeader({
             start="top 95%"
             className="font-display text-[clamp(1.9rem,4vw,3.5rem)] font-bold leading-[0.95] tracking-tighter text-[#f2ede4] uppercase"
           >
-            WIE FUNKTIONIERTS?
+            {copy.headline}
           </TextReveal>
         </div>
 
@@ -61,15 +66,24 @@ function ProcessHeader({
  * How-it-works: on desktop the artwork shuttles across as a wipe between
  * steps; mobile / reduced-motion keep a stacked reading order.
  */
-export default function Process() {
+export default function Process({
+  copy,
+  steps,
+}: {
+  copy: ProcessSectionCopy;
+  steps: ProcessStep[];
+}) {
   const sectionRef = useRef<HTMLElement>(null);
   const stackRef = useRef<HTMLDivElement>(null);
   const { pinRef, stageRef, shuttleRef, counterRef } = useProcessPin(
-    PROCESS_STEPS.length
+    steps.length
   );
   // Gegenstück zum Shuttle: unter 1024px steht der Stapel, und die Schritte
   // decken sich beim Hereinscrollen einzeln auf, statt fertig dazuliegen.
   useStackReveal(stackRef, { panel: ".process-panel", media: "wipe" });
+  // Die Kreismarke zählt ihre Knoten nach Position; das Wörterbuch führt
+  // die Namen über die Schritt-ID, hier kommen sie in Schrittfolge.
+  const cycleLabels = steps.map((step) => copy.cycleLabels[step.id]);
 
   return (
     <section
@@ -79,12 +93,12 @@ export default function Process() {
     >
       {/* Desktop shuttle stage */}
       <div ref={pinRef} className="process-pin process-pin--desktop">
-        <ProcessHeader counterRef={counterRef} />
+        <ProcessHeader copy={copy} counterRef={counterRef} />
 
         <div ref={stageRef} className="process-stage process-container">
           <div className="process-stage-grid">
             <div className="process-slot" data-process-slot="left">
-              {PROCESS_STEPS.map((step, index) =>
+              {steps.map((step, index) =>
                 index % 2 === 0 ? (
                   <div
                     key={step.id}
@@ -98,7 +112,7 @@ export default function Process() {
             </div>
 
             <div className="process-slot" data-process-slot="right">
-              {PROCESS_STEPS.map((step, index) =>
+              {steps.map((step, index) =>
                 index % 2 === 1 ? (
                   <div
                     key={step.id}
@@ -115,7 +129,7 @@ export default function Process() {
           {/* Mirrors the text grid; shuttle lives in column 2 and translates by one column */}
           <div className="process-shuttle-track" aria-hidden>
             <div ref={shuttleRef} className="process-shuttle">
-              {PROCESS_STEPS.map((step, index) => (
+              {steps.map((step, index) => (
                 <div
                   key={step.id}
                   data-process-media={index}
@@ -124,7 +138,9 @@ export default function Process() {
                   <ProcessMedia
                     step={step}
                     index={index}
-                    total={PROCESS_STEPS.length}
+                    total={steps.length}
+                    label={copy.mediaLabel}
+                    cycleLabels={cycleLabels}
                   />
                 </div>
               ))}
@@ -135,14 +151,16 @@ export default function Process() {
 
       {/* Mobile / reduced-motion stack */}
       <div ref={stackRef} className="process-stack">
-        <ProcessHeader />
+        <ProcessHeader copy={copy} />
         <div className="process-track">
-          {PROCESS_STEPS.map((step, index) => (
+          {steps.map((step, index) => (
             <ProcessPanel
               key={step.id}
               step={step}
               index={index}
-              total={PROCESS_STEPS.length}
+              total={steps.length}
+              mediaLabel={copy.mediaLabel}
+              cycleLabels={cycleLabels}
             />
           ))}
         </div>

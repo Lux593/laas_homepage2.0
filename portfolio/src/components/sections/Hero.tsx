@@ -6,18 +6,11 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useMousePosition } from "@/hooks/useMousePosition";
 import { useIsMobile } from "@/hooks/useMediaQuery";
 import { PIN_QUERY, STACK_QUERY } from "@/lib/breakpoints";
+import type { Dictionary } from "@/lib/i18n/types";
 import HeroLamp, { getLampLayers } from "./hero/HeroLamp";
 import "./hero/hero.css";
 
 gsap.registerPlugin(ScrollTrigger);
-
-const ROTATING_WORDS = [
-  "Web-Apps",
-  "mobile Apps",
-  "KI Integration",
-  "Prozessautomationen",
-  "Website Design",
-];
 
 /**
  * Höhe des Streifens am unteren Bildrand, in dem der Scroll-Hinweis sitzt —
@@ -56,7 +49,8 @@ const STACK_LAYOUT_QUERY =
   "(max-width: 1023.98px), " +
   "(min-width: 1024px) and (pointer: coarse) and (orientation: portrait)";
 
-export default function Hero() {
+export default function Hero({ copy }: { copy: Dictionary["hero"] }) {
+  const wordCount = copy.rotatingWords.length;
   const runwayRef = useRef<HTMLDivElement>(null);
   const line1Ref = useRef<HTMLSpanElement>(null);
   const line2Ref = useRef<HTMLDivElement>(null);
@@ -520,7 +514,7 @@ export default function Hero() {
           duration: 0.4,
           ease: "power2.in",
           onComplete: () => {
-            setWordIndex((prev) => (prev + 1) % ROTATING_WORDS.length);
+            setWordIndex((prev) => (prev + 1) % wordCount);
             if (rotatingRef.current) {
               gsap.fromTo(
                 rotatingRef.current,
@@ -537,7 +531,7 @@ export default function Hero() {
       clearInterval(interval);
       if (rotating) gsap.killTweensOf(rotating);
     };
-  }, [heroActive]);
+  }, [heroActive, wordCount]);
 
   return (
     <>
@@ -581,7 +575,7 @@ export default function Hero() {
                 />
               </svg>
               <span className="font-mono text-caption uppercase tracking-[0.2em] text-[#6a6a6a]">
-                Scrollen
+                {copy.scrollHint}
               </span>
             </div>
           </div>
@@ -690,7 +684,7 @@ export default function Hero() {
                 className="block text-[11vw] md:text-display-lg font-display font-bold tracking-tighter leading-[1.15] opacity-0"
                 style={{ color: "#f2ede4" }}
               >
-                Hey, ich bin Luca
+                {copy.greeting}
               </span>
             </div>
 
@@ -704,7 +698,7 @@ export default function Hero() {
                   className="block text-[6.5vw] md:text-display-md font-display font-light leading-[1.3]"
                   style={{ color: "#b8ae9e" }}
                 >
-                  Mein Fokus
+                  {copy.focusLabel}
                 </span>
                 {/* Line 3 - rotating word */}
                 <span
@@ -712,7 +706,7 @@ export default function Hero() {
                   className="block text-[8vw] md:text-display-md font-display font-bold tracking-tight leading-[1.4] whitespace-nowrap"
                   style={{ color: "#f2ede4" }}
                 >
-                  {ROTATING_WORDS[wordIndex]}
+                  {copy.rotatingWords[wordIndex]}
                 </span>
               </div>
             </div>
