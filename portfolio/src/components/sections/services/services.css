@@ -87,6 +87,31 @@
   }
 }
 
+/* ── Quer mit Finger: auch hier kein Clip im Pfad der Bühne ─────────────
+ *
+ * Gemeldet auf dem iPad mini quer in Safari: beim Scrollen mit dem Finger
+ * zittert in den Leistungen die ganze Bühne samt Zeichnung, nur dort und nur
+ * solange gescrollt wird. Das iPad mini fällt quer in PIN_QUERY, also in die
+ * Desktop-Bühne, und die Regel oben gilt dort nicht.
+ *
+ * Im iPad-Simulator nachgemessen, je ein Wisch durch Kapitel 01, Lage der
+ * Überschrift pro Frame: mit `overflow-x: clip` an der Section springt die
+ * Bühne um bis zu 5,5 Gerätepixel hin und her (57–66 Richtungswechsel je
+ * Wisch), ohne steht sie (Spanne 0,06 px, kein Richtungswechsel). Den
+ * clip-path wegzunehmen oder die ScrollTrigger der Bühne abzuschalten ändert
+ * nichts. Es ist allein das Clip.
+ *
+ * Gebraucht wird es hier nicht: die auf 1.45 skalierte Zeichnung liegt im
+ * inneren Rahmen der Bühne (`flex … overflow-hidden` in Services.tsx), und
+ * der kappt sie schon auf Section-Breite. Der clip-path bleibt, die Einfahrt
+ * als Balken und die runden Ecken sehen aus wie vorher. Maus und Trackpad
+ * (pointer: fine) bleiben unberührt. */
+@media (min-width: 1024px) and (pointer: coarse) and (orientation: landscape) {
+  .services-section {
+    overflow-x: visible;
+  }
+}
+
 /* ── Im Stapel: Creme-Grund, der nie nachgemalt werden muss ─────────────
  *
  * Gemeldet auf dem iPhone: beim schnellen Scrollen durch die Leistungen stand
