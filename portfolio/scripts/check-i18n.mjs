@@ -78,7 +78,10 @@ const COPY_DEFAULT_PAGES = [
 
 /** Deutsche Funktions- und Seitenwörter, die auf einer EN-Seite nichts
  *  verloren haben. Groß-/Kleinschreibung egal, nur ganze Wörter. Wörter mit
- *  Umlaut oder ß braucht die Liste nicht, die fängt eine eigene Regel. */
+ *  Umlaut oder ß (für, über, …) stehen bewusst nicht drin, die fängt eine
+ *  eigene Regel. „Stand" fehlt ebenfalls: wegen der Schreibweise-Toleranz
+ *  träfe es das englische „stand" (z. B. „stand out"); das deutsche Label
+ *  „Stand:" deckt das typisierte Wörterbuch ab. */
 const GERMAN_WORDS = [
   "und",
   "der",
@@ -86,7 +89,6 @@ const GERMAN_WORDS = [
   "ich",
   "nicht",
   "mit",
-  "für",
   "auf",
   "ist",
   "ein",
@@ -100,7 +102,6 @@ const GERMAN_WORDS = [
   "wie",
   "zum",
   "zur",
-  "über",
   "noch",
   "werden",
   "Seite",
@@ -109,7 +110,6 @@ const GERMAN_WORDS = [
   "Projekte",
   "Leistungen",
   "Kontakt",
-  "Stand",
   "Inhalt",
 ];
 
@@ -336,6 +336,9 @@ function reporter(name) {
     fail(msg) {
       errors.push(`FAIL ${name} ${msg}`);
     },
+    errorCount() {
+      return errors.length;
+    },
     finish(extra = "") {
       for (const e of errors) console.log(e);
       console.log(
@@ -402,9 +405,7 @@ function findGermanWords(text) {
 
   for (const m of rest.matchAll(/[\p{L}]*[äöüÄÖÜß][\p{L}]*/gu))
     add(m[0], m.index);
-  // Wörter mit Umlaut/ß hat die erste Regel schon; hier nur der Rest, sonst
-  // würde "über" doppelt gezählt.
-  const list = GERMAN_WORDS.filter((w) => !/[äöüÄÖÜß]/.test(w)).join("|");
+  const list = GERMAN_WORDS.join("|");
   const words = new RegExp(`(?<![\\p{L}])(?:${list})(?![\\p{L}])`, "giu");
   for (const m of rest.matchAll(words)) add(m[0], m.index);
   return hits;
@@ -570,14 +571,22 @@ async function snapshot() {
     }
     if (out[path].lines.length === 0) r.fail(`${path}: kein Text gefunden`);
   }
+  const rel = BASELINE.replace(process.cwd() + "/", "");
+  // Die Baseline ist git-ignoriert und nicht wiederherstellbar: bei jedem
+  // Fehler bleibt die vorhandene Datei, wie sie ist.
+  if (r.errorCount() > 0) {
+    const ok = r.finish();
+    console.log(
+      `snapshot: ${rel} nicht geschrieben, vorhandene Baseline bleibt unverändert`,
+    );
+    return ok;
+  }
   mkdirSync(dirname(BASELINE), { recursive: true });
   writeFileSync(BASELINE, JSON.stringify(out, null, 2) + "\n");
   const summary = SNAPSHOT_PAGES.map((p) => `${p}=${out[p].lines.length}`).join(
     " ",
   );
-  return r.finish(
-    ` → ${BASELINE.replace(process.cwd() + "/", "")} (${summary} Zeilen)`,
-  );
+  return r.finish(` → ${rel} (${summary} Zeilen)`);
 }
 
 /** Zeilendiff über die längste gemeinsame Teilfolge. */
