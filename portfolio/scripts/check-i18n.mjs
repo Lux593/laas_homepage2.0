@@ -137,6 +137,18 @@ const ALLOWED_PHRASES = [
 /** Attribute, deren Wert sichtbarer oder vorgelesener Text ist. */
 const TEXT_ATTRS = ["aria-label", "alt", "title", "placeholder"];
 
+/** <meta>-Tags, deren `content` Text für Suchergebnisse und Link-Vorschauen
+ *  ist: [Attribut, das den Tag benennt, sein Wert]. Steht deutscher SEO-Text
+ *  auf einer EN-Seite, sieht ihn kein Besucher, aber Google und jede
+ *  Link-Vorschau. */
+const META_TEXT = [
+  ["name", "description"],
+  ["property", "og:title"],
+  ["property", "og:description"],
+  ["name", "twitter:title"],
+  ["name", "twitter:description"],
+];
+
 /* -------------------------------------------------------------------------- */
 /* Abruf                                                                      */
 /* -------------------------------------------------------------------------- */
@@ -250,8 +262,9 @@ function removeByAttr(html, attr) {
 /**
  * Sichtbarer Text einer Seite als Liste in Dokumentreihenfolge.
  *
- * Jeder Eintrag ist ein Textknoten oder der Wert eines der TEXT_ATTRS
- * (`@alt: …`). Zeilenumbrüche innerhalb eines Knotens bleiben erhalten, weil
+ * Jeder Eintrag ist ein Textknoten, der Wert eines der TEXT_ATTRS (`@alt: …`)
+ * oder das `content` eines META_TEXT-Tags (`@meta[og:title]: …`).
+ * Zeilenumbrüche innerhalb eines Knotens bleiben erhalten, weil
  * sie Teil des Textes sind: verliert ein Umzug der Texte ein `\n`, soll das
  * im Vergleich auffallen. Nur Leerzeichen-Folgen werden zusammengezogen.
  *
@@ -285,6 +298,11 @@ function extractTokens(html) {
     for (const name of TEXT_ATTRS) {
       if (attrs[name]) push(`@${name}: `, attrs[name]);
     }
+    if (m[0].startsWith("<meta") && attrs.content) {
+      for (const [attr, value] of META_TEXT) {
+        if (attrs[attr] === value) push(`@meta[${value}]: `, attrs.content);
+      }
+    }
   }
   push("", html.slice(last));
   return tokens;
@@ -293,7 +311,7 @@ function extractTokens(html) {
 /** Text zum Durchsuchen: Attribut-Kennungen weg, alles auf einer Zeile. */
 function searchableText(tokens) {
   return tokens
-    .map((t) => t.replace(/^@[\w-]+: /, ""))
+    .map((t) => t.replace(/^@[\w-]+(?:\[[^\]]+\])?: /, ""))
     .join(" ")
     .replace(/\s+/g, " ");
 }
