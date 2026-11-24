@@ -705,10 +705,15 @@ export default function Services({
         ".services-stack-rule__fill",
         stackStage,
       );
+      // Kann der Browser Scroll-Zeitleisten, führt services.css den Strich
+      // selbst — gleitend und ausserhalb des Hauptthreads. Dieselbe Bedingung
+      // wie dort im @supports.
+      const fillRunsInCss = CSS.supports("animation-timeline: view()");
 
       const chapters = createChapterStage({
         root: stackStage,
         onProgress: (progress) => {
+          if (fillRunsInCss) return;
           const fill = `scaleX(${Math.max(progress, 0.02)})`;
           for (const rail of rails) rail.style.transform = fill;
         },
