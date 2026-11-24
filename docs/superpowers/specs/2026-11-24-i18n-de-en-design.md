@@ -8,6 +8,17 @@ setzten den Schalter nur ins Vollbild-Menü).
 letzter Eintrag unter „Kontakt“, zentriert, statt in der Kopfleiste. Die
 Kopfleiste bleibt auf allen Breiten unverändert.
 
+Änderung 24.11.2026 (Umsetzung, Entscheid R6): Die 404 ist anders gebaut als
+unten unter „Dateistruktur“, „404“ und „Risiken“ beschrieben. Sie kommt aus
+`app/global-not-found.tsx`, eingeschaltet über `experimental.globalNotFound`
+in `next.config.ts`, und rendert über `LegalShell` samt `Navigation`.
+`dynamicParams = false` steht nur an `app/[lang]/layout.tsx`;
+`[lang]/[...rest]` und `[lang]/not-found.tsx` gibt es nicht. Die Sprache
+schickt der Proxy als Header `x-lang`, ohne ihn gilt Deutsch. Grund: Next
+16.4.6 liefert ein `notFound()` unter `[lang]` nur als leere Fehler-Shell aus,
+die erst im Browser rendert (ohne `lang`, ohne CSS). Die gestylte 404 mit
+Status 404 und richtigem `lang` aus Akzeptanzkriterium 8 ging so nicht.
+
 ## Warum
 
 Luca will mit der Website auch internationale Kunden erreichen. Heute ist alles
