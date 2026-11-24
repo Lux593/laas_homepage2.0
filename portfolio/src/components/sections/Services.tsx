@@ -39,6 +39,16 @@ const SWAP_LEAVE_SHIFT = 14;
 /** Pixel, aus denen der Auftritt horizontal aus der Scrollrichtung nachrückt. */
 const SWAP_ENTER_SHIFT = 22;
 
+/* Kapitelwechsel im Stapel: die Copy schiebt sich als Ganzes durch die Bühne,
+   die Zeichnung darüber blendet. Abgang und Auftritt laufen gleich lang und auf
+   derselben Kurve — so steht zwischen beiden Texten jederzeit genau eine
+   Bühnenbreite, sie können sich nie überlagern. */
+/** Dauer des Schubs in Sekunden. */
+const SLIDE_DURATION = 0.65;
+const SLIDE_EASE = "power2.inOut";
+/** Überblendung der Zeichnung, parallel zum Schub. */
+const ART_FADE = 0.5;
+
 function titleLines(title: string) {
   const parts = title.trim().split(/\s+/);
   if (parts.length < 2) return [title];
@@ -49,9 +59,12 @@ interface ChapterStageOptions {
   /** Wurzel, in der `[data-featured]` und `[data-chapter]` gesucht werden. */
   root: HTMLElement;
   /** Fortschritt 0…1 der ganzen Sektion — läuft pro Frame. */
-  onProgress: (progress: number) => void;
+  onProgress?: (progress: number) => void;
   /** Neuer aktiver Index — läuft nur beim Wechsel. */
   onIndex?: (index: number) => void;
+  /** Stapel: Copy schiebt sich seitlich durch, die Zeichnung blendet.
+   *  Ohne die Option bleibt es beim Wechsel der Desktop-Bühne. */
+  slide?: boolean;
 }
 
 /**
@@ -72,6 +85,7 @@ function createChapterStage({
   root,
   onProgress,
   onIndex,
+  slide = false,
 }: ChapterStageOptions) {
   const nodes = gsap.utils.toArray<HTMLElement>("[data-featured]", root);
   /** Pro Kapitel alles, was gemeinsam ein- und ausgeblendet wird. */
@@ -185,6 +199,94 @@ function createChapterStage({
       );
   };
 
+  /** Deckkraft eines Knotens, wie GSAP sie gerade führt. */
+  const opacityOf = (node: HTMLElement | undefined) =>
+    node ? Number(gsap.getProperty(node, "opacity")) : 0;
+
+  /**
+   * Kapitelwechsel im Stapel: die Copy schiebt sich durch, die Zeichnung blendet.
+   *
+   * Abwärts läuft der alte Text nach links hinaus und der neue kommt von
+   * rechts, aufwärts umgekehrt. Beide fahren gleichzeitig, gleich lang, auf
+   * derselben Kurve — wie zwei Seiten eines Karussells.
+   * Die Bühne schneidet (`overflow: hidden` in services.css), der Weg ist
+   * deshalb genau eine Bühnenbreite.
+   *
+   * Absichtlich zeitbasiert und nicht am Scroll festgemacht: hängt das Telefon
+   * kurz (erster Aufruf, das Skript wird gerade eingerichtet), kommt der
+   * Wechsel einen Moment später, läuft dann aber vollständig ab. Eine an den
+   * Scroll gekoppelte Bewegung stünde in derselben Lage still und spränge
+   * danach — genau das war der Fehler des alten Fortschrittsstrichs.
+   */
+  const swapSlide = (activeIndex: number, direction: 1 | -1) => {
+    const enterLayer = featured[activeIndex];
+    const enterCopy = featuredCopy[activeIndex];
+    if (!enterLayer?.length || !enterCopy) return;
+
+    swap?.kill();
+    swap = null;
+
+    const isArt = (node: HTMLElement) => node.hasAttribute("data-featured-art");
+    const distance = root.clientWidth;
+
+    const leaving = featured
+      .map((_, index) => index)
+      .filter(
+        (index) =>
+          index !== activeIndex &&
+          featured[index]!.some((node) => opacityOf(node) > 0),
+      );
+    const leaveArt = leaving.flatMap((index) => featured[index]!.filter(isArt));
+    const leaveText = leaving.flatMap((index) =>
+      featured[index]!.filter((node) => !isArt(node)),
+    );
+    const leaveCopy = leaving.flatMap((index) => featuredCopy[index]!);
+    const enterArt = enterLayer.filter(isArt);
+    const enterText = enterLayer.filter((node) => !isArt(node));
+
+    swap = gsap.timeline({
+      onComplete: () => {
+        gsap.set([...enterCopy, ...leaveCopy], { clearProps: "transform" });
+        swap = null;
+      },
+    });
+
+    swap
+      .to(leaveArt, { autoAlpha: 0, duration: ART_FADE, ease: "power1.inOut" }, 0)
+      .to(enterArt, { autoAlpha: 1, duration: ART_FADE, ease: "power1.inOut" }, 0);
+
+    if (leaveCopy.length) {
+      swap
+        .to(
+          leaveCopy,
+          { x: -distance * direction, duration: SLIDE_DURATION, ease: SLIDE_EASE },
+          0,
+        )
+        .set(leaveText, { autoAlpha: 0 }, SLIDE_DURATION);
+    }
+
+    // Steht der Text noch halb im Bild — Richtungswechsel mitten im Schub —,
+    // fährt er von dort zurück, statt erst an den Rand zu springen.
+    const enterTo = { x: 0, duration: SLIDE_DURATION, ease: SLIDE_EASE };
+    if (opacityOf(enterText[0]) > 0) {
+      swap.to(enterCopy, enterTo, 0);
+    } else {
+      swap
+        .set(enterText, { autoAlpha: 1 }, 0)
+        .fromTo(enterCopy, { x: distance * direction }, enterTo, 0);
+    }
+  };
+
+  /** Ohne Bewegung auf ein Kapitel stellen — Initialstand und Refresh. */
+  const settle = (activeIndex: number) => {
+    swap?.kill();
+    swap = null;
+    featured.forEach((layer, index) =>
+      gsap.set(layer, { autoAlpha: index === activeIndex ? 1 : 0 }),
+    );
+    gsap.set(featuredCopy.flat(), { clearProps: "transform" });
+  };
+
   const applyActive = (activeIndex: number) => {
     featured.forEach((layer, index) => {
       const on = index === activeIndex;
@@ -208,7 +310,7 @@ function createChapterStage({
     );
 
     // Kontinuierlicher Progress — pro Frame, nur Transform.
-    onProgress(progress);
+    onProgress?.(progress);
 
     if (activeIndex !== lastIndex) {
       const previous = lastIndex;
@@ -218,7 +320,15 @@ function createChapterStage({
       // eingeblendet. Die Richtung folgt dem Indexsprung, damit der alte
       // Text beim Hochscrollen nach unten abgeht statt nach oben.
       if (armed && previous !== -1) {
-        swapChapter(activeIndex, activeIndex > previous ? 1 : -1);
+        const direction = activeIndex > previous ? 1 : -1;
+        if (slide) swapSlide(activeIndex, direction);
+        else swapChapter(activeIndex, direction);
+      } else {
+        // Ohne Animation, aber sichtbar auf dem richtigen Kapitel. Vorher
+        // wechselte hier nur die Klasse, während die Deckkraft inline auf dem
+        // alten Kapitel stehen blieb: nach einem Refresh mitten in der
+        // Sektion (oder einem Reload dort) stand der falsche Text da.
+        settle(activeIndex);
       }
     }
   };
@@ -344,6 +454,7 @@ function ServicesChapter({
     <>
       <figure
         data-featured
+        data-featured-art
         data-index={index}
         className={`services-stack-art${index === 0 ? " is-active" : ""}`}
         aria-hidden
@@ -375,12 +486,16 @@ function ServicesChapter({
           <span className="services-stack-chapter__mark font-display font-bold leading-none tracking-tighter tabular-nums">
             {mark}
           </span>
-          {/* Aus dem Zierstrich ist das Instrument geworden: er trägt den
-              Fortschritt der ganzen Sektion. In einer Bühne, die die Seite
-              festhält, ist das die einzige Auskunft darüber, wie weit es noch
-              ist — und sie kostet kein zusätzliches Element. */}
+          {/* Der Strich zeigt, wie weit die Folge ist: pro Kapitel ein
+              fester Stand (01 = ein Viertel …), kein Scroll-Instrument. Er
+              fährt mit seinem Text durch die Bühne, also steht jedes Kapitel
+              mit seinem eigenen Stand im Bild. Fest im Markup, damit er auch
+              ohne Skript und auf dem ersten Frame stimmt. */}
           <span className="services-stack-rule">
-            <span className="services-stack-rule__fill" />
+            <span
+              className="services-stack-rule__fill"
+              style={{ transform: `scaleX(${(index + 1) / total})` }}
+            />
           </span>
           {/* Display statt Mono — siehe ProcessPanel: die Mono-Null trägt
               einen Strich und fiel als einzige Zahl aus der Reihe. */}
@@ -687,44 +802,27 @@ export default function Services({
     // Scroll ist der Schnitt. Genau das ist die Bühne, die der Desktop schon
     // hat; sie kostet hier keine zweite Mechanik, nur eine zweite Wurzel.
     //
-    // Die Fortschrittslinie ist der Zierstrich der Kapitelzeile. Geschrieben
-    // wird auf alle vier, obwohl immer nur eine sichtbar ist: vier direkte
-    // Style-Zuweisungen sind billiger als eine Custom Property auf der Bühne,
-    // die bei jedem Frame die Stile des ganzen Teilbaums ungültig macht — und
-    // die verdeckten stehen so beim Wechsel schon richtig, statt einen Frame
-    // lang auf dem alten Wert.
+    // Im Stapel hängt nichts Sichtbares mehr am Scroll. Der Scroll wählt nur
+    // das Kapitel; der Wechsel selbst läuft auf Zeit (swapSlide): Text schiebt
+    // sich seitlich durch, die Zeichnung blendet. Ein Strich, der dem Finger
+    // folgte, fror auf dem Telefon beim ersten Besuch ein und sprang dann —
+    // ein Zeitwechsel kommt bei einem Ruckler höchstens später, läuft aber
+    // ganz. Der Strich steht deshalb fest pro Kapitel (ServicesChapter).
     //
-    // scrub 0.5 zwischen den 0.45 der Desktop-Bühne und den 0.55 der übrigen
-    // Stapel-Scrubs: der Wechsel zieht der Hand nach, klebt aber nicht am Rad.
+    // Kein scrub: es gibt keine Animation, die er glätten könnte, und das
+    // Kapitel soll wechseln, sobald die Schwelle überschritten ist.
     mm.add(STACK_QUERY, () => {
       const stackStage = stackStageRef.current;
       const stackTrack = stackTrackRef.current;
       if (!stackStage || !stackTrack) return;
 
-      const rails = gsap.utils.toArray<HTMLElement>(
-        ".services-stack-rule__fill",
-        stackStage,
-      );
-      // Kann der Browser Scroll-Zeitleisten, führt services.css den Strich
-      // selbst — gleitend und ausserhalb des Hauptthreads. Dieselbe Bedingung
-      // wie dort im @supports.
-      const fillRunsInCss = CSS.supports("animation-timeline: view()");
-
-      const chapters = createChapterStage({
-        root: stackStage,
-        onProgress: (progress) => {
-          if (fillRunsInCss) return;
-          const fill = `scaleX(${Math.max(progress, 0.02)})`;
-          for (const rail of rails) rail.style.transform = fill;
-        },
-      });
+      const chapters = createChapterStage({ root: stackStage, slide: true });
       chapters.prime();
 
       const st = ScrollTrigger.create({
         trigger: stackTrack,
         start: "top top",
         end: "bottom bottom",
-        scrub: 0.5,
         onUpdate: (self) => chapters.applyScrub(self.progress),
         onRefresh: (self) => chapters.restore(self.progress),
         invalidateOnRefresh: true,
@@ -737,9 +835,6 @@ export default function Services({
       return () => {
         st.kill();
         chapters.destroy();
-        // Zurück unter CSS-Kontrolle: sonst bliebe die Linie beim Wechsel auf
-        // den Desktop-Pfad auf ihrem letzten Stand stehen.
-        for (const rail of rails) rail.style.removeProperty("transform");
       };
     });
 

@@ -632,13 +632,13 @@
   line-height: 1.55;
 }
 
-/* Der Zierstrich der Kapitelzeile ist das Instrument: er trägt den Fortschritt
-   der ganzen Sektion. In einer Bühne, die die Seite festhält, ist er die
-   einzige Auskunft darüber, wie weit es noch ist — und er kostet kein
-   zusätzliches Element.
+/* Der Strich der Kapitelzeile zeigt, wie weit die Folge ist: pro Kapitel ein
+   fester Stand, gesetzt als Inline-Transform im Markup (ServicesChapter). Er
+   hängt bewusst nicht mehr am Scroll — ein scroll-geführter Strich fror auf
+   dem Telefon beim ersten Besuch ein und sprang dann. Er fährt mit seinem
+   Text durch die Bühne.
    Kein will-change: eine dauerhaft eigene Ebene liegt bei 1px Höhe auf einem
-   eigenen Geräte-Pixel-Raster und wird bei jedem Scroll-Frame neu
-   zusammengesetzt — die Linie flimmert dann durchgehend. Dieselbe Begründung
+   eigenen Geräte-Pixel-Raster — die Linie flimmert dann. Dieselbe Begründung
    wie an .services-rail__fill. */
 .services-stack-rule {
   position: relative;
@@ -653,7 +653,6 @@
   position: absolute;
   inset: 0;
   background: #0a0a0a;
-  transform: scaleX(0);
   transform-origin: left center;
 }
 
@@ -802,58 +801,6 @@
   .services-stack-scroll {
     display: block;
     height: 300svh;
-  }
-}
-
-/* ── Der Fortschrittsstrich läuft mit dem Scroll, nicht hinter ihm ─────────
- *
- * Gemeldet auf dem iPhone: der Strich neben „01“ wuchs beim Scrollen
- * abgehackt statt gleitend, auf der Live-Seite genauso. Geschrieben hat ihn
- * das Skript — Scroll-Ereignis, Frame, ScrollTrigger, inline transform —, und
- * weil er (siehe oben) keine eigene Ebene hat, malt der Browser dafür jedes
- * Mal die Bühne neu. Gemessen im Simulator: der Strich kam zwei Frames hinter
- * dem Scroll an. Auf dem Gerät reicht jede Verzögerung im Hauptthread, und er
- * springt.
- *
- * Hier hängt er direkt an der Scrollposition der Strecke: eine CSS-Animation
- * mit der Strecke als Zeitleiste. Safari führt solche Animationen seit 26.3
- * außerhalb des Hauptthreads, im selben Schritt wie den Scroll selbst. Der
- * Bereich `contain` ist genau das Stück, das auch ScrollTrigger misst: Strecke
- * oben an der Fensterkante bis Strecke unten an der Fensterkante (start
- * "top top", end "bottom bottom" in Services.tsx). `linear` als Schlüsselwort,
- * nicht als linear()-Funktion — die zwang die Animation in Safari 26 zurück in
- * den Hauptthread.
- *
- * Browser ohne Scroll-Zeitleiste lesen den Block nicht; dort schreibt das
- * Skript den Strich wie bisher (Services.tsx fragt dieselbe Bedingung ab).
- * Die Query ist wörtlich die des Stapel-Blocks oben. */
-@supports (animation-timeline: view()) {
-  @media (max-width: 1023.98px) and (prefers-reduced-motion: no-preference),
-    (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) and (prefers-reduced-motion: no-preference) {
-    .services-stack-track {
-      view-timeline: --services-stack block;
-      /* Ohne die 0 zöge die Zeitleiste das scroll-padding-top aus
-         globals.css (6rem unter 1024px) von der Fensterkante ab und liefe
-         96px vor ScrollTrigger los — im Simulator nachgemessen. */
-      view-timeline-inset: 0px;
-    }
-
-    .services-stack-rule__fill {
-      animation: services-stack-fill linear both;
-      animation-timeline: --services-stack;
-      animation-range: contain 0% contain 100%;
-    }
-  }
-}
-
-/* 0.02 statt 0: derselbe Mindeststand, den das Skript setzt — der Strich ist
-   von Anfang an als Strich zu sehen. */
-@keyframes services-stack-fill {
-  from {
-    transform: scaleX(0.02);
-  }
-  to {
-    transform: scaleX(1);
   }
 }
 
