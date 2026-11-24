@@ -780,6 +780,58 @@
   }
 }
 
+/* ── Der Fortschrittsstrich läuft mit dem Scroll, nicht hinter ihm ─────────
+ *
+ * Gemeldet auf dem iPhone: der Strich neben „01“ wuchs beim Scrollen
+ * abgehackt statt gleitend, auf der Live-Seite genauso. Geschrieben hat ihn
+ * das Skript — Scroll-Ereignis, Frame, ScrollTrigger, inline transform —, und
+ * weil er (siehe oben) keine eigene Ebene hat, malt der Browser dafür jedes
+ * Mal die Bühne neu. Gemessen im Simulator: der Strich kam zwei Frames hinter
+ * dem Scroll an. Auf dem Gerät reicht jede Verzögerung im Hauptthread, und er
+ * springt.
+ *
+ * Hier hängt er direkt an der Scrollposition der Strecke: eine CSS-Animation
+ * mit der Strecke als Zeitleiste. Safari führt solche Animationen seit 26.3
+ * außerhalb des Hauptthreads, im selben Schritt wie den Scroll selbst. Der
+ * Bereich `contain` ist genau das Stück, das auch ScrollTrigger misst: Strecke
+ * oben an der Fensterkante bis Strecke unten an der Fensterkante (start
+ * "top top", end "bottom bottom" in Services.tsx). `linear` als Schlüsselwort,
+ * nicht als linear()-Funktion — die zwang die Animation in Safari 26 zurück in
+ * den Hauptthread.
+ *
+ * Browser ohne Scroll-Zeitleiste lesen den Block nicht; dort schreibt das
+ * Skript den Strich wie bisher (Services.tsx fragt dieselbe Bedingung ab).
+ * Die Query ist wörtlich die des Stapel-Blocks oben. */
+@supports (animation-timeline: view()) {
+  @media (max-width: 1023.98px) and (prefers-reduced-motion: no-preference),
+    (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) and (prefers-reduced-motion: no-preference) {
+    .services-stack-track {
+      view-timeline: --services-stack block;
+      /* Ohne die 0 zöge die Zeitleiste das scroll-padding-top aus
+         globals.css (6rem unter 1024px) von der Fensterkante ab und liefe
+         96px vor ScrollTrigger los — im Simulator nachgemessen. */
+      view-timeline-inset: 0px;
+    }
+
+    .services-stack-rule__fill {
+      animation: services-stack-fill linear both;
+      animation-timeline: --services-stack;
+      animation-range: contain 0% contain 100%;
+    }
+  }
+}
+
+/* 0.02 statt 0: derselbe Mindeststand, den das Skript setzt — der Strich ist
+   von Anfang an als Strich zu sehen. */
+@keyframes services-stack-fill {
+  from {
+    transform: scaleX(0.02);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
 /* MUSS byte-identisch zur gsap.matchMedia()-Query in Services.tsx bleiben */
 @media (min-width: 1024px) and (pointer: fine) and (prefers-reduced-motion: no-preference),
   (min-width: 1024px) and (orientation: landscape) and (prefers-reduced-motion: no-preference) {
