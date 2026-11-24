@@ -240,37 +240,41 @@ export const en = {
         ],
       },
       "wintersport-verleih": {
-        title: "WINTER SPORTS\nRENTAL SYSTEM",
-        subtitle: "Rental system for Intersport Gemo",
+        title: "RENTDESK\nRENTAL SYSTEM",
+        subtitle: "Rental app for Intersport Gemo",
+        // Wie im Deutschen je zwei volle Zeilen (100–110 Zeichen).
         features: [
           {
             title: "Digital customer check-in",
             description:
-              "A day-rental form with contact details and ID upload. Guests sign themselves up before they even walk into the shop.",
+              "Guests sign up on their own phone via QR code, ID photo included. The team takes it straight into the rental.",
           },
           {
-            title: "New sign-ups in the shop",
+            title: "Rental, signature & register",
             description:
-              "An inbox for unprocessed sign-ups: the team sees contact details and rental type, then starts logging equipment.",
+              "Equipment step by step with automatic pricing, a signature on the device and payment at the register.",
           },
           {
-            title: "Checkout & payment status",
+            title: "Work schedule & vacation",
             description:
-              "Unpaid and completed rentals at a glance, clearly separated, so nothing gets lost at the register.",
+              "A weekly plan in 30-minute slots, vacation requests with approval and a leave balance for everyone on the team.",
           },
           {
-            title: "Admin & master data",
+            title: "Newsletter & analytics",
             description:
-              "Manage products, categories, user roles and revenue stats centrally, no extra tools on the side.",
+              "Newsletters built from blocks for customer groups, plus revenue, rentals and commission per employee.",
           },
         ],
         galleryTitles: [
-          "Choose rental type",
-          "Enter customer details",
-          "New sign-ups",
-          "Equipment & rental period",
-          "Rental management",
-          "Statistics & revenue",
+          "QR sign-up: choose the rental type",
+          "Photograph the ID",
+          "Overview with key figures and vacation",
+          "Rental: choose skis & boards",
+          "Signature on the device",
+          "Weekly work schedule",
+          "Monthly vacation calendar",
+          "Newsletter preview before sending",
+          "Season analytics",
         ],
       },
       "powershop-service": {

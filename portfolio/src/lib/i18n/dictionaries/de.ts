@@ -240,37 +240,41 @@ export const de = {
         ],
       },
       "wintersport-verleih": {
-        title: "WINTERSPORT\nVERLEIH SYSTEM",
-        subtitle: "Verleihsystem für Intersport Gemo",
+        title: "RENTDESK\nVERLEIH SYSTEM",
+        subtitle: "Verleih-App für Intersport Gemo",
+        // Wie beim Power Shop je zwei volle Zeilen (100–110 Zeichen).
         features: [
           {
             title: "Digitale Kundenanmeldung",
             description:
-              "Tagesverleih-Formular mit Kontaktdaten und Ausweis-Upload. Gäste melden sich selbst an, bevor sie in den Shop kommen.",
+              "Gäste melden sich per QR-Code am eigenen Handy an, samt Ausweisfoto. Das Team übernimmt alles in die Leihe.",
           },
           {
-            title: "Neue Anmeldungen im Shop",
+            title: "Verleih, Unterschrift & Kasse",
             description:
-              "Inbox für unbearbeitete Anmeldungen: Team sieht Kontaktdaten, Verleihart und startet direkt die Ausrüstungserfassung.",
+              "Ausrüstung Schritt für Schritt, Preise automatisch, Unterschrift auf dem Gerät, bezahlt wird an der Kasse.",
           },
           {
-            title: "Kasse & Zahlungsstatus",
+            title: "Arbeitsplan & Urlaub",
             description:
-              "Unbezahlte und abgeschlossene Leihen im Blick, klar getrennt, damit nichts an der Kasse untergeht.",
+              "Wochenplan im 30-Minuten-Raster, Urlaubsanträge mit Freigabe und ein Urlaubskonto für jede Person im Team.",
           },
           {
-            title: "Administration & Stammdaten",
+            title: "Newsletter & Auswertung",
             description:
-              "Produkte, Kategorien, User-Rollen und Umsatz-Statistiken zentral steuern, ohne Extra-Tools daneben.",
+              "Newsletter aus Bausteinen an Kundengruppen, dazu Umsatz, Leihen und Provision je Mitarbeiter im Überblick.",
           },
         ],
         galleryTitles: [
-          "Verleihtyp wählen",
-          "Kundendaten erfassen",
-          "Neue Anmeldungen",
-          "Ausrüstung & Mietdauer",
-          "Verleih-Management",
-          "Statistiken & Umsatz",
+          "Anmeldung per QR-Code: Leihart wählen",
+          "Ausweis fotografieren",
+          "Übersicht mit Kennzahlen und Urlaub",
+          "Verleih: Ski & Board auswählen",
+          "Unterschrift auf dem Gerät",
+          "Arbeitsplan der Woche",
+          "Urlaubskalender im Monat",
+          "Newsletter-Vorschau vor dem Versand",
+          "Auswertung der Saison",
         ],
       },
       "powershop-service": {

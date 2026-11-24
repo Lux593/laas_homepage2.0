@@ -266,21 +266,28 @@ export const PROJECT_ASSETS: readonly ProjectAsset[] = [
     screenColor: "#0A0A0A",
   },
   {
+    // RentDesk, der Neubau der Verleih-App (id bleibt, damit nichts anderes bricht)
     id: "wintersport-verleih",
-    tech: ["React", "Next.js", "TypeScript", "Supabase"],
+    tech: ["React", "Vite", "TypeScript", "Supabase"],
     gallery: [
-      { id: 1, url: "/vorschaubilder/gemo-app1.webp" },
-      { id: 2, url: "/vorschaubilder/gemo-app2.webp" },
-      { id: 3, url: "/vorschaubilder/gemo-app3.webp" },
-      { id: 4, url: "/vorschaubilder/gemo-app4.webp" },
-      { id: 5, url: "/vorschaubilder/gemo-app5.webp" },
-      { id: 6, url: "/vorschaubilder/gemo-app6.webp" },
+      // Aufnahmen aus dem Demo-Modus (nur fiktive Daten), als installierte App
+      // auf einem iPhone mit 402 pt Breite: Safe-Area oben 62 / unten 34 und
+      // eine nachgebaute Statusleiste wie bei den echten Bildschirmfotos zuvor.
+      { id: 1, url: "/vorschaubilder/rentdesk1.webp" },
+      { id: 2, url: "/vorschaubilder/rentdesk2.webp" },
+      { id: 3, url: "/vorschaubilder/rentdesk3.webp" },
+      { id: 4, url: "/vorschaubilder/rentdesk4.webp" },
+      { id: 5, url: "/vorschaubilder/rentdesk5.webp" },
+      { id: 6, url: "/vorschaubilder/rentdesk6.webp" },
+      { id: 7, url: "/vorschaubilder/rentdesk7.webp" },
+      { id: 8, url: "/vorschaubilder/rentdesk8.webp" },
+      { id: 9, url: "/vorschaubilder/rentdesk9.webp" },
     ],
     color: "#7A8FA0",
     device: "iphone",
     // Hochformat-Captures (1206x2622 ≈ 2.174) im iPhone-Ausschnitt (2.139):
-    // cover schneidet nur ~1.6% Höhe weg. Von oben decken, damit der blaue
-    // Header stehen bleibt und unten der leere Rest wegfällt.
+    // cover schneidet nur ~1.6% Höhe weg. Von oben decken, damit Statusleiste
+    // und Kopf stehen bleiben und unten nur Rand der Navigation wegfällt.
     fit: "cover-top",
     screenColor: "#F2F6FC",
     unoptimized: true,

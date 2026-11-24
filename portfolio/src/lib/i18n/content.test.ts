@@ -20,13 +20,14 @@ test("getProjects: Power Shop Onlineshop steht an erster Stelle, der Film vornew
 });
 
 test("getProjects: Galerie-Titel paaren sich mit den Aufnahmen in Reihenfolge", () => {
-  const wintersport = getProjects(de).find((p) => p.id === "wintersport-verleih");
-  assert.ok(wintersport);
+  const rentdesk = getProjects(de).find((p) => p.id === "wintersport-verleih");
+  assert.ok(rentdesk);
+  assert.equal(rentdesk.gallery.length, 9);
   assert.deepEqual(
-    wintersport.gallery.slice(0, 2).map(({ url, title }) => ({ url, title })),
+    rentdesk.gallery.slice(0, 2).map(({ url, title }) => ({ url, title })),
     [
-      { url: "/vorschaubilder/gemo-app1.webp", title: "Verleihtyp wählen" },
-      { url: "/vorschaubilder/gemo-app2.webp", title: "Kundendaten erfassen" },
+      { url: "/vorschaubilder/rentdesk1.webp", title: "Anmeldung per QR-Code: Leihart wählen" },
+      { url: "/vorschaubilder/rentdesk2.webp", title: "Ausweis fotografieren" },
     ],
   );
 });
