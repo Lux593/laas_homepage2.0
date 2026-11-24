@@ -55,6 +55,15 @@ export default function LegalSection({
   );
 }
 
+/**
+ * Hervorhebung im Fliesstext. Die Rechte-Liste der Datenschutzerklärung lebt
+ * davon, die Widerrufsbelehrung der AGB gliedert sich darüber — in beiden
+ * Sprachen, deshalb liegt sie hier und nicht in jedem Textmodul.
+ */
+export function LegalTerm({ children }: { children: React.ReactNode }) {
+  return <strong className="font-semibold text-[#0a0a0a]">{children}</strong>;
+}
+
 /** Aufzählung im Kapitelrumpf — bündig zum Fliesstext, Marke hängend. */
 export function LegalList({ items }: { items: React.ReactNode[] }) {
   return (

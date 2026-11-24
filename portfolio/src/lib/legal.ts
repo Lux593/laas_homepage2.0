@@ -1,15 +1,19 @@
 // Relativ und mit Endung, damit lib/i18n/content.ts samt Test unter
 // `node --test` ohne Bundler lädt.
 import { SITE_CONFIG } from "./constants.ts";
+import type { Locale } from "./i18n/locales.ts";
 
 /**
  * Alle nachfüllbaren Angaben der Rechtsseiten an genau einer Stelle.
  *
- * `null` heisst „fehlt noch". Die Texte in app/[lang]/impressum,
- * app/[lang]/datenschutz und app/[lang]/agb greifen ausschliesslich über
- * <Fill> auf diese Werte zu: steht hier ein Wert, erscheint er im Fliesstext;
- * steht `null`, erscheint stattdessen ein markierter Platzhalter mit der
- * Beschriftung, die am Aufrufort steht.
+ * `null` heisst „fehlt noch". Die Texte in content/legal (je Seite und
+ * Sprache ein Modul) greifen ausschliesslich über <Fill> auf diese Werte zu:
+ * steht hier ein Wert, erscheint er im Fliesstext; steht `null`, erscheint
+ * stattdessen ein markierter Platzhalter mit der Beschriftung, die am
+ * Aufrufort steht.
+ *
+ * Werte, die sich mit der Sprache ändern (Ländername), stehen je Sprache da.
+ * Eigennamen — Firmierung, Behörde, Hoster — bleiben in jeder Sprache gleich.
  *
  * Nachfüllen heisst deshalb: hier `null` durch den echten Wert ersetzen. Die
  * Rechtstexte selbst müssen dafür nicht angefasst werden, und die Markierung
@@ -30,7 +34,10 @@ export const LEGAL = {
     street: null as string | null,
     zip: "79576",
     city: "Weil am Rhein",
-    country: "Deutschland",
+    country: { de: "Deutschland", en: "Germany" } satisfies Record<
+      Locale,
+      string
+    >,
     /**
      * Geschäftliche Adresse. Steht hier die private Gmail, ist das rechtlich
      * zulässig, aber sie landet damit öffentlich im Impressum und in jeder
@@ -64,7 +71,10 @@ export const LEGAL = {
   /** Hoster — Grundlage des Abschnitts „Hosting" in der Datenschutzerklärung. */
   hosting: {
     name: "Hostinger International Ltd.",
-    address: "61 Lordou Vironos Street, 6023 Larnaca, Zypern",
+    address: {
+      de: "61 Lordou Vironos Street, 6023 Larnaca, Zypern",
+      en: "61 Lordou Vironos Street, 6023 Larnaca, Cyprus",
+    } satisfies Record<Locale, string>,
   },
 
   /** Kaufmännische Eckwerte für die AGB. */

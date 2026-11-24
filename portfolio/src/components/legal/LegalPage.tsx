@@ -199,6 +199,40 @@ export default function LegalPage({
               </p>
             )}
 
+            {/* Nur auf übersetzten Rechtsseiten (das deutsche Wörterbuch hat
+                keinen Hinweis, die Fehlerseite kein Dokument): verbindlich ist
+                die deutsche Fassung, und der Weg dorthin steht vor dem ersten
+                Kapitel, nicht erst in der Fusszeile. Bronze wie die
+                Fill-Marken, Schrift aber dunkel — der Satz muss auf der
+                Cremefläche lesbar sein, nicht nur auffallen. */}
+            {chrome.translationNotice && current && (
+              <div
+                role="note"
+                className="mt-8 border-l-2 border-[#A07850] bg-[#A07850]/10 py-4 pr-4 pl-5 md:py-5 md:pr-6 md:pl-6"
+              >
+                <p className="text-body-sm font-semibold leading-relaxed text-[#0a0a0a]">
+                  {chrome.translationNotice.text}
+                </p>
+                <a
+                  href={localizePath(`/${current}`, "de")}
+                  hrefLang="de"
+                  className="group mt-2 inline-flex items-center gap-2 font-mono text-caption uppercase tracking-widest text-[#3a3a3a] transition-colors duration-300 hover:text-[#0a0a0a] pointer-coarse:min-h-11"
+                >
+                  {/* Unterstrichen wird nur die Beschriftung: am Flex-Link
+                      selbst ginge die Linie auch unter den Pfeil. */}
+                  <span className="underline decoration-[#A07850]/60 underline-offset-4 transition-colors duration-300 group-hover:decoration-[#0a0a0a]">
+                    {chrome.translationNotice.linkLabel}
+                  </span>
+                  <span
+                    aria-hidden
+                    className="inline-block transition-transform duration-500 ease-out-expo group-hover:translate-x-1"
+                  >
+                    →
+                  </span>
+                </a>
+              </div>
+            )}
+
             {sections?.map((section, i) => (
               <LegalSection
                 key={section.id}
