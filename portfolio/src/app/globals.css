@@ -703,6 +703,47 @@
   transition: filter 350ms var(--ease-out-quint);
 }
 
+/* Vollbild-Menü: Abstände nach verfügbarer Höhe (Navigation.tsx).
+ *
+ * Fünf Einträge plus Sprachschalter messen mit den 44px-Trefferflächen
+ * 5·44 + 4·32 + (32 + 16) + 44 = 440px. Auf dem Handy quer (844x390,
+ * 568x320) ist das zu hoch, also rücken die Abstände zusammen: bis 480px
+ * Höhe auf 352px, bis 360px auf 308px. Erst darunter, etwa in Safari quer mit
+ * eingeblendeten Leisten, scrollt das Menü.
+ *
+ * Über 480px Höhe bleibt es bei 2rem, dem gap-8 von vorher — der Desktop
+ * steht still. Ungelayert, damit die Höhen-Stufen über die Reihenfolge hier
+ * gewinnen; am Element steht deshalb kein gap-Utility. */
+.nav-menu {
+  gap: 2rem;
+}
+
+/* Mehr Luft über dem Sprachschalter als zwischen den Einträgen: er gehört
+   nicht in ihre Reihe. */
+.nav-menu__lang {
+  margin-top: 1rem;
+}
+
+@media (max-height: 480px) {
+  .nav-menu {
+    gap: 1rem;
+  }
+
+  .nav-menu__lang {
+    margin-top: 0.5rem;
+  }
+}
+
+@media (max-height: 360px) {
+  .nav-menu {
+    gap: 0.5rem;
+  }
+
+  .nav-menu__lang {
+    margin-top: 0.25rem;
+  }
+}
+
 /* Kein Schleier hinter der festen Leiste.
  *
  * Hier stand ein zweilagiger Verlauf (dunkel/hell, umgeschaltet über

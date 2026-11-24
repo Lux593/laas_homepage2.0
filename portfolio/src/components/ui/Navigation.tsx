@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { Fragment, useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import gsap from "gsap";
-import { type Locale, localizePath } from "@/lib/i18n/locales";
+import { LOCALES, type Locale, localizePath, withHash } from "@/lib/i18n/locales";
 import type { NavCopy } from "@/lib/i18n/types";
 
 /**
@@ -19,9 +19,14 @@ const HIDE_AFTER_PX = 120;
 /** Zittern am Finger soll die Leiste nicht auf und ab schalten. */
 const HIDE_DELTA_PX = 8;
 
+/** Einflug der Menüeinträge; der Sprachschalter fährt als nächste Stufe mit. */
+const MENU_EASE = [0.22, 1, 0.36, 1] as const;
+const menuDelay = (step: number) => 0.1 + step * 0.08;
+
 export default function Navigation({
   locale,
   isHome,
+  alternateHref,
   copy,
 }: {
   locale: Locale;
@@ -33,6 +38,7 @@ export default function Navigation({
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   // Die Leiste steht seit den Rechtsseiten auch auf Unterseiten. Dort zeigen
   // die reinen Anker der Menüeinträge („#services") ins Leere — es gibt auf
@@ -151,7 +157,21 @@ export default function Navigation({
     if (!isMenuOpen) return;
     const lenis = (window as unknown as { __lenis?: ScrollDriver }).__lenis;
     lenis?.stop();
-    const block = (event: Event) => event.preventDefault();
+    // Ausnahme: passt das Menü nicht in die Höhe (Handy quer in Safari), scrollt
+    // es selbst. Gesten darin bleiben dann erlaubt; `overscroll-contain` am
+    // Menü hält sie vom Seitengrund fern, `data-lenis-prevent` hält Lenis raus.
+    const block = (event: Event) => {
+      const menu = menuRef.current;
+      if (
+        menu &&
+        menu.scrollHeight > menu.clientHeight &&
+        event.target instanceof Node &&
+        menu.contains(event.target)
+      ) {
+        return;
+      }
+      event.preventDefault();
+    };
     window.addEventListener("wheel", block, { passive: false });
     window.addEventListener("touchmove", block, { passive: false });
     return () => {
@@ -160,6 +180,25 @@ export default function Navigation({
       lenis?.start();
     };
   }, [isMenuOpen]);
+
+  // Sprachwechsel als voller Seitenaufruf, mit dem Hash der aktuellen Stelle:
+  // `/#work` → `/en#work`. GSAP-Pins und Lenis bauen sich auf der neuen Seite
+  // frisch auf, wie zwischen Rechtsseiten und Startseite. Der Hash kommt erst
+  // beim Klick dazu — im Server-HTML gibt es ihn nicht. Mit Zusatztaste (neuer
+  // Tab, neues Fenster) bleibt es beim normalen Link ohne Hash.
+  const switchLanguage = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+    event.preventDefault();
+    window.location.href = withHash(alternateHref, window.location.hash);
+  };
 
   return (
     <>
@@ -243,37 +282,92 @@ export default function Navigation({
       <AnimatePresence>
         {isMenuOpen && (
           <motion.div
+            ref={menuRef}
             // text-text-primary explizit: auf Rechtsseiten sitzt Navigation in
             // <main class="… text-[#0a0a0a]"> und würde sonst schwarz-auf-schwarz
             // erben — Einträge erst beim Hover (accent) sichtbar.
-            className="fixed inset-0 z-[calc(var(--z-nav)-1)] bg-bg-primary/98 backdrop-blur-xl flex flex-col items-center justify-center gap-8 text-center text-text-primary"
+            //
+            // Zentriert über `my-auto` an der inneren Spalte statt über
+            // justify-center: passt die Spalte nicht in die Höhe, fällt der
+            // Rand auf 0 und sie beginnt oben, statt oben aus dem
+            // scrollbaren Bereich zu ragen. Solange sie passt, steht sie genau
+            // wie vorher in der Mitte. Abstände nach Höhe: .nav-menu in
+            // globals.css.
+            className="fixed inset-0 z-[calc(var(--z-nav)-1)] bg-bg-primary/98 backdrop-blur-xl flex flex-col items-center overflow-y-auto overscroll-contain text-center text-text-primary"
+            data-lenis-prevent
             initial={{ clipPath: "circle(0% at calc(100% - 2.25rem) 2.75rem)" }}
             animate={{ clipPath: "circle(150% at 50% 50%)" }}
             exit={{ clipPath: "circle(0% at calc(100% - 2.25rem) 2.75rem)" }}
             transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}
           >
-            {copy.items.map((item, i) => (
-              <motion.a
-                key={item.label}
-                href={sectionHref(item.href)}
-                // 44px Trefferfläche, ohne an der Schrift zu drehen. Die
-                // Zeilenbox allein trägt max(36px, 4.5vw) — 1.5 Zeilenhöhe mal
-                // --text-display-sm, clamp(1.5rem, 3vw, 3rem) — und bleibt
-                // damit unter 978px Fensterbreite unter dem Mass: gemessen
-                // 36px bei 320 und 393, 36.9px bei 820. Ab 1024px sind es
-                // schon 46.1px und bei 1440px 64.8px — dort bleibt die
-                // Mindesthöhe wirkungslos, der Desktop ändert sich nicht.
-                // `flex` statt blossem min-h, weil die dazugewonnenen 7-8px
-                // sonst unter der Schrift hingen statt sie zu fassen.
-                className="flex min-h-[44px] items-center justify-center text-display-sm font-display font-bold tracking-tighter hover:text-accent-primary transition-colors duration-300"
+            <div className="nav-menu my-auto flex flex-col items-center">
+              {copy.items.map((item, i) => (
+                <motion.a
+                  key={item.label}
+                  href={sectionHref(item.href)}
+                  // 44px Trefferfläche, ohne an der Schrift zu drehen. Die
+                  // Zeilenbox allein trägt max(36px, 4.5vw) — 1.5 Zeilenhöhe mal
+                  // --text-display-sm, clamp(1.5rem, 3vw, 3rem) — und bleibt
+                  // damit unter 978px Fensterbreite unter dem Mass: gemessen
+                  // 36px bei 320 und 393, 36.9px bei 820. Ab 1024px sind es
+                  // schon 46.1px und bei 1440px 64.8px — dort bleibt die
+                  // Mindesthöhe wirkungslos, der Desktop ändert sich nicht.
+                  // `flex` statt blossem min-h, weil die dazugewonnenen 7-8px
+                  // sonst unter der Schrift hingen statt sie zu fassen.
+                  className="flex min-h-[44px] items-center justify-center text-display-sm font-display font-bold tracking-tighter hover:text-accent-primary transition-colors duration-300"
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: menuDelay(i), duration: 0.6, ease: MENU_EASE }}
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  {item.label}
+                </motion.a>
+              ))}
+
+              {/* Sprachschalter: letzter Eintrag, aber bewusst kein sechster
+                  Menüpunkt — Label-Schrift statt Display, mehr Luft nach oben.
+                  Die aktive Sprache ist kein Link, die andere führt auf
+                  dieselbe Seite in ihrer Sprache. Jede Fläche misst 44x44. */}
+              <motion.nav
+                aria-label={copy.languageNav}
+                data-lang-switch
+                className="nav-menu__lang flex items-center justify-center font-mono text-body-sm tracking-[0.2em]"
                 initial={{ opacity: 0, y: 40 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 + i * 0.08, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                onClick={() => setIsMenuOpen(false)}
+                transition={{ delay: menuDelay(copy.items.length), duration: 0.6, ease: MENU_EASE }}
               >
-                {item.label}
-              </motion.a>
-            ))}
+                {LOCALES.map((code, i) => (
+                  <Fragment key={code}>
+                    {i > 0 && (
+                      <span aria-hidden className="opacity-50">
+                        /
+                      </span>
+                    )}
+                    {code === locale ? (
+                      <span
+                        aria-current="true"
+                        lang={code}
+                        className="flex min-h-11 min-w-11 items-center justify-center underline decoration-1 underline-offset-[0.35em]"
+                      >
+                        <span aria-hidden>{code.toUpperCase()}</span>
+                        <span className="sr-only">{copy.languageNames[code]}</span>
+                      </span>
+                    ) : (
+                      <a
+                        href={alternateHref}
+                        hrefLang={code}
+                        lang={code}
+                        aria-label={copy.languageNames[code]}
+                        className="flex min-h-11 min-w-11 items-center justify-center opacity-50 transition-opacity duration-300 hover:opacity-100 focus-visible:opacity-100"
+                        onClick={switchLanguage}
+                      >
+                        {code.toUpperCase()}
+                      </a>
+                    )}
+                  </Fragment>
+                ))}
+              </motion.nav>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>

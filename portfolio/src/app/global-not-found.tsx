@@ -15,12 +15,14 @@ async function requestLocale() {
 }
 
 // Die globale 404 erbt nichts vom Root-Layout, deshalb die Grund-Metadaten
-// hier noch einmal, nur Titel und robots weichen ab.
+// hier noch einmal, nur Titel und robots weichen ab. Keine `alternates`: eine
+// Fehlerseite hat keine Fassung in der anderen Sprache und keine kanonische URL.
 export async function generateMetadata(): Promise<Metadata> {
-  const dict = getDictionary(await requestLocale());
+  const locale = await requestLocale();
+  const dict = getDictionary(locale);
 
   return {
-    ...siteMetadata(dict),
+    ...siteMetadata(dict, locale),
     title: dict.notFound.metaTitle,
     // Eine Fehlerseite gehört nicht in den Index. `follow` bleibt an, damit die
     // Wege zurück auf die Startseite trotzdem gelesen werden.

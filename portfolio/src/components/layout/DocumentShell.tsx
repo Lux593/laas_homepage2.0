@@ -70,6 +70,7 @@ export default function DocumentShell({
                 SITE_CONFIG.socials.instagram,
               ],
               knowsAbout: dict.meta.knowsAbout,
+              inLanguage: locale,
             }),
           }}
         />

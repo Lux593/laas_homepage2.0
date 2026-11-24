@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import LegalShell from "@/components/legal/LegalShell";
-import { LEGAL_DOCS } from "@/content/legal";
-import { DEFAULT_LOCALE, hasLocale, localizePath } from "@/lib/i18n/locales";
+import { LEGAL_DOCS, legalMetadata } from "@/content/legal";
+import { DEFAULT_LOCALE, hasLocale } from "@/lib/i18n/locales";
 import type { LegalSlug } from "@/lib/legal";
 
 const SLUG: LegalSlug = "datenschutz";
@@ -14,15 +14,7 @@ export async function generateMetadata({
   params: Promise<{ lang: string }>;
 }): Promise<Metadata> {
   const { lang } = await params;
-  const locale = hasLocale(lang) ? lang : DEFAULT_LOCALE;
-  const doc = LEGAL_DOCS[SLUG][locale];
-
-  return {
-    title: doc.metaTitle,
-    description: doc.metaDescription,
-    // Jede Sprache ist ihre eigene kanonische URL: /datenschutz und /en/datenschutz.
-    alternates: { canonical: localizePath(`/${SLUG}`, locale) },
-  };
+  return legalMetadata(SLUG, hasLocale(lang) ? lang : DEFAULT_LOCALE);
 }
 
 export default async function DatenschutzPage({

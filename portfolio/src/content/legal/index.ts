@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
+
 import type { LegalSectionData } from "@/components/legal/LegalSection";
 import type { Locale } from "@/lib/i18n/locales";
+import { buildAlternates } from "@/lib/i18n/seo";
 import type { LegalSlug } from "@/lib/legal";
 
 import { agbDe } from "./agb.de";
@@ -38,3 +41,17 @@ export const LEGAL_DOCS: Record<LegalSlug, Record<Locale, LegalDoc>> = {
   datenschutz: { de: datenschutzDe, en: datenschutzEn },
   impressum: { de: impressumDe, en: impressumEn },
 };
+
+/**
+ * Metadaten einer Rechtsseite: Titel, Beschreibung und die Sprachverweise.
+ * Jede Sprache ist ihre eigene kanonische URL (`/impressum`, `/en/impressum`),
+ * beide zeigen per hreflang aufeinander.
+ */
+export function legalMetadata(slug: LegalSlug, locale: Locale): Metadata {
+  const doc = LEGAL_DOCS[slug][locale];
+  return {
+    title: doc.metaTitle,
+    description: doc.metaDescription,
+    alternates: buildAlternates(`/${slug}`, locale),
+  };
+}

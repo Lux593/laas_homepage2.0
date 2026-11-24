@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 
 import { SITE_CONFIG } from "@/lib/constants";
+import { type Locale, OG_LOCALE, otherLocale } from "@/lib/i18n/locales";
 import type { Dictionary } from "@/lib/i18n/types";
 
 /**
@@ -12,8 +13,11 @@ import type { Dictionary } from "@/lib/i18n/types";
  * Beschreibung, Vorschaubild und Favicon.
  *
  * Titel und Name im Vorschaubild sind die Marke und bleiben in jeder Sprache.
+ *
+ * Die Sprachverweise (`alternates`) stehen nicht hier, sondern in jeder Seite:
+ * nur die Seite kennt ihren eigenen Pfad. Die 404 setzt keine.
  */
-export const siteMetadata = (dict: Dictionary): Metadata => ({
+export const siteMetadata = (dict: Dictionary, locale: Locale): Metadata => ({
   metadataBase: new URL(SITE_CONFIG.url),
   title: dict.meta.title,
   description: dict.meta.description,
@@ -29,7 +33,8 @@ export const siteMetadata = (dict: Dictionary): Metadata => ({
   authors: [{ name: "Luca Arnoldi" }],
   openGraph: {
     type: "website",
-    locale: "de_DE",
+    locale: OG_LOCALE[locale],
+    alternateLocale: OG_LOCALE[otherLocale(locale)],
     url: SITE_CONFIG.url,
     title: "LAAS — Luca Arnoldi App Studio",
     description: dict.meta.ogDescription,

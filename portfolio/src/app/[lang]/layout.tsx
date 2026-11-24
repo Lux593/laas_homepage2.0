@@ -5,15 +5,17 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import { DEFAULT_LOCALE, LOCALES, hasLocale } from "@/lib/i18n/locales";
 import { SITE_VIEWPORT, siteMetadata } from "@/lib/site-metadata";
 
-// Titel, Beschreibung und Vorschautexte in der Sprache der Route. Hängt nur an
-// `params`, beide Sprachen werden damit wie die Seiten vorgerendert.
+// Titel, Beschreibung, Vorschautexte und og:locale in der Sprache der Route.
+// Hängt nur an `params`, beide Sprachen werden damit wie die Seiten
+// vorgerendert. Die hreflang-Verweise setzt jede Seite selbst.
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ lang: string }>;
 }): Promise<Metadata> {
   const { lang } = await params;
-  return siteMetadata(getDictionary(hasLocale(lang) ? lang : DEFAULT_LOCALE));
+  const locale = hasLocale(lang) ? lang : DEFAULT_LOCALE;
+  return siteMetadata(getDictionary(locale), locale);
 }
 
 export const viewport: Viewport = SITE_VIEWPORT;
