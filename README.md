@@ -1,7 +1,7 @@
 # Luca Arnoldi App Studio — Website
 
-One-Pager-Portfolio, Deutsch, Dark Theme. Sieben Sections in dieser Reihenfolge
-(`portfolio/src/app/page.tsx`):
+One-Pager-Portfolio, Deutsch und Englisch, Dark Theme. Sieben Sections in dieser
+Reihenfolge (`portfolio/src/app/[lang]/page.tsx`):
 
 Hero → Leistungen → Prozess → Projekte → Kunden → Über mich → CTA
 
@@ -70,6 +70,33 @@ selbst; sonst sieht live alt aus, während der Build längst neu ist.
 
 Bilder nie in-place überschreiben — der Image-Optimizer liefert sonst stunden­lang
 die alte Rendition. Neues Motiv, neuer Dateiname.
+
+## Sprachen
+
+Deutsch liegt unter `/`, Englisch unter `/en` (`/en/impressum`, `/en/agb` …).
+Die Slugs sind in beiden Sprachen gleich. Der DE/EN-Schalter sitzt im
+Vollbild-Menü unter „Kontakt“. Es gibt keine Spracherkennung und kein Cookie:
+Die Sprache steckt allein in der URL.
+
+- **Copy:** `portfolio/src/lib/i18n/dictionaries/` (`de.ts`, `en.ts`)
+- **Rechtstexte:** `portfolio/src/content/legal/` (`*.de.tsx`, `*.en.tsx`).
+  Rechtlich bindend ist nur die deutsche Fassung; die EN-Seiten zeigen dazu
+  einen Hinweis.
+
+Prüfen (aus `portfolio/`). Die `check:i18n`-Befehle laufen gegen einen
+laufenden Server (`pnpm build && pnpm start`):
+
+```bash
+pnpm test                                 # Unit-Tests
+pnpm check:copy src/components src/app    # Text, der noch im JSX statt im Wörterbuch steht
+pnpm check:i18n routing                   # Status, Weiterleitungen, lang je Pfad
+pnpm check:i18n copy                      # deutsche Wörter auf EN-Seiten
+pnpm check:i18n seo                       # canonical, hreflang, og:locale, Sitemap
+pnpm check:i18n compare                   # DE-Text gegen die lokale Baseline (.i18n-baseline/, nicht im Repo)
+```
+
+**Nach jedem Deploy:** hcdn-Cache leeren, dann
+`BASE_URL=https://laas.website pnpm check:i18n routing` laufen lassen.
 
 ## Breakpoint-Regel
 
