@@ -763,7 +763,7 @@ export default function Services({
                   label={format(copy.landscapeLabel, {
                     statement: copy.statement,
                   })}
-                  valueText={copy.landscapeValue}
+                  valueTemplate={copy.landscapeValue}
                 />
               </div>
 

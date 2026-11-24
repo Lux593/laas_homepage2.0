@@ -1,5 +1,5 @@
 /**
- * Form der Wörterbücher (`dictionaries/de.ts`, später `en.ts`).
+ * Form der Wörterbücher (`dictionaries/de.ts`, `dictionaries/en.ts`).
  *
  * Nur Strings und Listen von Strings: was sprachneutral ist (Pfade, Farben,
  * Firmennamen), steht in lib/constants.ts und kommt über die IDs dazu, siehe
@@ -61,8 +61,8 @@ export type Dictionary = {
     /** Vorlage mit `{subtitle}`. */
     mediaLabel: string;
     /** Knoten der Kreismarke, die ProcessCycle zeigt, solange ein Schritt
-     *  noch kein Standbild hat — einer je Schritt, in Schrittfolge. */
-    cycleLabels: string[];
+     *  noch kein Standbild hat — einer je Schritt, über die Schritt-ID. */
+    cycleLabels: Record<ProcessStepId, string>;
     steps: Record<
       ProcessStepId,
       { title: string; subtitle: string; description: string; points: Feature[] }

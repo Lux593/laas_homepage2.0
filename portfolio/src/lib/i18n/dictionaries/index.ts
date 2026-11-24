@@ -1,9 +1,9 @@
 import type { Locale } from "../locales.ts";
 import type { Dictionary } from "../types.ts";
 import { de } from "./de.ts";
+import { en } from "./en.ts";
 
-/** Englisch fehlt noch; bis es da ist, bekommt auch `/en` den deutschen Text. */
-const DICTIONARIES: Record<Locale, Dictionary> = { de, en: de };
+const DICTIONARIES: Record<Locale, Dictionary> = { de, en };
 
 /**
  * Das Wörterbuch einer Sprache.

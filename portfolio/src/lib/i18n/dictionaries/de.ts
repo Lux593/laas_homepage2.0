@@ -95,7 +95,7 @@ export const de = {
     eyebrow: "So arbeiten wir zusammen",
     headline: "WIE FUNKTIONIERTS?",
     mediaLabel: "{subtitle}: kurze Comic-Animation",
-    cycleLabels: ["Idee", "Plan", "Build", "Loop"],
+    cycleLabels: { idea: "Idee", plan: "Plan", build: "Build", cycle: "Loop" },
     steps: {
       idea: {
         title: "DEINE IDEE ODER DEIN PROBLEM",

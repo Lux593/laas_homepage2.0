@@ -13,13 +13,13 @@ import "./process/process.css";
 
 const TOTAL = String(PROCESS_ASSETS.length).padStart(2, "0");
 
-type ProcessCopy = Omit<Dictionary["process"], "steps">;
+type ProcessSectionCopy = Omit<Dictionary["process"], "steps">;
 
 function ProcessHeader({
   copy,
   counterRef,
 }: {
-  copy: ProcessCopy;
+  copy: ProcessSectionCopy;
   counterRef?: RefObject<HTMLSpanElement | null>;
 }) {
   return (
@@ -70,7 +70,7 @@ export default function Process({
   copy,
   steps,
 }: {
-  copy: ProcessCopy;
+  copy: ProcessSectionCopy;
   steps: ProcessStep[];
 }) {
   const sectionRef = useRef<HTMLElement>(null);
@@ -81,6 +81,9 @@ export default function Process({
   // Gegenstück zum Shuttle: unter 1024px steht der Stapel, und die Schritte
   // decken sich beim Hereinscrollen einzeln auf, statt fertig dazuliegen.
   useStackReveal(stackRef, { panel: ".process-panel", media: "wipe" });
+  // Die Kreismarke zählt ihre Knoten nach Position; das Wörterbuch führt
+  // die Namen über die Schritt-ID, hier kommen sie in Schrittfolge.
+  const cycleLabels = steps.map((step) => copy.cycleLabels[step.id]);
 
   return (
     <section
@@ -137,7 +140,7 @@ export default function Process({
                     index={index}
                     total={steps.length}
                     label={copy.mediaLabel}
-                    cycleLabels={copy.cycleLabels}
+                    cycleLabels={cycleLabels}
                   />
                 </div>
               ))}
@@ -157,7 +160,7 @@ export default function Process({
               index={index}
               total={steps.length}
               mediaLabel={copy.mediaLabel}
-              cycleLabels={copy.cycleLabels}
+              cycleLabels={cycleLabels}
             />
           ))}
         </div>

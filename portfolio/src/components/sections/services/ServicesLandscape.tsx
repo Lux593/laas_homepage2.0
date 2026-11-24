@@ -36,13 +36,13 @@ const clamp = (value: number) => Math.min(100, Math.max(0, value));
 export default function ServicesLandscape({
   className = "",
   label,
-  valueText,
+  valueTemplate,
 }: {
   className?: string;
   /** Zugänglicher Name des Reglers, fertig formuliert. */
   label: string;
   /** Vorlage mit `{value}` für die vorgelesene Stellung der Ziehkante. */
-  valueText: string;
+  valueTemplate: string;
 }) {
   const figureRef = useRef<HTMLElement>(null);
   const draggingRef = useRef(false);
@@ -106,7 +106,7 @@ export default function ServicesLandscape({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={position}
-      aria-valuetext={format(valueText, { value: position })}
+      aria-valuetext={format(valueTemplate, { value: position })}
       aria-orientation="horizontal"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
