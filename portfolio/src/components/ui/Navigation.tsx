@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import gsap from "gsap";
-import { NAV_ITEMS } from "@/lib/constants";
 import { type Locale, localizePath } from "@/lib/i18n/locales";
+import type { NavCopy } from "@/lib/i18n/types";
 
 /**
  * Nur der Teil der Lenis-Instanz, den der Scroll-Lock braucht. SmoothScroll
@@ -22,16 +22,20 @@ const HIDE_DELTA_PX = 8;
 export default function Navigation({
   locale,
   isHome,
+  copy,
 }: {
   locale: Locale;
   /** Steht die Leiste auf der Startseite der jeweiligen Sprache? */
   isHome: boolean;
+  /** Dieselbe Seite in der anderen Sprache — das Ziel des Sprachschalters. */
+  alternateHref: string;
+  copy: NavCopy;
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
 
   // Die Leiste steht seit den Rechtsseiten auch auf Unterseiten. Dort zeigen
-  // die reinen Anker aus NAV_ITEMS („#services") ins Leere — es gibt auf
+  // die reinen Anker der Menüeinträge („#services") ins Leere — es gibt auf
   // /impressum keine Section mit dieser id, der Klick tut schlicht nichts.
   //
   // Auf der Startseite bleiben die hrefs deshalb ZEICHENGLEICH zu vorher, und
@@ -203,7 +207,7 @@ export default function Navigation({
           >
             <Image
               src="/laas-logo.svg"
-              alt="LAAS – Luca As A Service"
+              alt={copy.logoAlt}
               width={200}
               height={54}
               className="nav-logo h-[1.125rem] w-auto md:h-6"
@@ -218,7 +222,7 @@ export default function Navigation({
           <button
             className="pointer-events-auto relative flex shrink-0 flex-col justify-center items-center gap-2 w-11 h-11 md:w-14 md:h-14"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            aria-label="Navigationsmenü umschalten"
+            aria-label={copy.menuToggle}
             aria-expanded={isMenuOpen}
           >
             <motion.span
@@ -248,7 +252,7 @@ export default function Navigation({
             exit={{ clipPath: "circle(0% at calc(100% - 2.25rem) 2.75rem)" }}
             transition={{ duration: 0.6, ease: [0.76, 0, 0.24, 1] }}
           >
-            {NAV_ITEMS.map((item, i) => (
+            {copy.items.map((item, i) => (
               <motion.a
                 key={item.label}
                 href={sectionHref(item.href)}

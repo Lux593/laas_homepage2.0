@@ -1,20 +1,22 @@
 import type { Metadata, Viewport } from "next";
 
 import { SITE_CONFIG } from "@/lib/constants";
+import type { Dictionary } from "@/lib/i18n/types";
 
 /**
- * Grund-Metadaten der Seite.
+ * Grund-Metadaten der Seite in der Sprache des Wörterbuchs.
  *
- * Zwei Dateien exportieren sie: das Root-Layout unter app/[lang] und
+ * Zwei Dateien nutzen sie: das Root-Layout unter app/[lang] und
  * app/global-not-found.tsx. Die globale 404 hängt unter keinem Layout und
  * erbt deshalb nichts — ohne diesen gemeinsamen Stand fehlten ihr
  * Beschreibung, Vorschaubild und Favicon.
+ *
+ * Titel und Name im Vorschaubild sind die Marke und bleiben in jeder Sprache.
  */
-export const SITE_METADATA: Metadata = {
+export const siteMetadata = (dict: Dictionary): Metadata => ({
   metadataBase: new URL(SITE_CONFIG.url),
-  title: "Luca Arnoldi — Fullstack Developer & Digital Experience Engineer",
-  description:
-    "Ich baue digitale Erlebnisse, die nicht nur funktionieren — sie faszinieren. Fullstack Developer spezialisiert auf React, Next.js, KI-Integration & Premium Web Experiences.",
+  title: dict.meta.title,
+  description: dict.meta.description,
   keywords: [
     "Fullstack Developer",
     "Web Developer",
@@ -30,7 +32,7 @@ export const SITE_METADATA: Metadata = {
     locale: "de_DE",
     url: SITE_CONFIG.url,
     title: "LAAS — Luca Arnoldi App Studio",
-    description: "Herzlich Willkommen auf meiner Homepage.",
+    description: dict.meta.ogDescription,
     siteName: "Luca Arnoldi App Studio",
     // Eigenes JPEG statt des Bühnenbilds: Link-Vorschauen laufen über fremde
     // Scraper, die WebP teils nicht lesen und grosse Dateien verwerfen.
@@ -50,7 +52,7 @@ export const SITE_METADATA: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "LAAS — Luca Arnoldi App Studio",
-    description: "Herzlich Willkommen auf meiner Homepage.",
+    description: dict.meta.ogDescription,
     images: ["/og-image.jpg"],
   },
   robots: {
@@ -61,7 +63,7 @@ export const SITE_METADATA: Metadata = {
     icon: "/favicon.svg",
     apple: "/favicon.svg",
   },
-};
+});
 
 export const SITE_VIEWPORT: Viewport = {
   themeColor: "#050505",

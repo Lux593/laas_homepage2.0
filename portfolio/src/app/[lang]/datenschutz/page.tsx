@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { Fill, ProviderAddress } from "@/components/legal/Fill";
-import LegalPage from "@/components/legal/LegalPage";
+import LegalShell from "@/components/legal/LegalShell";
 import { LegalList } from "@/components/legal/LegalSection";
 import type { LegalSectionData } from "@/components/legal/LegalSection";
 import { hasLocale } from "@/lib/i18n/locales";
@@ -322,7 +322,7 @@ export default async function DatenschutzPage({
   if (!hasLocale(lang)) notFound();
 
   return (
-    <LegalPage
+    <LegalShell
       locale={lang}
       current="datenschutz"
       title="DATENSCHUTZ"

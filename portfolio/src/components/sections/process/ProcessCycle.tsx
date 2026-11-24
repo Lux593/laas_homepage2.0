@@ -2,8 +2,6 @@
 
 import type { ProcessStep } from "@/lib/constants";
 
-const LABELS = ["Idee", "Plan", "Build", "Loop"] as const;
-
 /**
  * Editorial cycle mark for the process panels. Active step is emphasized by
  * contrast and weight, not by glow or decorative chrome.
@@ -11,10 +9,13 @@ const LABELS = ["Idee", "Plan", "Build", "Loop"] as const;
 export default function ProcessCycle({
   index,
   total,
+  labels,
 }: {
   step: ProcessStep;
   index: number;
   total: number;
+  /** Ein Knotenname je Schritt; fehlt einer, steht die Nummer. */
+  labels: string[];
 }) {
   const size = 480;
   const cx = size / 2;
@@ -29,7 +30,7 @@ export default function ProcessCycle({
       i,
       x: cx + Math.cos(angle) * r,
       y: cy + Math.sin(angle) * r,
-      label: LABELS[i] ?? String(i + 1).padStart(2, "0"),
+      label: labels[i] ?? String(i + 1).padStart(2, "0"),
     };
   });
 

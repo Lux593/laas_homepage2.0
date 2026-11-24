@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { Fill, ProviderAddress } from "@/components/legal/Fill";
-import LegalPage from "@/components/legal/LegalPage";
+import LegalShell from "@/components/legal/LegalShell";
 import type { LegalSectionData } from "@/components/legal/LegalSection";
 import { hasLocale } from "@/lib/i18n/locales";
 import { LEGAL } from "@/lib/legal";
@@ -170,7 +170,7 @@ export default async function ImpressumPage({
   if (!hasLocale(lang)) notFound();
 
   return (
-    <LegalPage
+    <LegalShell
       locale={lang}
       current="impressum"
       title="IMPRESSUM"

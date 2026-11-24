@@ -1,7 +1,7 @@
 import { MetadataRoute } from "next";
 
 import { SITE_CONFIG } from "@/lib/constants";
-import { LEGAL_PAGES } from "@/lib/legal";
+import { LEGAL_SLUGS } from "@/lib/legal";
 
 export const dynamic = "force-static";
 
@@ -15,8 +15,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     // Die Rechtsseiten gehören in die Sitemap, aber nicht auf dieselbe Stufe:
     // sie ändern sich selten und sind kein Ziel, für das die Seite ranken soll.
-    ...LEGAL_PAGES.map((page) => ({
-      url: `${SITE_CONFIG.url}${page.href}`,
+    ...LEGAL_SLUGS.map((slug) => ({
+      url: `${SITE_CONFIG.url}/${slug}`,
       lastModified: new Date(),
       changeFrequency: "yearly" as const,
       priority: 0.3,

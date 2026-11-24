@@ -7,11 +7,19 @@ import TextReveal from "@/components/ui/TextReveal";
 import MagneticButton from "@/components/ui/MagneticButton";
 import { useLightSection } from "@/hooks/useLightSection";
 import { SITE_CONFIG } from "@/lib/constants";
-import { LEGAL_PAGES } from "@/lib/legal";
+import { format } from "@/lib/i18n/format";
+import type { Dictionary, LegalLink } from "@/lib/i18n/types";
 
 gsap.registerPlugin(ScrollTrigger);
 
-export default function GiganticCTA() {
+export default function GiganticCTA({
+  copy,
+  legalLinks,
+}: {
+  copy: Dictionary["cta"];
+  /** Fertig für die Sprache der Seite: `/agb` bzw. `/en/agb`. */
+  legalLinks: LegalLink[];
+}) {
   const sectionRef = useRef<HTMLElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -214,7 +222,7 @@ export default function GiganticCTA() {
             className="text-[clamp(2rem,5vw,3rem)] md:text-display-md font-display font-bold tracking-tighter mb-12 max-w-5xl text-[#0a0a0a] md:mb-14"
             stagger={0.05}
           >
-            Lust auf ein Projekt ?
+            {copy.headline}
           </TextReveal>
 
           {/* nowrap erst ab md: auf 320px stand der Satz sonst 273px breit in
@@ -225,7 +233,7 @@ export default function GiganticCTA() {
             className="text-[clamp(1.2rem,2.2vw,2rem)] font-body mb-16 text-[#3a3a3a] md:mb-20 md:whitespace-nowrap"
             start="top 90%"
           >
-            schreib mir - dann starten wir.
+            {copy.subline}
           </TextReveal>
 
           {/* Ab sm: relative + absolute cow — Button bleibt optisch zentriert,
@@ -291,7 +299,7 @@ export default function GiganticCTA() {
                   color: "#f0ede8",
                 }}
               >
-                Projekt starten
+                {copy.button}
                 <span className="inline-block transition-transform duration-500 ease-out-expo group-hover:translate-x-1">
                   →
                 </span>
@@ -312,7 +320,7 @@ export default function GiganticCTA() {
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                aria-label={`${platform}-Profil besuchen`}
+                aria-label={format(copy.socialLabel, { platform })}
                 className="flex items-center gap-2 text-caption font-mono uppercase tracking-widest transition-colors duration-300 pointer-coarse:min-h-11"
                 style={{ color: "#6a6a6a" }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = "#0a0a0a")}
@@ -363,12 +371,13 @@ export default function GiganticCTA() {
           </p>
           {/* Die Liste stand hier als Literal und ist seit den Rechtsseiten
               zweimal gebraucht — hier und in ihrer eigenen Fusszeile. Eine
-              Quelle, damit eine vierte Seite nicht an einer der beiden Stellen
-              fehlt. Markup und Klassen sind unverändert. */}
+              Quelle (LEGAL_SLUGS über getLegalLinks), damit eine vierte Seite
+              nicht an einer der beiden Stellen fehlt. Markup und Klassen sind
+              unverändert. */}
           <div className="flex items-center gap-5 md:gap-8">
-            {LEGAL_PAGES.map((link) => (
+            {legalLinks.map((link) => (
               <a
-                key={link.href}
+                key={link.slug}
                 href={link.href}
                 className="inline-flex items-center text-caption font-mono transition-colors duration-300 pointer-coarse:min-h-11"
                 style={{ color: "#9a9a9a" }}

@@ -4,6 +4,7 @@ import AnimationProvider from "@/components/providers/AnimationProvider";
 import GrainOverlay from "@/components/ui/GrainOverlay";
 
 import { SITE_CONFIG } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/locales";
 import "@/app/globals.css";
 
@@ -35,7 +36,8 @@ const dmSansBody = DM_Sans({
  * app/global-not-found.tsx. Die globale 404 läuft an allen Layouts vorbei und
  * muss ihr Dokument selbst bauen. Über diese eine Komponente können die
  * beiden nicht auseinanderlaufen — eine neue Schrift oder ein neuer Provider
- * landet automatisch auch auf der 404.
+ * landet automatisch auch auf der 404. Aus demselben Grund holt sie ihre
+ * Texte (Sprunglink, `knowsAbout`) selbst aus dem Wörterbuch der Sprache.
  */
 export default function DocumentShell({
   locale,
@@ -44,6 +46,8 @@ export default function DocumentShell({
   locale: Locale;
   children: React.ReactNode;
 }) {
+  const dict = getDictionary(locale);
+
   return (
     <html
       lang={locale}
@@ -65,16 +69,7 @@ export default function DocumentShell({
                 SITE_CONFIG.socials.linkedin,
                 SITE_CONFIG.socials.instagram,
               ],
-              knowsAbout: [
-                "Web Development",
-                "React",
-                "Next.js",
-                "TypeScript",
-                "Individuelle Software",
-                "Prozess Automationen",
-                "KI Integrationen",
-                "Website Design",
-              ],
+              knowsAbout: dict.meta.knowsAbout,
             }),
           }}
         />
@@ -82,7 +77,7 @@ export default function DocumentShell({
           href="#main-content"
           className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[10000] focus:px-4 focus:py-2 focus:bg-accent-primary focus:text-bg-primary focus:rounded-lg focus:text-sm focus:font-bold"
         >
-          Zum Inhalt springen
+          {dict.common.skipToContent}
         </a>
         <SmoothScroll>
           <AnimationProvider>

@@ -7,14 +7,16 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import TextReveal from "@/components/ui/TextReveal";
 import { useLightSection } from "@/hooks/useLightSection";
 import { PIN_QUERY, STACK_QUERY } from "@/lib/breakpoints";
-import { SERVICES, SERVICES_INTRO, type Service } from "@/lib/constants";
+import { SERVICE_ASSETS, type Service } from "@/lib/constants";
+import { format } from "@/lib/i18n/format";
+import type { Dictionary } from "@/lib/i18n/types";
 import ServicesLandscape from "@/components/sections/services/ServicesLandscape";
 import "./services/services.css";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const TOTAL = String(SERVICES.length).padStart(2, "0");
-const CHAPTER = 1 / SERVICES.length;
+const TOTAL = String(SERVICE_ASSETS.length).padStart(2, "0");
+const CHAPTER = 1 / SERVICE_ASSETS.length;
 
 /** Seitlicher Einzug des einfahrenden Balkens in Prozent — bündig zur Hero-Copy.
  *  Gilt nur noch für die gepinnte Bühne; im Stapel fährt die Section ohne Einzug
@@ -73,7 +75,7 @@ function createChapterStage({
 }: ChapterStageOptions) {
   const nodes = gsap.utils.toArray<HTMLElement>("[data-featured]", root);
   /** Pro Kapitel alles, was gemeinsam ein- und ausgeblendet wird. */
-  const featured = SERVICES.map((_, index) =>
+  const featured = SERVICE_ASSETS.map((_, index) =>
     nodes.filter((node) => Number(node.dataset.index) === index),
   );
   /** Titel und Subtext je Kapitel — nur sie werden versetzt. */
@@ -201,7 +203,7 @@ function createChapterStage({
 
   const applyScrub = (progress: number) => {
     const activeIndex = Math.min(
-      SERVICES.length - 1,
+      SERVICE_ASSETS.length - 1,
       Math.floor(progress / CHAPTER),
     );
 
@@ -261,10 +263,14 @@ function createChapterStage({
   };
 }
 
+type ServicesCopy = Omit<Dictionary["services"], "items">;
+
 function ServicesHeader({
+  copy,
   counterRef,
   revealScrub,
 }: {
+  copy: ServicesCopy;
   counterRef?: RefObject<HTMLSpanElement | null>;
   /** Nur der Stapel setzt das — siehe die Begründung an der Fundstelle. */
   revealScrub?: number;
@@ -274,7 +280,7 @@ function ServicesHeader({
       <div className="flex items-end justify-between gap-8">
         <div className="min-w-0">
           <span className="mb-2 block font-mono text-caption uppercase tracking-[0.2em] text-[#6a6a6a] lg:mb-3">
-            {SERVICES_INTRO.eyebrow}
+            {copy.eyebrow}
           </span>
           <TextReveal
             as="h2"
@@ -284,7 +290,7 @@ function ServicesHeader({
             scrub={revealScrub}
             className="font-display text-[clamp(1.75rem,4vw,3.5rem)] font-bold uppercase leading-[0.95] tracking-tighter text-[#0a0a0a]"
           >
-            {SERVICES_INTRO.headline}
+            {copy.headline}
           </TextReveal>
         </div>
 
@@ -413,7 +419,13 @@ function ServicesChapter({
  * Stapel: dieselbe Bühne hochkant — die Zeichnung räumt sich über vier Stufen
  * auf, die Copy wechselt mit ihr, und die Seite steht dabei still.
  */
-export default function Services() {
+export default function Services({
+  copy,
+  services,
+}: {
+  copy: ServicesCopy;
+  services: Service[];
+}) {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const counterRef = useRef<HTMLSpanElement>(null);
@@ -741,18 +753,24 @@ export default function Services() {
       <div ref={trackRef} className="services-pin--desktop relative w-full">
         <div className="sticky top-0 z-20 h-[100svh] w-full [backface-visibility:hidden] [transform:translateZ(0)]">
           <div className="flex h-full w-full flex-col overflow-hidden">
-            <ServicesHeader counterRef={counterRef} />
+            <ServicesHeader copy={copy} counterRef={counterRef} />
 
             <div ref={stageRef} className="services-stage work-container">
               {/* Links: dominante Landschaft */}
               <div className="services-landscape-slot">
-                <ServicesLandscape className="services-landscape--desktop" />
+                <ServicesLandscape
+                  className="services-landscape--desktop"
+                  label={format(copy.landscapeLabel, {
+                    statement: copy.statement,
+                  })}
+                  valueText={copy.landscapeValue}
+                />
               </div>
 
               {/* Rechts: Lookbook-Kapitel */}
               <div className="services-lookbook">
                 <div className="services-featured">
-                  {SERVICES.map((service, index) => {
+                  {services.map((service, index) => {
                     const lines = titleLines(service.title);
                     return (
                       <div
@@ -795,8 +813,11 @@ export default function Services() {
                     />
                   </div>
 
-                  <nav className="services-chapters" aria-label="Leistungen">
-                    {SERVICES.map((service, index) => (
+                  <nav
+                    className="services-chapters"
+                    aria-label={copy.sectionLabel}
+                  >
+                    {services.map((service, index) => (
                       <div
                         key={service.id}
                         data-chapter
@@ -831,7 +852,7 @@ export default function Services() {
             einmaliges Abspielen. Gemessen war genau diese Zeile die Asymmetrie,
             die als Aufsnappen ankam: abwärts lief sie 1002ms nach dem Finger
             weiter, aufwärts rührte sie sich nie. */}
-        <ServicesHeader revealScrub={0.5} />
+        <ServicesHeader copy={copy} revealScrub={0.5} />
 
         {/* Die Kopfzeile bleibt AUSSERHALB der Klebestrecke und zieht vorbei.
             Innen gerechnet kostete sie auf 375x667 rund 155px der Bühne — die
@@ -842,12 +863,12 @@ export default function Services() {
             ref={stackStageRef}
             className="services-stack-stage work-container"
           >
-            {SERVICES.map((service, index) => (
+            {services.map((service, index) => (
               <ServicesChapter
                 key={service.id}
                 service={service}
                 index={index}
-                total={SERVICES.length}
+                total={services.length}
               />
             ))}
           </div>

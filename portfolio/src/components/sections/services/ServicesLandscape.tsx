@@ -9,7 +9,8 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from "react";
-import { SERVICES_INTRO } from "@/lib/constants";
+import { SERVICES_LANDSCAPE } from "@/lib/constants";
+import { format } from "@/lib/i18n/format";
 
 /** Startposition der Ziehkante in Prozent. */
 const START = 50;
@@ -34,8 +35,14 @@ const clamp = (value: number) => Math.min(100, Math.max(0, value));
  */
 export default function ServicesLandscape({
   className = "",
+  label,
+  valueText,
 }: {
   className?: string;
+  /** Zugänglicher Name des Reglers, fertig formuliert. */
+  label: string;
+  /** Vorlage mit `{value}` für die vorgelesene Stellung der Ziehkante. */
+  valueText: string;
 }) {
   const figureRef = useRef<HTMLElement>(null);
   const draggingRef = useRef(false);
@@ -95,11 +102,11 @@ export default function ServicesLandscape({
       style={{ "--services-wipe": `${wipe}%` } as CSSProperties}
       role="slider"
       tabIndex={0}
-      aria-label={`${SERVICES_INTRO.statement} Ziehen wechselt zwischen zugestelltem und geräumtem Arbeitsplatz.`}
+      aria-label={label}
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={position}
-      aria-valuetext={`${position} Prozent Chaos`}
+      aria-valuetext={format(valueText, { value: position })}
       aria-orientation="horizontal"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -119,7 +126,7 @@ export default function ServicesLandscape({
           vollständig zurück; auf dem Desktop lädt sie der grosszügige
           rootMargin von next/image lange vor der Sektion. */}
       <Image
-        src={SERVICES_INTRO.visualAfter}
+        src={SERVICES_LANDSCAPE.visualAfter}
         alt=""
         fill
         sizes="(max-width: 1023px) 65vw, 60vw"
@@ -128,7 +135,7 @@ export default function ServicesLandscape({
         draggable={false}
       />
       <Image
-        src={SERVICES_INTRO.visualBefore}
+        src={SERVICES_LANDSCAPE.visualBefore}
         alt=""
         fill
         sizes="(max-width: 1023px) 65vw, 60vw"

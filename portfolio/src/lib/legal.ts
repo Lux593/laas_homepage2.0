@@ -1,4 +1,6 @@
-import { SITE_CONFIG } from "@/lib/constants";
+// Relativ und mit Endung, damit lib/i18n/content.ts samt Test unter
+// `node --test` ohne Bundler lädt.
+import { SITE_CONFIG } from "./constants.ts";
 
 /**
  * Alle nachfüllbaren Angaben der Rechtsseiten an genau einer Stelle.
@@ -84,19 +86,20 @@ export const LEGAL = {
   },
 
   /**
-   * Stand der Dokumente. Bewusst ein fester String und kein `new Date()`: das
+   * Stand der Dokumente als ISO-Datum. Bewusst fest und kein `new Date()`: das
    * Datum soll sich ändern, wenn die Texte sich ändern — nicht bei jedem
-   * Aufruf. Beim Nachfüllen der Platzhalter mit hochziehen.
+   * Aufruf. Beim Nachfüllen der Platzhalter mit hochziehen. Lesbar macht es
+   * `formatDate` je Sprache („12. August 2026" / „August 12, 2026").
    */
-  updated: "12. August 2026",
+  updated: "2026-08-12",
 };
 
-/** Slug einer Rechtsseite, in beiden Sprachen gleich (`/agb`, `/en/agb`). */
-export type LegalSlug = "agb" | "datenschutz" | "impressum";
+/**
+ * Slugs der Rechtsseiten, in beiden Sprachen gleich (`/agb`, `/en/agb`).
+ * Fusszeile der Rechtsseiten, Kontaktkarte und Sitemap lesen diese eine Liste
+ * — eine Reihenfolge, eine Quelle. Die Beschriftungen stehen im Wörterbuch.
+ */
+export const LEGAL_SLUGS = ["agb", "datenschutz", "impressum"] as const;
 
-/** Fusszeile der Rechtsseiten und der Kontaktkarte — eine Reihenfolge, eine Quelle. */
-export const LEGAL_PAGES = [
-  { href: "/agb", label: "AGB" },
-  { href: "/datenschutz", label: "Datenschutz" },
-  { href: "/impressum", label: "Impressum" },
-] as const;
+/** Slug einer Rechtsseite. Aus LEGAL_SLUGS abgeleitet, damit beide nicht auseinanderlaufen. */
+export type LegalSlug = (typeof LEGAL_SLUGS)[number];

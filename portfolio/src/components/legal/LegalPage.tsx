@@ -10,9 +10,10 @@ import ScrollProgress from "@/components/ui/ScrollProgress";
 import TextReveal from "@/components/ui/TextReveal";
 import { useLightChrome } from "@/hooks/useLightChrome";
 import { type Locale, localizePath } from "@/lib/i18n/locales";
-import { LEGAL, LEGAL_PAGES, type LegalSlug } from "@/lib/legal";
+import type { LegalChrome, LegalLink, NavCopy } from "@/lib/i18n/types";
+import type { LegalSlug } from "@/lib/legal";
 
-/** 01, 02, … — dieselbe zweistellige Marke wie in SERVICES und im Projektzähler. */
+/** 01, 02, … — dieselbe zweistellige Marke wie in SERVICE_ASSETS und im Projektzähler. */
 const mark = (index: number) => String(index + 1).padStart(2, "0");
 
 /**
@@ -22,12 +23,17 @@ const mark = (index: number) => String(index + 1).padStart(2, "0");
  * Leiste muss über der Cremefläche dunkel schreiben), TextReveal (GSAP) und
  * den Scroll-Spy fürs Inhaltsverzeichnis. Die Routen-Dateien darüber bleiben
  * Server-Components und behalten damit ihre `metadata` — die SEO-Angaben
- * werden serverseitig gerendert.
+ * werden serverseitig gerendert. Ihre Texte bekommt sie fertig von LegalShell.
  */
 export default function LegalPage({
   locale,
   current,
-  eyebrow = "Rechtliches",
+  alternateHref,
+  nav,
+  chrome,
+  legalLinks,
+  updated,
+  eyebrow = chrome.eyebrow,
   title,
   lede,
   showUpdated = true,
@@ -42,6 +48,15 @@ export default function LegalPage({
    * die deutschen Pfade intern umschreibt (siehe Navigation.tsx).
    */
   current: LegalSlug | null;
+  /** Dieselbe Seite in der anderen Sprache (für den Sprachschalter). */
+  alternateHref: string;
+  nav: NavCopy;
+  chrome: LegalChrome;
+  /** Alle drei Rechtslinks, Pfade schon in der Sprache der Seite. */
+  legalLinks: LegalLink[];
+  /** Standdatum, fertig formatiert. */
+  updated: string;
+  /** Fehlt er, steht `chrome.eyebrow` („Rechtliches"). */
   eyebrow?: string;
   title: string;
   lede: string;
@@ -127,7 +142,12 @@ export default function LegalPage({
       className="relative min-h-svh bg-[#f2ede4] text-[#0a0a0a]"
     >
       <ScrollProgress />
-      <Navigation locale={locale} isHome={false} />
+      <Navigation
+        locale={locale}
+        isHome={false}
+        alternateHref={alternateHref}
+        copy={nav}
+      />
 
       {/* Oberer Abstand deckt die feste Leiste in beiden Ausbaustufen: sie misst
           mobil 64px und ab lg 112px (siehe Navigation.tsx). */}
@@ -175,7 +195,7 @@ export default function LegalPage({
 
             {showUpdated && (
               <p className="mt-8 font-mono text-caption text-[#9a9a9a]">
-                Stand: {LEGAL.updated}
+                {chrome.updatedLabel} {updated}
               </p>
             )}
 
@@ -215,24 +235,24 @@ export default function LegalPage({
                 >
                   ←
                 </span>
-                Zur Startseite
+                {chrome.backHome}
               </a>
 
               <nav
-                aria-label="Weitere rechtliche Hinweise"
+                aria-label={chrome.moreLegal}
                 className="flex flex-wrap items-center gap-x-5 gap-y-1 md:gap-x-8"
               >
-                {LEGAL_PAGES.filter(
-                  (page) => page.href.slice(1) !== current,
-                ).map((page) => (
-                  <a
-                    key={page.href}
-                    href={localizePath(page.href, locale)}
-                    className="inline-flex items-center font-mono text-caption uppercase tracking-widest text-[#9a9a9a] transition-colors duration-300 hover:text-[#0a0a0a] pointer-coarse:min-h-11"
-                  >
-                    {page.label}
-                  </a>
-                ))}
+                {legalLinks
+                  .filter((link) => link.slug !== current)
+                  .map((link) => (
+                    <a
+                      key={link.slug}
+                      href={link.href}
+                      className="inline-flex items-center font-mono text-caption uppercase tracking-widest text-[#9a9a9a] transition-colors duration-300 hover:text-[#0a0a0a] pointer-coarse:min-h-11"
+                    >
+                      {link.label}
+                    </a>
+                  ))}
               </nav>
             </div>
           </div>
@@ -244,11 +264,11 @@ export default function LegalPage({
               erst ab einer Breite Platz hat. */}
           {hasIndex && sections && (
             <nav
-              aria-label="Inhalt dieses Dokuments"
+              aria-label={chrome.tocLabel}
               className="hidden lg:sticky lg:top-[clamp(8rem,20vh,11rem)] lg:block lg:self-start"
             >
               <span className="block font-mono text-caption uppercase tracking-[0.2em] text-[#9a9a9a]">
-                Inhalt
+                {chrome.tocHeading}
               </span>
               <ol className="mt-5 space-y-1">
                 {sections.map((section, i) => {

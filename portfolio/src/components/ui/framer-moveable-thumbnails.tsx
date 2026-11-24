@@ -9,6 +9,8 @@ import {
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ProjectGalleryItem } from "@/lib/constants";
+import { format } from "@/lib/i18n/format";
+import type { GalleryLabels } from "@/lib/i18n/types";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 /**
@@ -115,6 +117,9 @@ interface FramerMoveableThumbnailsProps {
    * status-bar chrome without cropping media.
    */
   screenBlurTop?: number;
+  /** Beschriftung der Pfeile und Punkte; `item` ist eine Vorlage mit
+   *  `{current}` und `{total}`. */
+  labels: GalleryLabels;
 }
 
 /** Positive-safe modulo — JS `%` keeps the sign of the dividend. */
@@ -339,6 +344,7 @@ function CarouselCutoutMedia({
   screenInset = 0,
   screenBlurTop = 0,
   unoptimized = false,
+  labels,
 }: FramerMoveableThumbnailsProps) {
   // Unbounded on purpose: it counts steps taken, not which slide is showing.
   // Going left from the first slide gives -1, and the transform follows without
@@ -636,7 +642,7 @@ function CarouselCutoutMedia({
               Regel, und eine Tailwind-Utility aus @layer utilities schlüge sie. */}
           <motion.button
             type="button"
-            aria-label="Vorheriges Bild"
+            aria-label={labels.previous}
             onClick={() => step(-1)}
             className={`device-nav absolute ${device.nav.left} ${device.nav.color} top-1/2 z-10 h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full opacity-90 transition-transform hover:scale-110 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2`}
           >
@@ -645,7 +651,7 @@ function CarouselCutoutMedia({
 
           <motion.button
             type="button"
-            aria-label="Nächstes Bild"
+            aria-label={labels.next}
             onClick={() => step(1)}
             className={`device-nav absolute ${device.nav.right} ${device.nav.color} top-1/2 z-10 h-11 w-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full opacity-90 transition-transform hover:scale-110 hover:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2`}
           >
@@ -660,14 +666,14 @@ function CarouselCutoutMedia({
           keinen Weg mehr zu den übrigen Aufnahmen. Sichtbar sind trotzdem nur die
           6px-Punkte — die 44px Trefferfläche liegt unsichtbar darum.
           `step` zählt Schritte, nicht Folien; deshalb der Umweg über wrap(). */}
-      <div className="device-dots" role="group" aria-label="Aufnahmen dieses Projekts">
+      <div className="device-dots" role="group" aria-label={labels.list}>
         {items.map((_, i) => {
           const current = wrap(index, len);
           return (
             <button
               key={i}
               type="button"
-              aria-label={`Aufnahme ${i + 1} von ${len}`}
+              aria-label={format(labels.item, { current: i + 1, total: len })}
               aria-current={i === current ? "true" : undefined}
               onClick={() => step(i - current)}
               className="flex h-11 w-6 cursor-pointer items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0a0a0a]"

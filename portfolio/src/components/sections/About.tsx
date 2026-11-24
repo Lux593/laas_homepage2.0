@@ -9,9 +9,10 @@ import { useLightSection } from "@/hooks/useLightSection";
 import {
   ABOUT_INTRO,
   ABOUT_PORTRAIT,
-  ABOUT_ROLES,
   ABOUT_TOOLS,
+  type AboutRole,
 } from "@/lib/constants";
+import type { Dictionary } from "@/lib/i18n/types";
 import "./about/about.css";
 
 gsap.registerPlugin(ScrollTrigger);
@@ -168,7 +169,13 @@ const SCREEN = { left: 40.68, top: 25.6, width: 28.58, height: 29.32 };
  *  Hochkant fällt die Blende früher, weil die Kamera dort weniger Weg hat. */
 const ZOOM_END = { desktop: 0.52, mobile: 0.46 };
 
-export default function About() {
+export default function About({
+  copy,
+  roles,
+}: {
+  copy: Omit<Dictionary["about"], "roles">;
+  roles: AboutRole[];
+}) {
   const sectionRef = useRef<HTMLElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
@@ -925,7 +932,7 @@ export default function About() {
               weiter innen als die Header darüber. */}
           <header ref={headerRef} className="about-header work-container w-full">
             <span className="mb-3 block font-mono text-caption uppercase tracking-[0.2em] text-[#5f574e]">
-              Wer dich unterstützt
+              {copy.eyebrow}
             </span>
             <TextReveal
               as="h2"
@@ -933,7 +940,7 @@ export default function About() {
               start="top 95%"
               className="font-display text-[clamp(1.9rem,4vw,3.5rem)] font-bold uppercase leading-[1.05] tracking-tighter text-[#0a0a0a]"
               >
-              ÜBER MICH
+              {copy.headline}
             </TextReveal>
           </header>
 
@@ -1056,11 +1063,11 @@ export default function About() {
                 <div className="about-in about-lead">
                   <figure
                     className="about-plate"
-                    aria-label={ABOUT_PORTRAIT.alt}
+                    aria-label={copy.portraitAlt}
                   >
                     <Image
                       src={ABOUT_PORTRAIT.src}
-                      alt={ABOUT_PORTRAIT.alt}
+                      alt={copy.portraitAlt}
                       width={ABOUT_PORTRAIT.width}
                       height={ABOUT_PORTRAIT.height}
                       sizes="(max-width: 767px) 40vw, 14vw"
@@ -1073,7 +1080,7 @@ export default function About() {
                         about.css die Textspalte auf und zieht allein diese
                         Zeile über das Porträt. */}
                     <p className="about-greeting font-mono text-[0.85rem] uppercase tracking-[0.24em] text-[#f2ede4]/50">
-                      {ABOUT_INTRO.greeting}
+                      {copy.greeting}
                     </p>
                     {/* Die Schriftgrösse steht in about.css bei .about-name:
                         sie braucht neben der Fensterbreite eine zweite
@@ -1092,7 +1099,7 @@ export default function About() {
                           nur oberhalb der Stapelschwelle. Als Utility-Klasse
                           hätte er unter jeder Breite gegolten und blähte auf
                           320px den Layout-Viewport auf 414px auf. */}
-                      {ABOUT_INTRO.subtitle.map((line) => (
+                      {copy.subtitle.map((line) => (
                         <span key={line} className="block">
                           {line}
                         </span>
@@ -1106,10 +1113,10 @@ export default function About() {
 
                 <div className="about-in about-annotations">
                   <p className="font-mono text-[0.85rem] uppercase tracking-[0.2em] text-[#f2ede4]/50">
-                    Was ich gerade beruflich mache
+                    {copy.rolesHeading}
                   </p>
                   <ul className="about-roles mt-[clamp(1.35rem,3.1vh,2.1rem)]">
-                    {ABOUT_ROLES.map((role) => (
+                    {roles.map((role) => (
                       <li key={role.company} className="about-role">
                         <div className="about-role-body min-w-0">
                           <p className="font-display text-body-md font-semibold leading-tight text-[#f2ede4] md:text-[clamp(1.28rem,1.6vw,1.65rem)]">
@@ -1126,7 +1133,7 @@ export default function About() {
 
                 <div className="about-in about-titleblock">
                   <p className="about-titleblock-label font-mono text-[0.85rem] uppercase tracking-[0.2em] text-[#f2ede4]/50">
-                    Tools die ich mag
+                    {copy.toolsHeading}
                   </p>
                   <ul className="about-tools">
                     {ABOUT_TOOLS.map((tool) => (

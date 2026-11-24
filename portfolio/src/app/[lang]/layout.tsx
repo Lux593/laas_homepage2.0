@@ -1,10 +1,20 @@
 import type { Metadata, Viewport } from "next";
 import DocumentShell from "@/components/layout/DocumentShell";
 
+import { getDictionary } from "@/lib/i18n/dictionaries";
 import { DEFAULT_LOCALE, LOCALES, hasLocale } from "@/lib/i18n/locales";
-import { SITE_METADATA, SITE_VIEWPORT } from "@/lib/site-metadata";
+import { SITE_VIEWPORT, siteMetadata } from "@/lib/site-metadata";
 
-export const metadata: Metadata = SITE_METADATA;
+// Titel, Beschreibung und Vorschautexte in der Sprache der Route. Hängt nur an
+// `params`, beide Sprachen werden damit wie die Seiten vorgerendert.
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}): Promise<Metadata> {
+  const { lang } = await params;
+  return siteMetadata(getDictionary(hasLocale(lang) ? lang : DEFAULT_LOCALE));
+}
 
 export const viewport: Viewport = SITE_VIEWPORT;
 

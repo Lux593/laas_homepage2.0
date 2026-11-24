@@ -2,21 +2,31 @@ import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 
 import DocumentShell from "@/components/layout/DocumentShell";
-import LegalPage from "@/components/legal/LegalPage";
-import { NAV_ITEMS } from "@/lib/constants";
+import LegalShell from "@/components/legal/LegalShell";
+import { getNavCopy } from "@/lib/i18n/content";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 import { localizePath } from "@/lib/i18n/locales";
 import { LOCALE_HEADER, localeFromHeader } from "@/lib/i18n/routing";
-import { SITE_METADATA, SITE_VIEWPORT } from "@/lib/site-metadata";
+import { SITE_VIEWPORT, siteMetadata } from "@/lib/site-metadata";
+
+/** Sprache der 404 — der Proxy schickt sie als Header mit (siehe unten). */
+async function requestLocale() {
+  return localeFromHeader((await headers()).get(LOCALE_HEADER));
+}
 
 // Die globale 404 erbt nichts vom Root-Layout, deshalb die Grund-Metadaten
 // hier noch einmal, nur Titel und robots weichen ab.
-export const metadata: Metadata = {
-  ...SITE_METADATA,
-  title: "Seite nicht gefunden — Luca Arnoldi App Solutions",
-  // Eine Fehlerseite gehört nicht in den Index. `follow` bleibt an, damit die
-  // Wege zurück auf die Startseite trotzdem gelesen werden.
-  robots: { index: false, follow: true },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = getDictionary(await requestLocale());
+
+  return {
+    ...siteMetadata(dict),
+    title: dict.notFound.metaTitle,
+    // Eine Fehlerseite gehört nicht in den Index. `follow` bleibt an, damit die
+    // Wege zurück auf die Startseite trotzdem gelesen werden.
+    robots: { index: false, follow: true },
+  };
+}
 
 export const viewport: Viewport = SITE_VIEWPORT;
 
@@ -29,16 +39,18 @@ export const viewport: Viewport = SITE_VIEWPORT;
  * Pfade, auf denen er nicht läuft, fallen auf Deutsch zurück.
  */
 export default async function GlobalNotFound() {
-  const locale = localeFromHeader((await headers()).get(LOCALE_HEADER));
+  const locale = await requestLocale();
+  const dict = getDictionary(locale);
+  const copy = dict.notFound;
 
   return (
     <DocumentShell locale={locale}>
-      <LegalPage
+      <LegalShell
         locale={locale}
         current={null}
-        eyebrow="Fehler 404"
-        title="NICHTS ZU SEHEN"
-        lede="Diese Seite gibt es nicht — jedenfalls nicht mehr, oder noch nicht. Vielleicht hat sich ein Tippfehler in die Adresse geschlichen, vielleicht ist der Link älter als die Seite dahinter."
+        eyebrow={copy.eyebrow}
+        title={copy.title}
+        lede={copy.lede}
         showUpdated={false}
       >
         {/* Kein LegalSection: die Fehlerseite ist kein Dokument mit Kapiteln,
@@ -46,16 +58,16 @@ export default async function GlobalNotFound() {
             Rhythmus der Rechtsseiten, damit beide erkennbar zusammengehören. */}
         <div className="mt-12 border-t border-[#0a0a0a]/10 pt-8 md:mt-16 md:pt-10">
           <span className="block font-mono text-caption uppercase tracking-[0.2em] text-[#9a9a9a]">
-            Wohin stattdessen
+            {copy.whereTo}
           </span>
 
           <nav
-            aria-label="Bereiche der Startseite"
+            aria-label={copy.sectionsLabel}
             className="mt-6 flex flex-col"
           >
             {/* <a> aus demselben Grund wie in LegalPage: die Ziele sind Anker auf
                 der Startseite, und die will frisch aufgebaut werden. */}
-            {NAV_ITEMS.map((item) => (
+            {getNavCopy(dict).items.map((item) => (
               <a
                 key={item.label}
                 href={`${localizePath("/", locale)}${item.href}`}
@@ -72,7 +84,7 @@ export default async function GlobalNotFound() {
             ))}
           </nav>
         </div>
-      </LegalPage>
+      </LegalShell>
     </DocumentShell>
   );
 }

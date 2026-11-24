@@ -2,6 +2,7 @@
 
 import FramerMoveableThumbnails from "@/components/ui/framer-moveable-thumbnails";
 import type { Project } from "@/lib/constants";
+import type { GalleryLabels } from "@/lib/i18n/types";
 
 /**
  * Ein Projekt, als aufgeschlagene Doppelseite statt als Karte. Die Struktur
@@ -20,10 +21,12 @@ export default function ProjectPanel({
   project,
   index,
   total,
+  galleryLabels,
 }: {
   project: Project;
   index: number;
   total: number;
+  galleryLabels: GalleryLabels;
 }) {
   return (
     // Pinned: vertically center the spread. The device column keeps a
@@ -169,6 +172,7 @@ export default function ProjectPanel({
                   screenInset={project.screenInset}
                   screenBlurTop={project.screenBlurTop}
                   unoptimized={project.unoptimized}
+                  labels={galleryLabels}
                 />
               </div>
             </div>
