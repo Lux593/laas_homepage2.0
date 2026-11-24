@@ -43,3 +43,6 @@ next-env.d.ts
 
 # vom Build erzeugter Versions-Stempel
 /public/build.txt
+
+# i18n-Baseline (Text-Snapshot und Screenshots vor der Umstellung)
+.i18n-baseline/
