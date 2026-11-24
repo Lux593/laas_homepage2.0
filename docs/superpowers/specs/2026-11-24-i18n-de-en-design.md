@@ -4,11 +4,15 @@ Stand: 24.11.2026 · ersetzt `2026-08-12-i18n-en-home-design.md` und den
 zugehörigen Plan (beide nie umgesetzt; sie schlossen die Rechtsseiten aus und
 setzten den Schalter nur ins Vollbild-Menü).
 
+Änderung 24.11.2026 (Luca): Der Schalter sitzt doch im Vollbild-Menü, als
+letzter Eintrag unter „Kontakt“, zentriert, statt in der Kopfleiste. Die
+Kopfleiste bleibt auf allen Breiten unverändert.
+
 ## Warum
 
 Luca will mit der Website auch internationale Kunden erreichen. Heute ist alles
 Deutsch. Jeder Text und jeder Inhalt soll zusätzlich auf Englisch verfügbar
-sein, umschaltbar über einen DE/EN-Schalter oben im Header. Screenshots, Bilder
+sein, umschaltbar über einen DE/EN-Schalter im Menü. Screenshots, Bilder
 und Videos mit deutschem Inhalt (z. B. die Projektvorschauen) bleiben, wie sie
 sind.
 
@@ -26,7 +30,7 @@ Sprachen getrennt.
 | Livegang | One-Pager und Rechtsseiten gehen gemeinsam auf Englisch live; juristische Gegenlese ist kein Gate, sondern optional danach |
 | URLs | `/` = DE wie heute, `/en` = EN; alle heutigen URLs bleiben gültig |
 | Spracherkennung | Keine. Die URL entscheidet, nur der Schalter wechselt |
-| Schalter | Text „DE / EN“ rechts neben dem Menü-Button, auf Desktop und Handy |
+| Schalter | Text „DE / EN“ im Vollbild-Menü, letzter Eintrag unter „Kontakt“, zentriert, auf allen Breiten (geändert 24.11.) |
 | Umsetzung | Ansatz A (siehe unten): `app/[lang]` + `proxy.ts` + eigene Dictionaries |
 
 ## Ziele
@@ -50,7 +54,8 @@ Sprachen getrennt.
 
 ## Anti-Ziele (wäre ein Fehlschlag, auch wenn es technisch läuft)
 
-- Die deutsche Seite ändert sich sichtbar, abgesehen vom neuen Schalter.
+- Die deutsche Seite ändert sich sichtbar, abgesehen vom neuen Schalter im
+  geöffneten Menü.
 - Die Desktop-Choreografie (GSAP-Pins, Lenis, Timelines) verhält sich anders.
 - Das Englisch klingt nach Maschinenübersetzung oder Template.
 - Auf `/en` steht irgendwo noch ein deutscher Text oder deutsches Aria.
@@ -222,13 +227,17 @@ Rechtsseiten gibt es jetzt in beiden Sprachen.
 
 **Schalter:**
 
-- Sitzt in der festen Leiste rechts, direkt links vom Menü-Button, auf allen
-  Breiten. Bewusste Ausnahme von der eingefrorenen Desktop-Leiste, auf Lucas
-  Wunsch.
-- Zwei Links „DE“ und „EN“ mit Trenner. Aktive Sprache in `var(--ui-fg)` voll
-  deckend und unterstrichen, inaktive gedimmt. Damit wechselt der Schalter mit
-  dem Rest der Leiste über hellen Sections die Farbe.
-- Trefferfläche mindestens 44 px, `pointer-events-auto` wie Logo und Button.
+- Sitzt im Vollbild-Menü als letzter Eintrag unter „Kontakt“, zentriert, auf
+  allen Breiten (Lucas Entscheidung vom 24.11.2026). Die Kopfleiste bleibt auf
+  allen Breiten unverändert.
+- Zwei Einträge „DE“ und „EN“ mit Trenner „/“, schlichter Text. Kleiner und
+  ruhiger als die Menüpunkte (UI-Label-Größe statt Display-Schrift), damit er
+  nicht wie ein sechster Menüpunkt liest; nach oben etwas mehr Abstand als
+  zwischen den Menüpunkten. Aktive Sprache voll deckend und unterstrichen,
+  inaktive gedimmt, beides in der Textfarbe des Menüs.
+- Fährt ein wie die Menüpunkte, mit der nächsten Verzögerungsstufe nach
+  „Kontakt“.
+- Trefferfläche mindestens 44 × 44 px.
 - Semantik: `<nav aria-label="Sprache">` bzw. „Language“; jeder Link mit
   `hrefLang` und `lang`, zugänglicher Name „Deutsch“ / „English“, aktive
   Sprache mit `aria-current`.
@@ -236,10 +245,12 @@ Rechtsseiten gibt es jetzt in beiden Sprachen.
   `location.hash` angehängt). Der Wechsel ist ein normaler Seitenaufruf per
   `<a>`, kein `next/link`. Das ist dasselbe Muster wie zwischen Rechtsseiten
   und Home heute: GSAP-Pins und Lenis bauen sich sauber neu auf.
-- Fährt mit der Leiste beim Scrollen weg und wieder ein; bei offenem Menü
-  bleibt die Leiste sichtbar, der Schalter also auch.
-- Platz auf 320 px Breite prüfen: Wortmarke, Schalter, Menü-Button nebeneinander
-  ohne Überlappung.
+- Passt auf kurze Höhen (Handy quer, 320 × 568): Menüpunkte und Schalter
+  werden nie abgeschnitten. Reicht die Höhe nicht, rücken die Abstände über
+  eine Höhen-Query enger zusammen oder das Menü scrollt.
+- Das Menü wird nur geöffnet gerendert, der Schalter-Link steht also nicht im
+  Server-HTML. Suchmaschinen finden die andere Sprache über die
+  `hreflang`-Alternates und die Sitemap (siehe SEO).
 
 ### SEO
 
@@ -295,7 +306,7 @@ Personennamen, Ortsnamen, E-Mail, Social-URLs, Medieninhalte.
 
 - Ab `(min-width: 1024px) and (pointer: fine)` ist die Desktop-Choreografie
   eingefroren. Keine Änderung an GSAP-Pin-Hooks, `breakpoints.ts`, Timelines.
-  Einzige Ausnahme: der Schalter in der Leiste.
+  Einzige Ausnahme: der Schalter im geöffneten Menü.
 - Sections bekommen Copy als Props; ihre Motion-Logik bleibt unberührt.
 - Zwischen Home und Rechtsseiten sowie beim Sprachwechsel bleibt `<a>` statt
   `next/link` (Lenis/ScrollTrigger brauchen den vollen Aufbau).
@@ -324,15 +335,15 @@ Personennamen, Ortsnamen, E-Mail, Social-URLs, Medieninhalte.
 ## Akzeptanzkriterien
 
 1. `/`, `/impressum`, `/datenschutz`, `/agb` und alle Anker verhalten sich wie
-   heute; die DE-Seiten sehen bis auf den Schalter pixelgleich aus.
+   heute; die DE-Seiten sehen bei geschlossenem Menü pixelgleich aus.
 2. `/en`, `/en/impressum`, `/en/datenschutz`, `/en/agb` zeigen vollständig
    englische Inhalte; Bilder/Screenshots/Videos sind dieselben wie auf DE.
 3. Im ausgelieferten HTML jeder EN-Seite steht `<html lang="en">`, auf jeder
    DE-Seite `<html lang="de">`.
 4. Kein deutscher Text, kein deutsches Aria/Alt/Title auf EN-Seiten (außer
    Eigennamen und dem deutschen Rechtstext-Link im Hinweis).
-5. Schalter in der Leiste auf allen Breiten sichtbar und bedienbar, wechselt zur
-   selben Seite in der anderen Sprache, Hash wird mitgenommen.
+5. Schalter im geöffneten Menü unter „Kontakt“ auf allen Breiten sichtbar und
+   bedienbar, auch bei Handy quer, wechselt zur selben Seite in der anderen Sprache, Hash wird mitgenommen.
 6. Auf `/en` bleiben Section-Anker und Logo auf `/en`. Auf Rechtsseiten führen
    Section-Links und Logo zur Home derselben Sprache.
 7. `/de` und `/de/…` leiten per 301 auf die unpräfixierte URL.
@@ -359,7 +370,7 @@ Personennamen, Ortsnamen, E-Mail, Social-URLs, Medieninhalte.
   scripts/mobile-matrix.mjs overflow` und `shots`, dazu dasselbe auf `/` als
   Vergleich zum Stand vor dem Umbau.
 - **Handtest im Browser:** Schalter auf Home mit Hash, auf Rechtsseite, auf 404;
-  Menü offen; helle und dunkle Sections; 320 px Breite.
+  im Menü auf Desktop und Handy; Handy quer (kurze Höhe); 320 px Breite.
 
 ## Risiken
 
@@ -380,7 +391,7 @@ Personennamen, Ortsnamen, E-Mail, Social-URLs, Medieninhalte.
 - Ob die Locale über Params oder `next/root-params` gelesen wird.
 - Ob `HomePage` als eigene Komponente die Section-Komposition übernimmt.
 - Wie die Allowlist des Deutsch-Scans aufgebaut ist.
-- Feinmaße des Schalters (Schriftgröße, Abstand zum Menü-Button) im Rahmen der
+- Feinmaße des Schalters (Schriftgröße, Abstand zu „Kontakt“) im Rahmen der
   Vorgaben oben.
 
 ## Aufräumen
