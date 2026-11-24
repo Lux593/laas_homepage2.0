@@ -1,3 +1,5 @@
+import { notFound } from "next/navigation";
+
 import Navigation from "@/components/ui/Navigation";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import Hero from "@/components/sections/Hero";
@@ -7,12 +9,20 @@ import SelectedWork from "@/components/sections/SelectedWork";
 import Clients from "@/components/sections/Clients";
 import Process from "@/components/sections/Process";
 import GiganticCTA from "@/components/sections/GiganticCTA";
+import { hasLocale } from "@/lib/i18n/locales";
 
-export default function Home() {
+export default async function Home({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  if (!hasLocale(lang)) notFound();
+
   return (
     <main id="main-content" className="relative min-h-screen bg-bg-primary">
       <ScrollProgress />
-      <Navigation />
+      <Navigation locale={lang} isHome />
 
       <div className="relative z-10">
         {/* Gemeinsamer Positions-Kontext: der Hero klebt per position:sticky darin,

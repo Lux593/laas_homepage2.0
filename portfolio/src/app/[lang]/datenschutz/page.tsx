@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 import { Fill, ProviderAddress } from "@/components/legal/Fill";
 import LegalPage from "@/components/legal/LegalPage";
 import { LegalList } from "@/components/legal/LegalSection";
 import type { LegalSectionData } from "@/components/legal/LegalSection";
+import { hasLocale } from "@/lib/i18n/locales";
 import { LEGAL } from "@/lib/legal";
 
 export const metadata: Metadata = {
@@ -311,9 +313,18 @@ const SECTIONS: LegalSectionData[] = [
   },
 ];
 
-export default function DatenschutzPage() {
+export default async function DatenschutzPage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  if (!hasLocale(lang)) notFound();
+
   return (
     <LegalPage
+      locale={lang}
+      current="datenschutz"
       title="DATENSCHUTZ"
       lede="Informationen nach Art. 13 der Datenschutz-Grundverordnung: welche personenbezogenen Daten beim Besuch dieser Website verarbeitet werden, wozu, auf welcher Rechtsgrundlage — und welche Rechte du dagegen hast."
       sections={SECTIONS}

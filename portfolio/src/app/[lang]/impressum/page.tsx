@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 import { Fill, ProviderAddress } from "@/components/legal/Fill";
 import LegalPage from "@/components/legal/LegalPage";
 import type { LegalSectionData } from "@/components/legal/LegalSection";
+import { hasLocale } from "@/lib/i18n/locales";
 import { LEGAL } from "@/lib/legal";
 
 export const metadata: Metadata = {
@@ -159,9 +161,18 @@ const SECTIONS: LegalSectionData[] = [
   },
 ];
 
-export default function ImpressumPage() {
+export default async function ImpressumPage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  if (!hasLocale(lang)) notFound();
+
   return (
     <LegalPage
+      locale={lang}
+      current="impressum"
       title="IMPRESSUM"
       lede="Angaben nach § 5 des Digitale-Dienste-Gesetzes (DDG) und § 18 Abs. 2 des Medienstaatsvertrags (MStV)."
       sections={SECTIONS}

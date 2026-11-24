@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { resolveProxy, type ProxyDecision } from "./routing.ts";
+import {
+  localeFromHeader,
+  localeFromPath,
+  resolveProxy,
+  type ProxyDecision,
+} from "./routing.ts";
 
 const cases: [string, ProxyDecision][] = [
   ["/", { kind: "rewrite", pathname: "/de" }],
@@ -29,3 +34,37 @@ test("resolveProxy: /de//host wird kein protokollrelativer Redirect", () => {
     pathname: "/evil.com",
   });
 });
+
+const localeCases: [string, "de" | "en"][] = [
+  ["/", "de"],
+  ["/gibtsnicht", "de"],
+  ["/english", "de"],
+  ["/de/impressum", "de"],
+  ["/en", "en"],
+  ["/en/", "en"],
+  ["/en/gibtsnicht", "en"],
+];
+
+for (const [input, expected] of localeCases) {
+  test(`localeFromPath ${input}`, () => {
+    assert.equal(localeFromPath(input), expected);
+  });
+}
+
+// Ohne Proxy (Pfade mit Endung) fehlt der Header; ein selbst gesetzter Wert
+// zählt nur, wenn er genau eines der zwei Kürzel ist.
+const headerCases: [string | null, "de" | "en"][] = [
+  [null, "de"],
+  ["", "de"],
+  ["de", "de"],
+  ["en", "en"],
+  ["EN", "de"],
+  ["fr", "de"],
+  ["en-US", "de"],
+];
+
+for (const [input, expected] of headerCases) {
+  test(`localeFromHeader ${JSON.stringify(input)}`, () => {
+    assert.equal(localeFromHeader(input), expected);
+  });
+}

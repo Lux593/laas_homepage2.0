@@ -25,6 +25,19 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   compress: true,
 
+  experimental: {
+    /**
+     * Eigene 404 für jede Adresse ohne Route: app/global-not-found.tsx.
+     *
+     * Nötig, weil das Root-Layout unter app/[lang] liegt. Ein geworfenes
+     * notFound() rendert Next 16.4 dort nur im Browser — das Server-HTML ist
+     * eine leere Fehler-Shell ohne `lang`, Stylesheet und Text. Unbekannte
+     * Pfade treffen dank `dynamicParams = false` im Layout keine Route und
+     * landen hier, serverseitig gerendert und mit Status 404.
+     */
+    globalNotFound: true,
+  },
+
   images: {
     formats: ["image/avif", "image/webp"],
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048],

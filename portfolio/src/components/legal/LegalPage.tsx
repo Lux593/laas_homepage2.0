@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
 
 import LegalSection, {
   type LegalSectionData,
@@ -10,7 +9,8 @@ import Navigation from "@/components/ui/Navigation";
 import ScrollProgress from "@/components/ui/ScrollProgress";
 import TextReveal from "@/components/ui/TextReveal";
 import { useLightChrome } from "@/hooks/useLightChrome";
-import { LEGAL, LEGAL_PAGES } from "@/lib/legal";
+import { type Locale, localizePath } from "@/lib/i18n/locales";
+import { LEGAL, LEGAL_PAGES, type LegalSlug } from "@/lib/legal";
 
 /** 01, 02, … — dieselbe zweistellige Marke wie in SERVICES und im Projektzähler. */
 const mark = (index: number) => String(index + 1).padStart(2, "0");
@@ -25,6 +25,8 @@ const mark = (index: number) => String(index + 1).padStart(2, "0");
  * werden serverseitig gerendert.
  */
 export default function LegalPage({
+  locale,
+  current,
   eyebrow = "Rechtliches",
   title,
   lede,
@@ -32,6 +34,14 @@ export default function LegalPage({
   sections,
   children,
 }: {
+  locale: Locale;
+  /**
+   * Welche Rechtsseite das ist — sie fällt aus der Fusszeile, die auf die
+   * Geschwister zeigt. `null` auf der Fehlerseite: dort zeigt die Fusszeile
+   * alle drei. Kommt als Prop statt aus dem Pfad im Browser, weil der Proxy
+   * die deutschen Pfade intern umschreibt (siehe Navigation.tsx).
+   */
+  current: LegalSlug | null;
   eyebrow?: string;
   title: string;
   lede: string;
@@ -48,7 +58,6 @@ export default function LegalPage({
   children?: React.ReactNode;
 }) {
   useLightChrome();
-  const pathname = usePathname();
   const hasIndex = Boolean(sections && sections.length > 2);
   const [activeId, setActiveId] = useState<string | null>(
     sections?.[0]?.id ?? null,
@@ -118,7 +127,7 @@ export default function LegalPage({
       className="relative min-h-svh bg-[#f2ede4] text-[#0a0a0a]"
     >
       <ScrollProgress />
-      <Navigation />
+      <Navigation locale={locale} isHome={false} />
 
       {/* Oberer Abstand deckt die feste Leiste in beiden Ausbaustufen: sie misst
           mobil 64px und ab lg 112px (siehe Navigation.tsx). */}
@@ -196,12 +205,8 @@ export default function LegalPage({
                 sauber neu auf und kostet auf drei selten besuchten Seiten
                 nichts. */}
             <div className="mt-20 flex flex-col gap-5 border-t border-[#0a0a0a]/10 pt-8 md:flex-row md:items-center md:justify-between">
-              {/* eslint-disable-next-line @next/next/no-html-link-for-pages --
-                  Die Regel kennt den Grund darüber nicht: next/link würde hier
-                  gerade NICHT das Richtige tun, weil die Startseite einen
-                  frischen Lenis- und ScrollTrigger-Zustand braucht. */}
               <a
-                href="/"
+                href={localizePath("/", locale)}
                 className="group inline-flex items-center gap-2 font-mono text-caption uppercase tracking-widest text-[#6a6a6a] transition-colors duration-300 hover:text-[#0a0a0a] pointer-coarse:min-h-11"
               >
                 <span
@@ -217,17 +222,17 @@ export default function LegalPage({
                 aria-label="Weitere rechtliche Hinweise"
                 className="flex flex-wrap items-center gap-x-5 gap-y-1 md:gap-x-8"
               >
-                {LEGAL_PAGES.filter((page) => page.href !== pathname).map(
-                  (page) => (
-                    <a
-                      key={page.href}
-                      href={page.href}
-                      className="inline-flex items-center font-mono text-caption uppercase tracking-widest text-[#9a9a9a] transition-colors duration-300 hover:text-[#0a0a0a] pointer-coarse:min-h-11"
-                    >
-                      {page.label}
-                    </a>
-                  ),
-                )}
+                {LEGAL_PAGES.filter(
+                  (page) => page.href.slice(1) !== current,
+                ).map((page) => (
+                  <a
+                    key={page.href}
+                    href={localizePath(page.href, locale)}
+                    className="inline-flex items-center font-mono text-caption uppercase tracking-widest text-[#9a9a9a] transition-colors duration-300 hover:text-[#0a0a0a] pointer-coarse:min-h-11"
+                  >
+                    {page.label}
+                  </a>
+                ))}
               </nav>
             </div>
           </div>

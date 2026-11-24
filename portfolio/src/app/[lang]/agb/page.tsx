@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 import { Fill, ProviderAddress } from "@/components/legal/Fill";
 import LegalPage from "@/components/legal/LegalPage";
 import { LegalList } from "@/components/legal/LegalSection";
 import type { LegalSectionData } from "@/components/legal/LegalSection";
+import { hasLocale } from "@/lib/i18n/locales";
 import { LEGAL } from "@/lib/legal";
 
 export const metadata: Metadata = {
@@ -461,9 +463,18 @@ const SECTIONS: LegalSectionData[] = [
   },
 ];
 
-export default function AGBPage() {
+export default async function AGBPage({
+  params,
+}: {
+  params: Promise<{ lang: string }>;
+}) {
+  const { lang } = await params;
+  if (!hasLocale(lang)) notFound();
+
   return (
     <LegalPage
+      locale={lang}
+      current="agb"
       title="AGB"
       lede="Allgemeine Geschäftsbedingungen für Softwareentwicklung, Prozessautomatisierung, KI-Integration und Webdesign. Sie gelten für alle Verträge, die auf dieser Grundlage geschlossen werden."
       sections={SECTIONS}

@@ -3,10 +3,11 @@ import { SITE_CONFIG } from "@/lib/constants";
 /**
  * Alle nachfüllbaren Angaben der Rechtsseiten an genau einer Stelle.
  *
- * `null` heisst „fehlt noch". Die Texte in app/impressum, app/datenschutz und
- * app/agb greifen ausschliesslich über <Fill> auf diese Werte zu: steht hier
- * ein Wert, erscheint er im Fliesstext; steht `null`, erscheint stattdessen ein
- * markierter Platzhalter mit der Beschriftung, die am Aufrufort steht.
+ * `null` heisst „fehlt noch". Die Texte in app/[lang]/impressum,
+ * app/[lang]/datenschutz und app/[lang]/agb greifen ausschliesslich über
+ * <Fill> auf diese Werte zu: steht hier ein Wert, erscheint er im Fliesstext;
+ * steht `null`, erscheint stattdessen ein markierter Platzhalter mit der
+ * Beschriftung, die am Aufrufort steht.
  *
  * Nachfüllen heisst deshalb: hier `null` durch den echten Wert ersetzen. Die
  * Rechtstexte selbst müssen dafür nicht angefasst werden, und die Markierung
@@ -89,6 +90,9 @@ export const LEGAL = {
    */
   updated: "12. August 2026",
 };
+
+/** Slug einer Rechtsseite, in beiden Sprachen gleich (`/agb`, `/en/agb`). */
+export type LegalSlug = "agb" | "datenschutz" | "impressum";
 
 /** Fusszeile der Rechtsseiten und der Kontaktkarte — eine Reihenfolge, eine Quelle. */
 export const LEGAL_PAGES = [

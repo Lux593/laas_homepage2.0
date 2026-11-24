@@ -3,9 +3,9 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
 import gsap from "gsap";
 import { NAV_ITEMS } from "@/lib/constants";
+import { type Locale, localizePath } from "@/lib/i18n/locales";
 
 /**
  * Nur der Teil der Lenis-Instanz, den der Scroll-Lock braucht. SmoothScroll
@@ -19,7 +19,14 @@ const HIDE_AFTER_PX = 120;
 /** Zittern am Finger soll die Leiste nicht auf und ab schalten. */
 const HIDE_DELTA_PX = 8;
 
-export default function Navigation() {
+export default function Navigation({
+  locale,
+  isHome,
+}: {
+  locale: Locale;
+  /** Steht die Leiste auf der Startseite der jeweiligen Sprache? */
+  isHome: boolean;
+}) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navRef = useRef<HTMLDivElement>(null);
 
@@ -31,9 +38,14 @@ export default function Navigation() {
   // nur ausserhalb wird „/#services" bzw. „/" daraus. Das ist kein Geschmack,
   // sondern Notwendigkeit: „/" auf der Startseite wäre eine Navigation auf
   // dieselbe URL und würde neu laden, wo „#" heute sanft nach oben rollt.
-  const isHome = usePathname() === "/";
-  const homeHref = isHome ? "#" : "/";
-  const sectionHref = (hash: string) => (isHome ? hash : `/${hash}`);
+  //
+  // `isHome` kommt als Prop von der Seite und nicht mehr aus dem Pfad: der
+  // Proxy schreibt `/` intern auf `/de` um. Vorgerendert wird unter `/de`, im
+  // Browser steht `/` — ein Pfadvergleich gäbe auf Server und Client
+  // verschiedene hrefs und damit einen Hydration-Fehler.
+  const homeHref = isHome ? "#" : localizePath("/", locale);
+  const sectionHref = (hash: string) =>
+    isHome ? hash : `${localizePath("/", locale)}${hash}`;
   /** Der Einflug fährt dieselbe Box — vorher darf nichts anderes daran ziehen. */
   const entryDoneRef = useRef(false);
 
