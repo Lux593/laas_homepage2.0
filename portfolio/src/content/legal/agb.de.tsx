@@ -125,13 +125,13 @@ const SECTIONS: LegalSectionData[] = [
         <p>
           Bei Projekten ab einem Volumen, das im Angebot benannt ist, wird eine
           Anzahlung von{" "}
-          <Fill value={terms.deposit} label="Anzahlung bei Projektbeginn" /> bei
+          <Fill value={terms.deposit.de} label="Anzahlung bei Projektbeginn" /> bei
           Auftragserteilung fällig. Der Restbetrag wird nach Abnahme in Rechnung
           gestellt. Laufende Leistungen werden monatlich abgerechnet.
         </p>
         <p>
           Rechnungen sind ohne Abzug innerhalb von{" "}
-          <Fill value={terms.paymentDays} label="Zahlungsziel" /> ab
+          <Fill value={terms.paymentDays.de} label="Zahlungsziel" /> ab
           Rechnungsdatum zur Zahlung fällig. Alle Preise verstehen sich
           zuzüglich der jeweils geltenden gesetzlichen Umsatzsteuer, soweit
           diese auszuweisen ist.
@@ -173,7 +173,7 @@ const SECTIONS: LegalSectionData[] = [
           Bei Werkleistungen zeigt der Auftragnehmer die Fertigstellung an und
           stellt das Ergebnis zur Prüfung bereit. Der Auftraggeber prüft es
           innerhalb von{" "}
-          <Fill value={terms.acceptanceDays} label="Prüffrist in Werktagen" />{" "}
+          <Fill value={terms.acceptanceDays.de} label="Prüffrist in Werktagen" />{" "}
           und erklärt die Abnahme in Textform oder benennt die Mängel, die ihr
           entgegenstehen.
         </p>
@@ -255,7 +255,7 @@ const SECTIONS: LegalSectionData[] = [
           Gegenüber Unternehmern beträgt die Verjährungsfrist für
           Mängelansprüche{" "}
           <Fill
-            value={terms.warrantyPeriod}
+            value={terms.warrantyPeriod.de}
             label="Gewährleistungsfrist gegenüber Unternehmern"
           />{" "}
           ab Abnahme. Gegenüber Verbrauchern gilt die gesetzliche Frist
@@ -344,7 +344,7 @@ const SECTIONS: LegalSectionData[] = [
         <p>
           Laufende Verträge über Wartung, Betreuung oder Support können von
           beiden Seiten mit einer Frist von{" "}
-          <Fill value={terms.noticePeriod} label="Kündigungsfrist" /> zum
+          <Fill value={terms.noticePeriod.de} label="Kündigungsfrist" /> zum
           Monatsende gekündigt werden. Das Recht zur ausserordentlichen
           Kündigung aus wichtigem Grund bleibt unberührt.
         </p>

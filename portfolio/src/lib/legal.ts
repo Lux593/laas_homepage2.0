@@ -12,12 +12,15 @@ import type { Locale } from "./i18n/locales.ts";
  * stattdessen ein markierter Platzhalter mit der Beschriftung, die am
  * Aufrufort steht.
  *
- * Werte, die sich mit der Sprache ändern (Ländername), stehen je Sprache da.
- * Eigennamen — Firmierung, Behörde, Hoster — bleiben in jeder Sprache gleich.
+ * Werte, die sich mit der Sprache ändern, stehen je Sprache da (`de`/`en`):
+ * Ländername, Anschrift des Hosters und die Fristen und Anteile der AGB —
+ * deren Einheit ist Text („14 Tage" / „14 days") und steht mitten im Satz.
+ * In jeder Sprache gleich bleiben Eigennamen (Firmierung, Behörde, Hoster,
+ * Gerichtsort), Anschrift und Kontakt des Anbieters und der Stundensatz.
  *
- * Nachfüllen heisst deshalb: hier `null` durch den echten Wert ersetzen. Die
- * Rechtstexte selbst müssen dafür nicht angefasst werden, und die Markierung
- * verschwindet von allein.
+ * Nachfüllen heisst deshalb: hier `null` durch den echten Wert ersetzen — bei
+ * Werten je Sprache in beiden Sprachen. Die Rechtstexte selbst müssen dafür
+ * nicht angefasst werden, und die Markierung verschwindet von allein.
  *
  * Was hier NICHT steht, steht bewusst nicht hier: Registergericht und
  * Berufsaufsicht. Ein nicht eingetragenes Einzelunternehmen in der
@@ -77,21 +80,40 @@ export const LEGAL = {
     } satisfies Record<Locale, string>,
   },
 
-  /** Kaufmännische Eckwerte für die AGB. */
+  /**
+   * Kaufmännische Eckwerte für die AGB. Fristen und Anteile je Sprache, weil
+   * ihre Einheit im Satz der jeweiligen Fassung steht; Stundensatz und
+   * Gerichtsstand sind in beiden Fassungen gleich.
+   */
   terms: {
-    /** Stundensatz netto, inklusive Währung — z. B. „95 EUR". */
+    /** Stundensatz netto, inklusive Währung — z. B. „95 EUR". Beide Sprachen. */
     hourlyRate: null as string | null,
-    /** Zahlungsziel ab Rechnungsdatum — z. B. „14 Tage". */
-    paymentDays: null as string | null,
-    /** Anzahlung bei Projektbeginn — z. B. „30 % der Auftragssumme". */
-    deposit: null as string | null,
-    /** Frist für die Abnahmeerklärung — z. B. „10 Werktage". */
-    acceptanceDays: null as string | null,
-    /** Gewährleistungsfrist ab Abnahme — z. B. „12 Monate". */
-    warrantyPeriod: null as string | null,
-    /** Kündigungsfrist laufender Wartungs- und Supportverträge. */
-    noticePeriod: null as string | null,
-    /** Gerichtsstand bei Verträgen mit Unternehmern — z. B. „Lörrach". */
+    /** Zahlungsziel ab Rechnungsdatum — z. B. de „14 Tage", en „14 days". */
+    paymentDays: { de: null, en: null } satisfies Record<Locale, string | null>,
+    /**
+     * Anzahlung bei Projektbeginn — z. B. de „30 % der Auftragssumme",
+     * en „30% of the order value".
+     */
+    deposit: { de: null, en: null } satisfies Record<Locale, string | null>,
+    /** Frist für die Abnahmeerklärung — z. B. de „10 Werktage", en „10 working days". */
+    acceptanceDays: { de: null, en: null } satisfies Record<
+      Locale,
+      string | null
+    >,
+    /** Gewährleistungsfrist ab Abnahme — z. B. de „12 Monate", en „12 months". */
+    warrantyPeriod: { de: null, en: null } satisfies Record<
+      Locale,
+      string | null
+    >,
+    /**
+     * Kündigungsfrist laufender Wartungs- und Supportverträge — z. B.
+     * de „4 Wochen", en „4 weeks".
+     */
+    noticePeriod: { de: null, en: null } satisfies Record<
+      Locale,
+      string | null
+    >,
+    /** Gerichtsstand bei Verträgen mit Unternehmern — z. B. „Lörrach". Beide Sprachen. */
     jurisdiction: null as string | null,
   },
 

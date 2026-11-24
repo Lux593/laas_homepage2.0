@@ -135,15 +135,15 @@ const SECTIONS: LegalSectionData[] = [
         </p>
         <p>
           For projects at or above a volume specified in the offer, a deposit of{" "}
-          <Fill value={terms.deposit} label="Deposit at project start" /> is due
-          when the order is placed. The remaining amount is invoiced after
+          <Fill value={terms.deposit.en} label="Deposit at project start" /> is
+          due when the order is placed. The remaining amount is invoiced after
           acceptance. Ongoing services are billed monthly.
         </p>
         <p>
           Invoices are payable without deduction within{" "}
-          <Fill value={terms.paymentDays} label="Payment term" /> of the invoice
-          date. All prices are exclusive of the applicable statutory VAT,
-          insofar as VAT must be shown.
+          <Fill value={terms.paymentDays.en} label="Payment term" /> of the
+          invoice date. All prices are exclusive of the applicable statutory
+          VAT, insofar as VAT must be shown.
         </p>
         <p>
           Costs for <a href="#dritte">third-party services</a> are not included
@@ -180,7 +180,7 @@ const SECTIONS: LegalSectionData[] = [
           For work performance, the contractor gives notice of completion and
           makes the result available for review. The client reviews it within{" "}
           <Fill
-            value={terms.acceptanceDays}
+            value={terms.acceptanceDays.en}
             label="Review period in working days"
           />{" "}
           and either declares acceptance in text form or names the defects that
@@ -261,7 +261,7 @@ const SECTIONS: LegalSectionData[] = [
           For entrepreneurs, the limitation period for claims based on defects
           is{" "}
           <Fill
-            value={terms.warrantyPeriod}
+            value={terms.warrantyPeriod.en}
             label="Warranty period for entrepreneurs"
           />{" "}
           from acceptance. For consumers, the full statutory period applies. The
@@ -349,8 +349,8 @@ const SECTIONS: LegalSectionData[] = [
         <p>
           Continuing contracts for maintenance, ongoing care or support may be
           terminated by either party with a notice period of{" "}
-          <Fill value={terms.noticePeriod} label="Notice period" /> to the end
-          of a month. The right to extraordinary termination for good cause
+          <Fill value={terms.noticePeriod.en} label="Notice period" /> to the
+          end of a month. The right to extraordinary termination for good cause
           remains unaffected.
         </p>
         <p>
