@@ -705,42 +705,67 @@
 
 /* Vollbild-Menü: Abstände nach verfügbarer Höhe (Navigation.tsx).
  *
+ * Alle Masse stehen als Variablen an .nav-menu, die Höhen-Stufen unten setzen
+ * nur diese Variablen neu. Ungelayert, damit die Stufen über die Reihenfolge
+ * hier gewinnen; am Element steht deshalb kein gap-Utility.
+ *
  * Fünf Einträge plus Sprachschalter messen mit den 44px-Trefferflächen
  * 5·44 + 4·32 + (32 + 16) + 44 = 440px. Auf dem Handy quer (844x390,
  * 568x320) ist das zu hoch, also rücken die Abstände zusammen: bis 480px
  * Höhe auf 352px, bis 360px auf 308px. Erst darunter, etwa in Safari quer mit
- * eingeblendeten Leisten, scrollt das Menü.
- *
- * Über 480px Höhe bleibt es bei 2rem, dem gap-8 von vorher — der Desktop
- * steht still. Ungelayert, damit die Höhen-Stufen über die Reihenfolge hier
- * gewinnen; am Element steht deshalb kein gap-Utility. */
+ * eingeblendeten Leisten, scrollt das Menü. Über 480px Höhe bleibt es bei
+ * 2rem, dem gap-8 von vorher. */
 .nav-menu {
-  gap: 2rem;
+  --nav-menu-gap: 2rem;
+  /* Zusätzliche Luft über dem Schalter: er gehört nicht in die Reihe. */
+  --nav-menu-lang-space: 1rem;
+  /* Höhe der Schalterzeile: die 44px-Trefferflächen (min-h-11) der Einträge. */
+  --nav-menu-lang-height: 2.75rem;
+  gap: var(--nav-menu-gap);
 }
 
-/* Mehr Luft über dem Sprachschalter als zwischen den Einträgen: er gehört
-   nicht in ihre Reihe. */
 .nav-menu__lang {
-  margin-top: 1rem;
+  height: var(--nav-menu-lang-height);
+  margin-top: var(--nav-menu-lang-space);
+}
+
+/* Gegengewicht zum Schalter: oben so viel Raum, wie der Schalter unten belegt
+ * (Abstand + Zusatzluft + Zeile, 92px). Die zentrierte Spalte hat ihre Mitte
+ * damit wieder genau zwischen den fünf Einträgen, und die stehen auf dem
+ * Pixel wie vor dem Schalter: 224 bei 1440x900, 192 bei 1280x800, 252 bei
+ * 393x852, 110 bei 320x568.
+ *
+ * Nur wo die Spalte mit Gegengewicht sicher passt, sonst schöbe es den
+ * Schalter aus dem Bild. Sie misst 2·92 + 4·32 + 5·Eintrag = 312px +
+ * 5·Eintrag, und ein Eintrag ist max(44px, 4.5vw), höchstens 72px:
+ *   bis 1013px Breite  Eintrag ≤ 45.6px  →  Spalte ≤ 540px
+ *   bis 1440px Breite  Eintrag ≤ 64.8px  →  Spalte ≤ 636px
+ *   jede Breite        Eintrag ≤ 72px    →  Spalte ≤ 672px
+ * Wo keine Bedingung greift, steht die Spalte als Ganzes mittig, die
+ * Einträge 46px höher. Die Höhen-Stufen unten liegen alle unter 540px und
+ * kommen dem Gegengewicht nie in die Quere. */
+@media (min-height: 540px) and (max-width: 1013px),
+  (min-height: 636px) and (max-width: 1440px),
+  (min-height: 672px) {
+  .nav-menu {
+    padding-top: calc(
+      var(--nav-menu-gap) + var(--nav-menu-lang-space) +
+        var(--nav-menu-lang-height)
+    );
+  }
 }
 
 @media (max-height: 480px) {
   .nav-menu {
-    gap: 1rem;
-  }
-
-  .nav-menu__lang {
-    margin-top: 0.5rem;
+    --nav-menu-gap: 1rem;
+    --nav-menu-lang-space: 0.5rem;
   }
 }
 
 @media (max-height: 360px) {
   .nav-menu {
-    gap: 0.5rem;
-  }
-
-  .nav-menu__lang {
-    margin-top: 0.25rem;
+    --nav-menu-gap: 0.5rem;
+    --nav-menu-lang-space: 0.25rem;
   }
 }
 

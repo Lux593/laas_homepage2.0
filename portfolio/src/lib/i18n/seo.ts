@@ -1,10 +1,12 @@
 /**
- * Sprachverweise für Suchmaschinen: `canonical` und `hreflang` je Seite.
+ * Sprachverweise für Suchmaschinen: `canonical` und `hreflang` je Seite, dazu
+ * absolute URLs für Sitemap und JSON-LD.
  *
  * Ohne React- und Next-Importe, wie locales.ts: läuft in den Seiten, in der
  * Sitemap und unter `node --test`.
  */
 
+import { SITE_CONFIG } from "../constants.ts";
 import { type Locale, localizePath } from "./locales.ts";
 
 /** Die Seiten, die es in beiden Sprachen gibt, als sprachloser Pfad. */
@@ -40,4 +42,13 @@ export function buildAlternates(
     canonical: localizePath(path, locale),
     languages: { de, en: localizePath(path, "en"), "x-default": de },
   };
+}
+
+/**
+ * Absolute URL eines Pfads der Seite, für Stellen ohne `metadataBase`
+ * (Sitemap, JSON-LD). Die Startseite ohne abschliessenden Schrägstrich, wie
+ * Next sie auch im canonical schreibt.
+ */
+export function absoluteUrl(path: string): string {
+  return path === "/" ? SITE_CONFIG.url : `${SITE_CONFIG.url}${path}`;
 }

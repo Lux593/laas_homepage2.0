@@ -1,14 +1,9 @@
 import { MetadataRoute } from "next";
 
-import { SITE_CONFIG } from "@/lib/constants";
 import { LOCALES } from "@/lib/i18n/locales";
-import { PAGE_PATHS, buildAlternates } from "@/lib/i18n/seo";
+import { PAGE_PATHS, absoluteUrl, buildAlternates } from "@/lib/i18n/seo";
 
 export const dynamic = "force-static";
-
-/** Absolute URL eines Pfads; die Startseite ohne abschliessenden Schrägstrich. */
-const absolute = (path: string) =>
-  path === "/" ? SITE_CONFIG.url : `${SITE_CONFIG.url}${path}`;
 
 /**
  * Jede Seite zweimal, deutsch und englisch. Jeder Eintrag nennt beide
@@ -19,7 +14,7 @@ const absolute = (path: string) =>
 export default function sitemap(): MetadataRoute.Sitemap {
   return PAGE_PATHS.flatMap((path) => {
     const { de, en } = buildAlternates(path, "de").languages;
-    const languages = { de: absolute(de), en: absolute(en) };
+    const languages = { de: absoluteUrl(de), en: absoluteUrl(en) };
     // Die Rechtsseiten gehören in die Sitemap, aber nicht auf dieselbe Stufe:
     // sie ändern sich selten und sind kein Ziel, für das die Seite ranken soll.
     const isHome = path === "/";

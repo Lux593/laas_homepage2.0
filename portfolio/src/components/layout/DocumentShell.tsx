@@ -5,7 +5,8 @@ import GrainOverlay from "@/components/ui/GrainOverlay";
 
 import { SITE_CONFIG } from "@/lib/constants";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import type { Locale } from "@/lib/i18n/locales";
+import { type Locale, localizePath } from "@/lib/i18n/locales";
+import { absoluteUrl } from "@/lib/i18n/seo";
 import "@/app/globals.css";
 
 const instrumentSerif = Instrument_Serif({
@@ -58,19 +59,30 @@ export default function DocumentShell({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
+            // Zwei Knoten: die Sprache gehört zur Website, nicht zur Person —
+            // `inLanguage` kennt schema.org an `Person` nicht.
             __html: JSON.stringify({
               "@context": "https://schema.org",
-              "@type": "Person",
-              name: "Luca Arnoldi",
-              jobTitle: "Fullstack Developer",
-              url: SITE_CONFIG.url,
-              sameAs: [
-                SITE_CONFIG.socials.github,
-                SITE_CONFIG.socials.linkedin,
-                SITE_CONFIG.socials.instagram,
+              "@graph": [
+                {
+                  "@type": "WebSite",
+                  url: absoluteUrl(localizePath("/", locale)),
+                  name: SITE_CONFIG.name,
+                  inLanguage: locale,
+                },
+                {
+                  "@type": "Person",
+                  name: "Luca Arnoldi",
+                  jobTitle: "Fullstack Developer",
+                  url: SITE_CONFIG.url,
+                  sameAs: [
+                    SITE_CONFIG.socials.github,
+                    SITE_CONFIG.socials.linkedin,
+                    SITE_CONFIG.socials.instagram,
+                  ],
+                  knowsAbout: dict.meta.knowsAbout,
+                },
               ],
-              knowsAbout: dict.meta.knowsAbout,
-              inLanguage: locale,
             }),
           }}
         />
