@@ -87,6 +87,48 @@
   }
 }
 
+/* ── Im Stapel: Creme-Grund, der nie nachgemalt werden muss ─────────────
+ *
+ * Gemeldet auf dem iPhone: beim schnellen Scrollen durch die Leistungen stand
+ * die Zeichnung samt Copy auf Schwarz, nach einem Moment war die Creme wieder
+ * da. Die Section liegt über dem gepinnten Hero und ist deshalb eine eigene,
+ * über 300svh hohe Ebene; iOS Safari malt sie kachelweise nach, wenn sie ins
+ * Bild scrollt. Bis eine Kachel steht, ist sie durchsichtig, und darunter liegt
+ * nicht der Hero (der steht dort auf visibility: hidden), sondern der
+ * Seitengrund in #050505 — exakt der Farbwert im gemeldeten Screenshot. Die
+ * klebende Bühne ist eine eigene, bildschirmgroße Ebene, die sofort steht,
+ * deshalb war sie scharf auf dem Schwarz.
+ *
+ * Die Fläche hier ist eine eigene Ebene (translateZ) ohne jeden Inhalt außer
+ * der Hintergrundfarbe. WebKit malt so eine Ebene nicht in Kacheln, sondern
+ * legt die Farbe direkt in den Compositor — sie steht ab dem ersten Frame.
+ * Mit z-index: -1 liegt sie zwischen dem Grund der Section und ihrem Inhalt:
+ * fehlt eine Kachel, scheint Creme durch statt Schwarz.
+ *
+ * Kein border-radius auf der Fläche, sonst muss WebKit sie doch wieder malen.
+ * Darum beginnt sie erst unter den runden Ecken; die obersten 2rem trägt der
+ * Grund der Section wie bisher.
+ *
+ * Bewusst nicht an der klebenden Bühne und nicht am Seitengrund: Safari färbt
+ * Status- und Adressleiste nach klebenden Flächen am Fensterrand und nach dem
+ * Seitengrund und behält die Farbe danach zu lange — im Simulator standen
+ * beide Leisten im dunklen Prozess noch cremefarben. Diese Fläche scrollt mit
+ * der Section und wird nicht abgetastet.
+ *
+ * Die Breiten-Arme sind die aus STACK_QUERY — der Desktop ist eingefroren. */
+@media (max-width: 1023.98px),
+  (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) {
+  .services-section::before {
+    content: "";
+    position: absolute;
+    inset: var(--radius-panel-lg) 0 0 0;
+    z-index: -1;
+    background-color: var(--color-panel);
+    transform: translateZ(0);
+    pointer-events: none;
+  }
+}
+
 /* ── Desktop Stage ──────────────────────────────────────────────────── */
 
 .services-stage {
