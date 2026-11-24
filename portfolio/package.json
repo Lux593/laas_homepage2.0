@@ -13,7 +13,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "node scripts/stamp-build.mjs && next build",
+    "build": "node scripts/stamp-build.mjs && next build --webpack",
     "start": "next start",
     "lint": "eslint"
   },
