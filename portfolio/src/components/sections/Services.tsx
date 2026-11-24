@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, type CSSProperties, type RefObject } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -977,6 +977,17 @@ export default function Services({
               warum die Seite hier nicht weiterläuft: gescrollt wird an ihr,
               gezeigt wird auf der klebenden Bühne darüber. */}
           <div className="services-stack-scroll" aria-hidden />
+          {/* Rastpunkte, einer je Kapitel: ein schneller Wisch hält am
+              nächsten Kapitel an, statt eins zu überspringen. Lage und Regeln
+              in services.css (.services-stack-snap). */}
+          {services.map((service, index) => (
+            <span
+              key={service.id}
+              className="services-stack-snap"
+              style={{ "--snap-index": index } as CSSProperties}
+              aria-hidden
+            />
+          ))}
         </div>
       </div>
     </section>

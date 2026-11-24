@@ -804,6 +804,43 @@
   }
 }
 
+/* ── Kein Kapitel wird übersprungen ──────────────────────────────────────
+ *
+ * Gemeldet auf dem iPhone: ein schneller Wisch trug über ein Kapitel hinweg,
+ * man sah es nie. Vier Rastpunkte, je einer in der Mitte eines Kapitels, mit
+ * `scroll-snap-stop: always`: ein Wisch darf keinen davon überfahren, er hält
+ * am nächsten Kapitel. Ausserhalb der Strecke gibt es keine Rastpunkte, dort
+ * scrollt die Seite wie bisher.
+ *
+ * `proximity`, nicht `mandatory`: mandatory zwänge die ganze Seite, immer
+ * auf einem Rastpunkt zu stehen — man käme aus den Leistungen nicht mehr
+ * heraus.
+ *
+ * Nur bei Touch (pointer: coarse). Mit Maus oder Trackpad schiebt ab 768px
+ * Lenis die Seite, und Lenis verträgt kein CSS-Snapping.
+ *
+ * Lage: der Scroll durch die Strecke ist 300svh lang (.services-stack-scroll),
+ * also 75svh je Kapitel; Kapitelmitte = (Index + 0.5) × 75svh. Die 6rem
+ * gleichen das scroll-padding-top aus globals.css aus, das in genau diesen
+ * Breiten gilt und den Rastpunkt sonst um 6rem verschöbe. */
+@media (max-width: 1023.98px) and (pointer: coarse) and (prefers-reduced-motion: no-preference),
+  (min-width: 1024px) and (pointer: coarse) and (orientation: portrait) and (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-snap-type: y proximity;
+  }
+
+  .services-stack-snap {
+    position: absolute;
+    left: 0;
+    top: calc((var(--snap-index) + 0.5) * 75svh + 6rem);
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+}
+
 /* MUSS byte-identisch zur gsap.matchMedia()-Query in Services.tsx bleiben */
 @media (min-width: 1024px) and (pointer: fine) and (prefers-reduced-motion: no-preference),
   (min-width: 1024px) and (orientation: landscape) and (prefers-reduced-motion: no-preference) {
