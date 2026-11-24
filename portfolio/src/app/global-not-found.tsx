@@ -15,8 +15,9 @@ async function requestLocale() {
 }
 
 // Die globale 404 erbt nichts vom Root-Layout, deshalb die Grund-Metadaten
-// hier noch einmal, nur Titel und robots weichen ab. Keine `alternates`: eine
-// Fehlerseite hat keine Fassung in der anderen Sprache und keine kanonische URL.
+// hier noch einmal, nur Titel und robots weichen ab. Keine `alternates` und
+// kein og:url (siteMetadata setzt beides nicht): eine Fehlerseite hat keine
+// Fassung in der anderen Sprache und keine kanonische URL.
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await requestLocale();
   const dict = getDictionary(locale);

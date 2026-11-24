@@ -23,6 +23,7 @@ export default async function DatenschutzPage({
   params: Promise<{ lang: string }>;
 }) {
   const { lang } = await params;
+  // Engt nur den Typ ein: `dynamicParams = false` am Layout lässt nur de/en durch.
   if (!hasLocale(lang)) notFound();
   const doc = LEGAL_DOCS[SLUG][lang];
 

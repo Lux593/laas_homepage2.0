@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 
 import { SITE_CONFIG } from "@/lib/constants";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 import { type Locale, OG_LOCALE, otherLocale } from "@/lib/i18n/locales";
+import { type PagePath, absoluteUrl, buildAlternates } from "@/lib/i18n/seo";
 import type { Dictionary } from "@/lib/i18n/types";
 
 /**
@@ -14,8 +16,9 @@ import type { Dictionary } from "@/lib/i18n/types";
  *
  * Titel und Name im Vorschaubild sind die Marke und bleiben in jeder Sprache.
  *
- * Die Sprachverweise (`alternates`) stehen nicht hier, sondern in jeder Seite:
- * nur die Seite kennt ihren eigenen Pfad. Die 404 setzt keine.
+ * Sprachverweise (`alternates`) und og:url stehen nicht hier, sondern über
+ * pageMetadata in jeder Seite: nur die Seite kennt ihren eigenen Pfad. Die
+ * 404 setzt beides nicht.
  */
 export const siteMetadata = (dict: Dictionary, locale: Locale): Metadata => ({
   metadataBase: new URL(SITE_CONFIG.url),
@@ -31,11 +34,55 @@ export const siteMetadata = (dict: Dictionary, locale: Locale): Metadata => ({
     "Digital Experience",
   ],
   authors: [{ name: "Luca Arnoldi" }],
-  openGraph: {
+  openGraph: siteOpenGraph(dict, locale),
+  twitter: {
+    card: "summary_large_image",
+    title: "LAAS — Luca Arnoldi App Studio",
+    description: dict.meta.ogDescription,
+    images: ["/og-image.jpg"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/favicon.svg",
+  },
+});
+
+/**
+ * Was eine Seite mit eigener Adresse zu siteMetadata ergänzt: Sprachverweise
+ * und og:url, beide auf ihre kanonische URL.
+ *
+ * og:url lesen Facebook und LinkedIn als Adresse des geteilten Links und
+ * holen die Vorschau dort neu ab. Stünde es im Layout, zeigte jede Seite auf
+ * die deutsche Startseite.
+ *
+ * `openGraph` kommt vollständig mit: Next mischt es aus Layout und Seite
+ * nicht, sondern ersetzt es als Ganzes — mit `url` allein verlöre die Seite
+ * Bild, Titel und og:locale.
+ */
+export function pageMetadata(path: PagePath, locale: Locale): Metadata {
+  const alternates = buildAlternates(path, locale);
+  return {
+    alternates,
+    openGraph: {
+      ...siteOpenGraph(getDictionary(locale), locale),
+      url: absoluteUrl(alternates.canonical),
+    },
+  };
+}
+
+/** og-Grundstand ohne `url`: siteMetadata und pageMetadata teilen ihn. */
+function siteOpenGraph(
+  dict: Dictionary,
+  locale: Locale,
+): NonNullable<Metadata["openGraph"]> {
+  return {
     type: "website",
     locale: OG_LOCALE[locale],
     alternateLocale: OG_LOCALE[otherLocale(locale)],
-    url: SITE_CONFIG.url,
     title: "LAAS — Luca Arnoldi App Studio",
     description: dict.meta.ogDescription,
     siteName: "Luca Arnoldi App Studio",
@@ -53,22 +100,8 @@ export const siteMetadata = (dict: Dictionary, locale: Locale): Metadata => ({
         alt: "LAAS — Luca Arnoldi App Studio",
       },
     ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "LAAS — Luca Arnoldi App Studio",
-    description: dict.meta.ogDescription,
-    images: ["/og-image.jpg"],
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  icons: {
-    icon: "/favicon.svg",
-    apple: "/favicon.svg",
-  },
-});
+  };
+}
 
 export const SITE_VIEWPORT: Viewport = {
   themeColor: "#050505",

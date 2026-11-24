@@ -739,12 +739,15 @@
  * Schalter aus dem Bild. Sie misst 2·92 + 4·32 + 5·Eintrag = 312px +
  * 5·Eintrag, und ein Eintrag ist max(44px, 4.5vw), höchstens 72px:
  *   bis 1013px Breite  Eintrag ≤ 45.6px  →  Spalte ≤ 540px
+ *   bis 1280px Breite  Eintrag ≤ 57.6px  →  Spalte ≤ 600px
  *   bis 1440px Breite  Eintrag ≤ 64.8px  →  Spalte ≤ 636px
  *   jede Breite        Eintrag ≤ 72px    →  Spalte ≤ 672px
- * Wo keine Bedingung greift, steht die Spalte als Ganzes mittig, die
- * Einträge 46px höher. Die Höhen-Stufen unten liegen alle unter 540px und
- * kommen dem Gegengewicht nie in die Quere. */
+ * Die 1280er-Stufe hält Laptops mit 600–635px Höhe beim alten Stand
+ * (1280x620: erster Eintrag auf 102). Wo keine Bedingung greift, steht die
+ * Spalte als Ganzes mittig, die Einträge 46px höher. Die Höhen-Stufen unten
+ * liegen alle unter 540px und kommen dem Gegengewicht nie in die Quere. */
 @media (min-height: 540px) and (max-width: 1013px),
+  (min-height: 600px) and (max-width: 1280px),
   (min-height: 636px) and (max-width: 1440px),
   (min-height: 672px) {
   .nav-menu {

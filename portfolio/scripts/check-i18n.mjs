@@ -9,7 +9,7 @@
  * Aufruf (Server vorher mit `pnpm build && pnpm start` starten):
  *   node scripts/check-i18n.mjs routing            Status, Location, lang je Pfad
  *   node scripts/check-i18n.mjs copy [pfad…]       deutsche Wörter auf EN-Seiten
- *   node scripts/check-i18n.mjs seo                canonical, hreflang, og:locale, Sitemap
+ *   node scripts/check-i18n.mjs seo                canonical, hreflang, og:locale, og:url, Sitemap
  *   node scripts/check-i18n.mjs snapshot           DE-Text nach .i18n-baseline/de.json
  *   node scripts/check-i18n.mjs compare            DE-Text gegen die Baseline prüfen
  *
@@ -462,6 +462,10 @@ function linkTags(html) {
   return [...html.matchAll(/<link\b[^>]*>/gi)].map((m) => parseAttrs(m[0]));
 }
 
+function metaTags(html) {
+  return [...html.matchAll(/<meta\b[^>]*>/gi)].map((m) => parseAttrs(m[0]));
+}
+
 async function seo() {
   const r = reporter("seo");
   const pages = ROUTES.filter((x) => x.status === 200 && x.lang);
@@ -500,14 +504,43 @@ async function seo() {
         r.fail(`${path}: unerwartetes hreflang="${l.hreflang}"`);
     }
 
-    const og = [...page.body.matchAll(/<meta\b[^>]*>/gi)]
-      .map((m) => parseAttrs(m[0]))
-      .filter((m) => m.property === "og:locale");
+    const metas = metaTags(page.body);
+    const og = metas.filter((m) => m.property === "og:locale");
     const wantOg = lang === "de" ? "de_DE" : "en_US";
     if (og.length !== 1 || og[0].content !== wantOg) {
       r.fail(
         `${path}: og:locale ${og.map((m) => m.content).join(",") || "(keins)"}, erwartet ${wantOg}`,
       );
+    }
+
+    // og:url ist für Facebook und LinkedIn die kanonische Adresse: dort holen
+    // sie die Vorschau neu ab und dorthin führt der geteilte Link. Zeigt sie
+    // nicht auf die Seite selbst, teilt /en die deutsche Startseite.
+    const ogUrl = metas.filter((m) => m.property === "og:url");
+    if (ogUrl.length !== 1) {
+      r.fail(`${path}: ${ogUrl.length} og:url, erwartet genau 1`);
+    } else if (normUrl(ogUrl[0].content ?? "") !== normUrl(SITE + path)) {
+      r.fail(
+        `${path}: og:url ${ogUrl[0].content}, erwartet ${SITE}${path} (wie canonical)`,
+      );
+    }
+  }
+
+  // Die 404 hat keine eigene Adresse. Ein og:url darf dort fehlen, aber nie
+  // auf eine echte Seite zeigen — sonst wird ein Link auf die Fehlerseite als
+  // Startseite geteilt.
+  const realPages = new Set(pages.map(({ path }) => normUrl(SITE + path)));
+  for (const { path } of ROUTES.filter((x) => x.status === 404)) {
+    const page = await load(path);
+    r.check();
+    if (page.status !== 404) {
+      r.fail(`${path}: Status ${page.status}, erwartet 404`);
+      continue;
+    }
+    for (const m of metaTags(page.body).filter((m) => m.property === "og:url")) {
+      if (realPages.has(normUrl(m.content ?? ""))) {
+        r.fail(`${path}: og:url ${m.content} auf der 404, erwartet keins`);
+      }
     }
   }
 
