@@ -34,6 +34,7 @@ export const SITE_CONFIG = {
 export type ServiceId = "software" | "automation" | "ai" | "website";
 export type ProcessStepId = "idea" | "plan" | "build" | "cycle";
 export type ProjectId =
+  | "powershop-onlineshop"
   | "wintersport-verleih"
   | "powershop-service"
   | "powershop-madness"
@@ -237,6 +238,33 @@ export interface Project extends Omit<ProjectAsset, "gallery"> {
 }
 
 export const PROJECT_ASSETS: readonly ProjectAsset[] = [
+  {
+    id: "powershop-onlineshop",
+    tech: ["Shopify", "Liquid", "JavaScript", "GSAP"],
+    gallery: [
+      // Hero der Shop-Startseite, genau ein Umlauf der drei Modellfilme. Nur im
+      // Aufnahme-Browser mit 7 statt 18 s pro Slide, sonst wäre die Schleife
+      // fast eine Minute lang und rund viermal so groß.
+      {
+        id: 1,
+        url: "/vorschaubilder/powershop-onlineshop-loop.mp4",
+        type: "video",
+        poster: "/vorschaubilder/powershop-onlineshop1.webp",
+      },
+      { id: 2, url: "/vorschaubilder/powershop-onlineshop2.webp" },
+      { id: 3, url: "/vorschaubilder/powershop-onlineshop3.webp" },
+      { id: 4, url: "/vorschaubilder/powershop-onlineshop4.webp" },
+      { id: 5, url: "/vorschaubilder/powershop-onlineshop5.webp" },
+      { id: 6, url: "/vorschaubilder/powershop-onlineshop6.webp" },
+      { id: 7, url: "/vorschaubilder/powershop-onlineshop7.webp" },
+    ],
+    color: "#D9571A",
+    // Browser-Captures 1280x844 (≈ 1.517) passen fast exakt in den
+    // iPad-Ausschnitt (1.516). cover füllt randlos, ohne Statusleiste zum
+    // Ausblenden, daher kein screenBlurTop.
+    fit: "cover",
+    screenColor: "#0A0A0A",
+  },
   {
     id: "wintersport-verleih",
     tech: ["React", "Next.js", "TypeScript", "Supabase"],

@@ -202,6 +202,43 @@ export const de = {
       item: "Aufnahme {current} von {total}",
     },
     projects: {
+      "powershop-onlineshop": {
+        title: "POWER SHOP\nONLINESHOP",
+        subtitle: "E-Commerce für einen Harley-Davidson-Händler",
+        // Je zwei volle Zeilen (100–110 Zeichen), damit die Liste so hoch ist wie
+        // bei den Nachbarprojekten und der Titel beim Durchscrollen nicht springt.
+        features: [
+          {
+            title: "Custom Shopify-Shop",
+            description:
+              "Eigenes Theme statt Vorlage. Seiten, Filter, Warenkorb und Animationen sind von Grund auf entwickelt.",
+          },
+          {
+            title: "Personalisiert für den Händler",
+            description:
+              "Eigene Bikes, Team, Standort und Öffnungszeiten machen den Shop unverwechselbar, ganz wie der Laden vor Ort.",
+          },
+          {
+            title: "Präsentation der Dienstleistungen",
+            description:
+              "Werkstatt, Custom-Umbauten zum Aufklappen, Probefahrt und Finanzierung, jeweils mit direkter Anfrage.",
+          },
+          {
+            title: "Produktmanagement & Reporting",
+            description:
+              "Artikel und Bestände werden automatisiert gepflegt, mit dem Lager abgeglichen und in Berichten ausgewertet.",
+          },
+        ],
+        galleryTitles: [
+          "Startseite mit Motorradfilmen im Hero",
+          "Aufgeklappter Custom-Umbau „Project Falk“",
+          "Motorräder mit Film im Kopfbereich",
+          "Neue Motorräder mit Filtern",
+          "Kollektion „Alle Herren“",
+          "Produktseite einer Lederjacke",
+          "Geöffneter Warenkorb mit drei Artikeln",
+        ],
+      },
       "wintersport-verleih": {
         title: "WINTERSPORT\nVERLEIH SYSTEM",
         subtitle: "Verleihsystem für Intersport Gemo",

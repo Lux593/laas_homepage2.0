@@ -4,9 +4,24 @@ import assert from "node:assert/strict";
 import { getLegalLinks, getNavCopy, getProjects } from "./content.ts";
 import { de } from "./dictionaries/de.ts";
 
+test("getProjects: Power Shop Onlineshop steht an erster Stelle, der Film vorneweg", () => {
+  const [first] = getProjects(de);
+  assert.equal(first.id, "powershop-onlineshop");
+  assert.equal(first.gallery.length, 7);
+  const { type, url, poster } = first.gallery[0];
+  assert.deepEqual(
+    { type, url, poster },
+    {
+      type: "video",
+      url: "/vorschaubilder/powershop-onlineshop-loop.mp4",
+      poster: "/vorschaubilder/powershop-onlineshop1.webp",
+    },
+  );
+});
+
 test("getProjects: Galerie-Titel paaren sich mit den Aufnahmen in Reihenfolge", () => {
-  const [wintersport] = getProjects(de);
-  assert.equal(wintersport.id, "wintersport-verleih");
+  const wintersport = getProjects(de).find((p) => p.id === "wintersport-verleih");
+  assert.ok(wintersport);
   assert.deepEqual(
     wintersport.gallery.slice(0, 2).map(({ url, title }) => ({ url, title })),
     [
