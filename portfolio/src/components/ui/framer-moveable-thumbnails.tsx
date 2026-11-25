@@ -184,13 +184,19 @@ function GallerySlideMedia({
       return;
     }
 
+    // Nur abspielen (und damit erst laden), solange der Ausschnitt im Bild ist.
+    // `active` heißt bloß „aktuelle Folie ihres Karussells“ — das ist bei
+    // jedem Projekt mit Film die erste, also bei allen zugleich. Hing das
+    // Laden daran, zog schon der erste Aufruf alle Projekt-Filme (~20 MB).
+    let inView = false;
     const tryPlay = () => {
-      void video.play().catch(() => {});
+      if (inView) void video.play().catch(() => {});
     };
 
     const io = new IntersectionObserver(
       ([entry]) => {
-        if (entry?.isIntersecting) tryPlay();
+        inView = Boolean(entry?.isIntersecting);
+        if (inView) tryPlay();
         else video.pause();
       },
       // Low threshold: in the pinned horizontal track a panel can sit mostly
@@ -198,8 +204,9 @@ function GallerySlideMedia({
       { threshold: 0.01, rootMargin: "20% 0px" }
     );
     io.observe(video);
+    // Nachfassen, sobald Daten da sind — aber nur, wenn der Clip noch im Bild
+    // ist. Ohne die Prüfung lief ein inzwischen pausierter Film wieder an.
     video.addEventListener("loadeddata", tryPlay);
-    tryPlay();
     return () => {
       io.disconnect();
       video.removeEventListener("loadeddata", tryPlay);
@@ -232,10 +239,12 @@ function GallerySlideMedia({
         className={`absolute inset-0 h-full w-full ${imageFit} select-none pointer-events-none`}
         style={{ objectPosition }}
         muted
-        autoPlay
         loop
         playsInline
-        preload={active ? "auto" : "metadata"}
+        // Kein autoPlay und nichts vorladen: autoPlay setzt sich über preload
+        // hinweg und lädt sofort. Gestartet wird über den Observer oben, bis
+        // dahin steht das Poster.
+        preload="none"
         poster={item.poster}
         aria-label={item.title}
         aria-hidden={isSpare || undefined}
