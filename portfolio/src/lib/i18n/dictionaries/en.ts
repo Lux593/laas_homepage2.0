@@ -204,7 +204,7 @@ export const en = {
     },
     projects: {
       "powershop-onlineshop": {
-        title: "POWER SHOP\nONLINE STORE",
+        title: "SHOPIFY\nONLINE STORE",
         subtitle: "E-commerce for a Harley-Davidson dealer",
         // Wie im Deutschen je zwei volle Zeilen (95–110 Zeichen).
         features: [
@@ -250,19 +250,19 @@ export const en = {
               "Guests sign up on their own phone via QR code, ID photo included. The team takes it straight into the rental.",
           },
           {
-            title: "Rental, signature & register",
+            title: "Rental, register & analytics",
             description:
-              "Equipment step by step with automatic pricing, a signature on the device and payment at the register.",
+              "Equipment step by step, a signature on the device, a register with daily closing and revenue per employee.",
           },
           {
-            title: "Work schedule & vacation",
+            title: "Vacation planner & work schedule",
             description:
-              "A weekly plan in 30-minute slots, vacation requests with approval and a leave balance for everyone on the team.",
+              "Vacation requests with approval, leave balances and a team calendar, plus the work schedule in 30-minute slots.",
           },
           {
-            title: "Newsletter & analytics",
+            title: "Newsletter for customers",
             description:
-              "Newsletters built from blocks for customer groups, plus revenue, rentals and commission per employee.",
+              "Built from blocks and sent to customer groups. Customers opt in themselves when they sign up for a rental.",
           },
         ],
         galleryTitles: [

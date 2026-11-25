@@ -203,7 +203,7 @@ export const de = {
     },
     projects: {
       "powershop-onlineshop": {
-        title: "POWER SHOP\nONLINESHOP",
+        title: "SHOPIFY\nONLINESHOP",
         subtitle: "E-Commerce für einen Harley-Davidson-Händler",
         // Je zwei volle Zeilen (100–110 Zeichen), damit die Liste so hoch ist wie
         // bei den Nachbarprojekten und der Titel beim Durchscrollen nicht springt.
@@ -242,7 +242,7 @@ export const de = {
       "wintersport-verleih": {
         title: "RENTDESK\nVERLEIH SYSTEM",
         subtitle: "Verleih-App für Intersport Gemo",
-        // Wie beim Power Shop je zwei volle Zeilen (100–110 Zeichen).
+        // Wie beim Shopify-Onlineshop je zwei volle Zeilen (100–110 Zeichen).
         features: [
           {
             title: "Digitale Kundenanmeldung",
@@ -250,19 +250,19 @@ export const de = {
               "Gäste melden sich per QR-Code am eigenen Handy an, samt Ausweisfoto. Das Team übernimmt alles in die Leihe.",
           },
           {
-            title: "Verleih, Unterschrift & Kasse",
+            title: "Verleih, Kasse & Auswertung",
             description:
-              "Ausrüstung Schritt für Schritt, Preise automatisch, Unterschrift auf dem Gerät, bezahlt wird an der Kasse.",
+              "Ausrüstung Schritt für Schritt, Unterschrift auf dem Gerät, Kasse mit Tagesabschluss und Umsatz je Mitarbeiter.",
           },
           {
-            title: "Arbeitsplan & Urlaub",
+            title: "Urlaubsplaner & Arbeitsplan",
             description:
-              "Wochenplan im 30-Minuten-Raster, Urlaubsanträge mit Freigabe und ein Urlaubskonto für jede Person im Team.",
+              "Urlaubsanträge mit Freigabe, Urlaubskonten und Teamkalender, dazu der Arbeitsplan im 30-Minuten-Raster.",
           },
           {
-            title: "Newsletter & Auswertung",
+            title: "Newsletter an Kunden",
             description:
-              "Newsletter aus Bausteinen an Kundengruppen, dazu Umsatz, Leihen und Provision je Mitarbeiter im Überblick.",
+              "Aus Bausteinen gestaltet und an Kundengruppen verschickt. Kunden tragen sich bei der Anmeldung selbst ein.",
           },
         ],
         galleryTitles: [

@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { getLegalLinks, getNavCopy, getProjects } from "./content.ts";
 import { de } from "./dictionaries/de.ts";
 
-test("getProjects: Power Shop Onlineshop steht an erster Stelle, der Film vorneweg", () => {
+test("getProjects: Shopify-Onlineshop steht an erster Stelle, der Film vorneweg", () => {
   const [first] = getProjects(de);
   assert.equal(first.id, "powershop-onlineshop");
   assert.equal(first.gallery.length, 7);
